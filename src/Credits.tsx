@@ -1,8 +1,12 @@
 const photos = [
-  { image: 'hero-learner', name: 'Learner photograph', by: 'Christina @ wocintechchat.com', url: 'https://unsplash.com/photos/woman-using-laptop-YPcnjFweo40' },
-  { image: 'learning-together', name: 'Collaboration photograph', by: 'Christina @ wocintechchat.com', url: 'https://unsplash.com/photos/three-women-sitting-beside-wooden-table-c6wbSBaYxkY' },
-  { image: 'code-detail', name: 'Code and workspace photograph', by: 'Christopher Gower', url: 'https://unsplash.com/photos/a-macbook-with-lines-of-code-on-its-screen-on-a-busy-desk-m_HRfLhgABo' },
+  { image: 'hero-learner', name: 'A moment of focus', description: 'An imagined learner finding her next line of code.', alt: 'AI-generated scene of a woman focused on a laptop' },
+  { image: 'learning-together', name: 'Better, together', description: 'An imagined study session, built around shared curiosity.', alt: 'AI-generated scene of three adults learning together at a laptop' },
+  { image: 'code-detail', name: 'Room for an idea', description: 'An imagined coding desk, ready for a small beginning.', alt: 'AI-generated coding workspace with a laptop and notebook' },
 ];
 export function Credits() {
-  return <div className="wrap page-section"><div className="page-heading"><p className="eyebrow">THE PEOPLE BEHIND THE PICTURES</p><h1>Made with care.<br />Credited with respect.</h1><p>Our learner and collaboration photographs are illustrative stock. They do not depict Billion Codes students, staff, events or testimonials.</p></div><div className="credits-grid">{photos.map(photo => <article key={photo.image}><img src={`/images/${photo.image}.webp`} alt={photo.name} width="600" height="400" loading="lazy" /><h2>{photo.name}</h2><p>Photo by {photo.by} on Unsplash.</p><a href={photo.url} target="_blank" rel="noreferrer">View original photograph <span className="sr-only">(opens in a new tab)</span></a></article>)}</div><div className="catalog-tail"><p>Used under the <a href="https://unsplash.com/license" target="_blank" rel="noreferrer">Unsplash License</a>. The founder portrait is owner-provided. Billion Codes branding and course illustrations are original designs.</p></div></div>;
+  return <div className="wrap page-section">
+    <div className="page-heading"><p className="eyebrow">BEHIND THE VISUALS</p><h1>Imagined with purpose.<br />Made for Billion Codes.</h1><p>Our learning scenes are AI-generated illustrations, created for this site. The people and settings are fictional, not actual students, staff, events or testimonials.</p></div>
+    <div className="credits-grid">{photos.map(photo => <article key={photo.image}><img src={`/images/${photo.image}.webp`} alt={photo.alt} width="600" height="400" loading="lazy" /><h2>{photo.name}</h2><p>{photo.description}</p><span className="eyebrow">AI-GENERATED SCENE</span></article>)}</div>
+    <div className="catalog-tail"><p>The founder portrait is a real, owner-provided photograph of Josiah Adeyemo and has not been replaced by AI. Billion Codes branding and course illustrations are original vector designs.</p></div>
+  </div>;
 }

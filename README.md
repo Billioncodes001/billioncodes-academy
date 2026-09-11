@@ -14,7 +14,7 @@ A practical software-learning launch: original free introductions, four interact
 - About the founder, verified contact information and clear launch/privacy terms.
 - Four HTML exercises with specific structural feedback and sandboxed, non-executing previews.
 - Learning desk with drafts, resume, validated JSON backups, confirmed resets and optional public offline downloads. Private forms and admin responses are never cached.
-- Original Billion Codes branding, self-hosted fonts, illustrated covers, licensed stock photographs and the owner's portrait. See [asset credits](docs/BRAND.md).
+- Original Billion Codes branding, self-hosted fonts, illustrated covers, custom AI-generated learning scenes and the owner's real portrait. See [visual identity](docs/BRAND.md) and [image prompts and provenance](docs/GENERATED-IMAGERY.md).
 - Separate [Expo native app](mobile/README.md), sharing content and grading with the web app. Source and exports are tested; native store/device distribution is not yet released.
 
 Paid courses, payments, learner accounts, community features and mobile distribution are not active. Applications are expressions of interest, not confirmed bookings. Project enquiries are not accepted contracts.

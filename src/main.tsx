@@ -137,7 +137,7 @@ function Policies() {
 }
 
 function Footer() {
-  return <footer className="site-footer"><div className="wrap"><div className="footer-top"><a className="brand footer-brand" href="#/"><Brand /></a><p>Learn to code. Build real projects.<br />Get expert help.</p><a href="mailto:jhardeyemor@gmail.com" className="footer-email">Say hello <Arrow /></a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Billion Codes</span><nav aria-label="Footer navigation"><a href="#/about">About & contact</a><a href="#/policies">Privacy & launch terms</a><a href="#/courses">Free introductions</a><a href="#/workspace">Learning desk</a><a href="#/credits">Photo credits</a></nav><span>Built for the next line.</span></div></div></footer>;
+  return <footer className="site-footer"><div className="wrap"><div className="footer-top"><a className="brand footer-brand" href="#/"><Brand /></a><p>Learn to code. Build real projects.<br />Get expert help.</p><a href="mailto:jhardeyemor@gmail.com" className="footer-email">Say hello <Arrow /></a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Billion Codes</span><nav aria-label="Footer navigation"><a href="#/about">About & contact</a><a href="#/policies">Privacy & launch terms</a><a href="#/courses">Free introductions</a><a href="#/workspace">Learning desk</a><a href="#/credits">About the imagery</a></nav><span>Built for the next line.</span></div></div></footer>;
 }
 
 function App() {
@@ -146,7 +146,7 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const firstRoute = useRef(true);
   useEffect(() => {
-    const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms', '/practice': 'The practice lab', '/workspace': 'Your learning desk', '/credits': 'Photo credits' };
+    const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms', '/practice': 'The practice lab', '/workspace': 'Your learning desk', '/credits': 'About the imagery' };
     document.title = `Billion Codes | ${titles[route] ?? (route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
     window.scrollTo(0, 0);
     if (firstRoute.current) firstRoute.current = false; else mainRef.current?.focus({ preventScroll: true });

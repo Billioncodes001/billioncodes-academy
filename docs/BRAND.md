@@ -8,17 +8,17 @@ The custom B monogram combines a vertical structural spine with two code-chevron
 
 Codecademy's public homepage was consulted for human-focused presentation, visible learning choices and showing the learning experience. The composition, copy, logo, palette and assets here are independently designed. No testimonials, employer affiliations or learner numbers have been invented.
 
-## Photography
+## Photorealistic imagery
 
-The following free community photographs were verified on 11 September 2026 under the [Unsplash License](https://unsplash.com/license). They are illustrative stock, not photographs of Billion Codes students, employees or events. Attribution is displayed on the website's photo-credits page. Copyright permission is not a guarantee of all model or property releases; no endorsement is claimed.
+The three learning scenes were generated specifically for Billion Codes on 11 September 2026 using Codex's built-in image-generation tool. They replace the earlier stock images. The people and settings are fictional, not actual students, employees, events or testimonials. The website's imagery page discloses this distinction. Exact prompts and asset paths are recorded in [GENERATED-IMAGERY.md](GENERATED-IMAGERY.md).
 
-| File | Photographer and source | Use |
+| File in public/images | Source | Use |
 | --- | --- | --- |
-| hero-learner.webp | [Christina @ wocintechchat.com](https://unsplash.com/photos/woman-using-laptop-YPcnjFweo40) | Illustrative learner photograph |
-| learning-together.webp | [Christina @ wocintechchat.com](https://unsplash.com/photos/three-women-sitting-beside-wooden-table-c6wbSBaYxkY) | Illustrative collaboration photograph |
-| code-detail.webp | [Christopher Gower](https://unsplash.com/photos/a-macbook-with-lines-of-code-on-its-screen-on-a-busy-desk-m_HRfLhgABo) | Code/desk detail |
-| founder.webp | Owner-provided portrait already used in Josiah's portfolio | Founder identity, not stock |
+| hero-learner.webp | AI-generated | Fictional learner scene |
+| learning-together.webp | AI-generated | Fictional collaboration scene |
+| code-detail.webp | AI-generated | Fictional coding workspace |
+| founder.webp | Owner-provided portrait already used in Josiah's portfolio | Real founder identity, unchanged |
 
-The source JPEGs are kept in ignored `.asset-sources/`. `node scripts/prepare-brand.mjs /path/to/owner-portrait` optimizes downloaded files to WebP and exports PNG app icons. Images are served from the application itself, not runtime hotlinks. Photo framing is CSS object-fit; originals were not altered to fabricate people, logos or events.
+Generated source PNGs are kept in ignored `.asset-sources/` under the filenames documented with the prompts. `node scripts/prepare-brand.mjs` optimizes them to WebP and exports PNG app icons without modifying the founder portrait. Only pass an owner-portrait argument when intentionally replacing that real photograph. Images are self-hosted, not runtime hotlinks. Framing is CSS object-fit. The committed WebP files are sufficient for normal builds; generation is not part of CI.
 
 Native/mobile distribution uses the same monogram and palette. No trademark clearance or app-store approval is implied by these design assets.

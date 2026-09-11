@@ -94,6 +94,22 @@ test('homepage text preview treats markup as text', async ({ page }) => {
   await expect(page.locator('.first-win-output strong')).toHaveText('<img src=x onerror=alert(1)>');
   await expect(page.locator('.first-win-output img')).toHaveCount(0);
 });
+test('generated imagery is disclosed without attributing fictional scenes to stock photographers', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.photo-disclaimer')).toContainText('AI-generated imagery');
+  await page.getByRole('link', { name: 'About the visuals', exact: true }).click();
+  await expect(page).toHaveTitle(/About the imagery/);
+  await expect(page.getByRole('heading', { name: 'Imagined with purpose. Made for Billion Codes.' })).toBeVisible();
+  await expect(page.getByText('The people and settings are fictional', { exact: false })).toBeVisible();
+  await expect(page.getByText('The founder portrait is a real, owner-provided photograph', { exact: false })).toBeVisible();
+  await expect(page.locator('.credits-grid img')).toHaveCount(3);
+  for (const image of await page.locator('.credits-grid img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toHaveAttribute('alt', /^AI-generated/);
+    await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
+  await expect(page.locator('a[href*="unsplash.com"]')).toHaveCount(0);
+});
 test('small phones and intermediate tablet widths preserve layout and loaded imagery', async ({ page }) => {
   for (const width of [320, 768, 1024]) {
     await page.setViewportSize({ width, height: 900 });
