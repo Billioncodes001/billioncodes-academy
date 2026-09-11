@@ -26,6 +26,7 @@ The app uses its own dependency manifest and lockfile. `@billioncodes/learning` 
 - Branding: bundled Bricolage Grotesque, DM Sans and IBM Plex Mono fonts; navy/ivory surfaces and lime/coral accents. Only five font weights are bundled, with no runtime font-server requests.
 - The original Billion Codes B monogram is bundled as a native header Image; Expo's app icon uses the approved 512px export. Both PNGs are exact copies from the parent-owned `public/brand/` assets.
 - Public links: `https://learnatbillioncodes.com/#/training` and `/#/policies`, opened in the system browser. The native app never posts an enquiry or adds an Origin exemption.
+- The September 2026 account release changes that browser destination to the intake landing page and a Firebase-backed training dashboard. Learners sign in there before applying. Native Firebase sign-in and account-progress sync inside the mobile app are not implemented yet; local practice data remains device-only.
 
 ## Storage And Network
 

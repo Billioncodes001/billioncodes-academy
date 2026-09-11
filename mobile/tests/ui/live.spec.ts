@@ -12,7 +12,8 @@ test('@live native-style public GET and real browser training page need no submi
   const browser = await opened;
   await browser.waitForLoadState('domcontentloaded');
   await expect(browser).toHaveURL('https://learnatbillioncodes.com/#/training');
-  await expect(browser.locator('form')).toBeVisible();
+  await expect(browser.getByRole('link', { name: 'Open training dashboard', exact: true })).toBeVisible();
+  await expect(browser.locator('form')).toHaveCount(0);
 });
 
 test('@live cross-origin Expo web catalog read requires backend GET allowlist', async ({ page, request }) => {
@@ -39,7 +40,8 @@ test('@live cross-origin Expo web catalog read requires backend GET allowlist', 
   const browser = await opened;
   await browser.waitForLoadState('domcontentloaded');
   await expect(browser).toHaveURL('https://learnatbillioncodes.com/#/training');
-  await expect(browser.locator('form')).toBeVisible();
+  await expect(browser.getByRole('link', { name: 'Open training dashboard', exact: true })).toBeVisible();
+  await expect(browser.locator('form')).toHaveCount(0);
   expect(writes).toEqual([]);
   expect(errors).toEqual([]);
 });

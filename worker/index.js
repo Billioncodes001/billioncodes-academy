@@ -1,5 +1,5 @@
 import { catalog } from "./catalog.js";
-import { identityRoute, platformEnabled } from './identity.js';
+import { identityRoute, identityReady, platformEnabled } from './identity.js';
 import { platformRoute } from './platform.js';
 import { HttpError, UUID, readJSON, validateSubmission, validateStatus } from "./validation.js";
 import { authenticateAdmin, checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security.js";
@@ -49,6 +49,17 @@ async function api(request, env, url) {
         db.prepare("SELECT id FROM submission_audit LIMIT 0")
       ]);
       if (!configuredSecret(env.SECURITY_SALT)) throw new Error();
+      if (platformEnabled(env)) {
+        if (!identityReady(env)) throw new Error();
+        await db.batch([
+          db.prepare('SELECT id,disabled FROM learner_users LIMIT 0'),
+          db.prepare('SELECT user_id FROM learner_profiles LIMIT 0'),
+          db.prepare('SELECT id FROM learning_courses LIMIT 0'),
+          db.prepare('SELECT user_id FROM learning_enrolments LIMIT 0'),
+          db.prepare('SELECT id FROM training_cohorts LIMIT 0'),
+          db.prepare('SELECT id FROM training_applications LIMIT 0')
+        ]);
+      }
       return json({ ok: true, service: "billioncodes-academy", apiVersion: "v1", submissions: "ready", payments: "unconfigured" });
     } catch {
       return json({ ok: false, error: "Submission service is not ready.", service: "billioncodes-academy", apiVersion: "v1", submissions: "unavailable", payments: "unconfigured" }, 503);
