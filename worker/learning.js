@@ -92,9 +92,10 @@ export async function addLesson(db, id, input) {
   const lessonId = crypto.randomUUID();
   const inserted = await db.prepare(`INSERT INTO learning_lessons(id,course_id,title,kind,body_json,resource_id,position)
     SELECT ?,?,?,?,?,?,(SELECT COALESCE(MAX(position),-1)+1 FROM learning_lessons WHERE course_id=?)
-    WHERE EXISTS(SELECT 1 FROM learning_courses WHERE id=? AND status='draft') AND (SELECT count(*) FROM learning_lessons WHERE course_id=?)<100 RETURNING id`)
-    .bind(lessonId,id,title,input.kind,JSON.stringify(body),resource?.id || null,id,id,id).first();
-  if (!inserted) throw new HttpError(409,'This course changed or is no longer editable.');
+    WHERE EXISTS(SELECT 1 FROM learning_courses WHERE id=? AND status='draft') AND (SELECT count(*) FROM learning_lessons WHERE course_id=?)<100
+    AND (SELECT COALESCE(SUM(length(CAST(body_json AS BLOB))),0) FROM learning_lessons WHERE course_id=?) + ? <= 250000 RETURNING id`)
+    .bind(lessonId,id,title,input.kind,JSON.stringify(body),resource?.id || null,id,id,id,id,new TextEncoder().encode(JSON.stringify(body)).length).first();
+  if (!inserted) throw new HttpError(409,'This course changed, is no longer editable, or reached its 100-lesson/250 KB text budget.');
   await audit(db, 'course', id, 'lesson-added');
   return { course: await getCourse(db, id) };
 }

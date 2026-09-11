@@ -39,6 +39,7 @@ async function setup(t) {
 }
 test('Firebase registration verifies signed identity, consent, and rejects arbitrary roles',async t => {
   const h = await setup(t);
+  assert.equal((await h.fetch('/api/health')).status,200);
   assert.equal((await h.fetch('/api/v2/library')).status,401);
   assert.equal((await h.fetch('/api/v1/applications',post(application()))).status,401);
   assert.equal((await h.fetch('/api/auth/register',post({name:'Ada Learner',consent:false},undefined,h.headers))).status,400);
