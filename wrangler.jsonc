@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "billioncodes-academy",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "account_id": "40687c1a299192a1ba3add80961e429f",
+  "workers_dev": false,
+  "preview_urls": false,
+  "limits": { "cpu_ms": 50 },
+  "routes": [
+    { "pattern": "learnatbillioncodes.com", "custom_domain": true },
+    { "pattern": "www.learnatbillioncodes.com", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "billioncodes-academy-db",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://learnatbillioncodes.com,https://www.learnatbillioncodes.com",
+    "DAILY_SUBMISSION_CAP": "500",
+    "DAILY_ATTEMPT_CAP": "6000",
+    "IP_WINDOW_LIMIT": "30"
+  }
+  // Parent operator supplies real D1 ID, domains/routes and secrets ADMIN_TOKEN + SECURITY_SALT.
+  // No secrets belong in this file. Expired rate buckets are cleaned during submissions.
+}

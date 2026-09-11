@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "basePath": "/api/v1",
+  "launchScope": "Free text curriculum, training applications and project enquiries only. No booking, paid enrolment, payment, referral credit, uploads or learner accounts.",
+  "requestRules": {
+    "contentType": "application/json; optional charset=utf-8",
+    "maxBodyBytes": 16384,
+    "encoding": "Strict UTF-8; reject malformed encoding, unpaired surrogates and control characters except tab/newline/carriage return in multiline fields.",
+    "stringLengths": "Unicode code points after trimming surrounding whitespace; no Unicode normalization",
+    "unknownFields": "rejected",
+    "origin": "Required for public writes: https://learnatbillioncodes.com or https://www.learnatbillioncodes.com. Additional local origins only when explicitly configured by operator.",
+    "idempotency": "Required Idempotency-Key: RFC 4122/9562 UUID, version 1-8 and variant 8/9/a/b. Reuse for unchanged retry. Canonical validated payload and endpoint scope are compared; same key with different payload or endpoint returns 409. Accepted retries return original 201 and id.",
+    "consent": "Must be boolean true. Consent is to storing these details for reviewing and responding to this enquiry, not marketing.",
+    "website": "Optional honeypot string. Must be empty or whitespace; nonempty rejected with 422. Do not show to real users."
+  },
+  "definitions": {
+    "name": {"type": "string", "minLength": 2, "maxLength": 100, "multiline": false},
+    "email": {"type": "string", "minLength": 3, "maxLength": 254, "format": "practical ASCII email, local part <=64; no whitespace; domain must have a dot", "normalization": "domain lowercased, local part preserved"},
+    "phone": {"type": "string", "optional": true, "minLength": 7, "maxLength": 30, "pattern": "^[+0-9(). -]+$", "empty": "treated as omitted"},
+    "track": {"type": "string", "minLength": 2, "maxLength": 80, "multiline": false},
+    "format": {"enum": ["online", "physical", "undecided"]},
+    "experience": {"type": "string", "minLength": 2, "maxLength": 1000, "multiline": true},
+    "goals": {"type": "string", "minLength": 10, "maxLength": 2000, "multiline": true},
+    "category": {"enum": ["business-software", "mentorship", "code-review"]},
+    "summary": {"type": "string", "minLength": 10, "maxLength": 160, "multiline": false},
+    "details": {"type": "string", "minLength": 20, "maxLength": 5000, "multiline": true},
+    "targetDate": {"type": "string", "optional": true, "format": "real calendar date YYYY-MM-DD, years 2026-2100", "empty": "treated as omitted", "note": "Preference only; no deadline or availability commitment."},
+    "consent": {"const": true},
+    "website": {"type": "string", "optional": true, "maxLength": 200, "empty": "must be empty after trim"}
+  },
+  "endpoints": {
+    "GET /api/health": {"success": {"ok": true, "service": "billioncodes-academy", "apiVersion": "v1", "submissions": "ready", "payments": "unconfigured"}, "note": "503 if D1 schema or SECURITY_SALT missing; health does not expose private values."},
+    "GET /api/v1/catalog": {"success": {"courses": [{"id": "string", "title": "string", "level": "string", "format": "string", "summary": "string", "lessons": [{"id": "string", "title": "string", "body": ["string"]}]}], "training": {"status": "applications-open"}, "payments": {"enabled": false}}},
+    "POST /api/v1/applications": {"required": ["name", "email", "track", "format", "experience", "goals", "consent"], "optional": ["phone", "website"], "status": 201, "success": {"accepted": true, "id": "UUID"}},
+    "POST /api/v1/project-requests": {"required": ["name", "email", "category", "summary", "details", "consent"], "optional": ["phone", "targetDate", "website"], "status": 201, "success": {"accepted": true, "id": "UUID"}},
+    "GET /api/v1/admin/submissions": {"authorization": "Bearer ADMIN_TOKEN", "query": {"kind": "optional applications|project-requests", "status": "optional new|contacted|closed", "limit": "integer 1-50, default 20", "cursor": "opaque nextCursor from prior response"}, "success": {"items": [{"id": "UUID", "kind": "applications|project-requests", "status": "new|contacted|closed", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "version": 1, "data": {}}], "nextCursor": "string|null"}},
+    "PATCH /api/v1/admin/submissions/{id}": {"authorization": "Bearer ADMIN_TOKEN", "body": {"status": "new|contacted|closed", "version": "positive integer current row version"}, "success": {"updated": true, "id": "UUID", "status": "new|contacted|closed", "version": 2}, "note": "409 on stale version. Same status is a no-op. Status changes are atomically audited; no deletion endpoint."},
+    "GET /api/v1/admin/submissions/{id}/audit": {"authorization": "Bearer ADMIN_TOKEN", "success": {"items": [{"id": "integer", "previousStatus": "string", "status": "string", "changedAt": "UTC ISO timestamp", "actor": "admin", "version": "integer"}]}, "note": "Last 100 changes; no body, token or IP in audit."},
+    "/api/v1/payments/*, /api/v1/checkout, /api/v1/enrolments, /api/v1/referrals/*": {"status": 503, "error": "Payments, paid enrolments and referral credits are not configured."}
+  },
+  "errors": {"shape": {"error": "string", "fields": "optional object mapping field names to messages"}, "statuses": {"400": "Malformed request", "401": "Administrator authentication required", "403": "Origin or browser request rejected", "404": "Not found", "405": "Method not allowed", "409": "Idempotency or review version conflict", "413": "Body too large", "415": "Unsupported content type or encoding", "422": "Validation failed", "429": "Rate or daily capacity limit; inspect Retry-After", "503": "Required service or secrets not configured/unavailable"}},
+  "privacy": {"publicReads": "Only catalog and health; no public submission lookup", "stored": "Validated enquiry, consent version/time, payload digest, UUID idempotency key, status and audit. IP is never stored raw; rotating daily HMAC identifiers in expiring rate buckets only.", "adminToken": "Header only, browser memory only. Never URL/cookie/localStorage/sessionStorage."},
+  "clientNotes": ["An accepted submission is an enquiry, not a confirmed place, contract, reply promise or payment.", "Do not execute or render lesson/submission strings as HTML.", "Do not embed an administrator token in any public client.", "Native application implementation, user identity and progress sync are deferred; v1 catalog is reusable now."]
+}

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="billioncodes-operations-console" content="private-review-v1">
+  <title>Private operations | Billion Codes</title>
+  <style nonce="__CSP_NONCE__">
+    :root { color-scheme: light; --ink:#142e2a; --paper:#f5f3eb; --line:#bfc9bf; --accent:#155d4a; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:linear-gradient(130deg,#f5f3eb,#e9f0e5); font:16px/1.55 Georgia,"Times New Roman",serif; }
+    main { max-width:1000px; margin:auto; padding:40px 22px 80px; }
+    header { border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:28px; }
+    .eyebrow { font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.16em; }
+    h1 { font-size:clamp(30px,5vw,48px); line-height:1.1; margin:12px 0; }
+    h2 { margin:0 0 12px; font-size:25px; }
+    h3 { font-size:19px; }
+    p { margin:10px 0; }
+    .panel, article { background:#fffef9; padding:24px; border:1px solid var(--line); margin:20px 0; }
+    label { display:block; font-weight:bold; }
+    input, select, button { font:inherit; border:1px solid var(--line); border-radius:3px; padding:10px 12px; }
+    input, select { max-width:100%; background:#fff; color:var(--ink); }
+    input { width:100%; margin:6px 0 16px; }
+    button { cursor:pointer; background:var(--accent); color:#fff; border-color:var(--accent); }
+    button.secondary { background:transparent; color:var(--ink); }
+    button:disabled { opacity:.5; cursor:wait; }
+    :focus-visible { outline:3px solid #c06825; outline-offset:3px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+    .row label { flex:1; min-width:130px; }
+    .row select { width:100%; display:block; margin-top:6px; }
+    .notice { min-height:1.7em; font-weight:bold; }
+    .muted { font-size:14px; color:#52605a; }
+    dt { font-weight:bold; margin-top:14px; }
+    dd { margin:2px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+    code { font:12px/1.5 monospace; overflow-wrap:anywhere; }
+    details { border-top:1px solid var(--line); padding-top:14px; margin-top:16px; }
+    [hidden] { display:none!important; }
+    @media(max-width:550px) { main { padding:24px 14px 50px; } .panel,article { padding:18px; } .row button { width:100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Billion Codes / Private operations</div>
+    <h1>Review the next step.</h1>
+    <p>Training applications and project enquiries. Access is limited to authorised operators.</p>
+  </header>
+  <section id="login-panel" class="panel" aria-labelledby="access-heading">
+    <h2 id="access-heading">Operator access</h2>
+    <p>The access token stays in this page's memory only. It is cleared when you lock, leave, reload, or after 15 minutes without interaction. Do not use a shared computer.</p>
+    <form id="login-form">
+      <label for="token">Private access token</label>
+      <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" required>
+      <button id="unlock" type="submit">Unlock review</button>
+    </form>
+  </section>
+  <p id="message" class="notice" role="status" aria-live="polite"></p>
+  <section id="review-panel" hidden aria-labelledby="review-heading">
+    <div class="row"><h2 id="review-heading">Submission inbox</h2><button class="secondary" id="lock" type="button">Lock and clear</button></div>
+    <p class="muted">These are enquiries, not confirmed bookings or contracts. Do not copy personal details into public channels. Mark contacted only after actual contact. Closing does not delete a record.</p>
+    <form id="filters" class="row">
+      <label>Type<select id="kind"><option value="">All enquiries</option><option value="applications">Training applications</option><option value="project-requests">Project requests</option></select></label>
+      <label>Status<select id="status"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="closed">Closed</option></select></label>
+      <button id="refresh" type="submit">Refresh</button>
+    </form>
+    <div id="records"></div>
+    <button id="more" class="secondary" type="button" hidden>Load more</button>
+  </section>
+</main>
+<script nonce="__CSP_NONCE__">
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  let token = "";
+  let cursor = null;
+  let idleTimer;
+  let generation = 0;
+  let listLoading = false;
+  const requests = new Set();
+  const labels = { name:"Name", email:"Email", phone:"Phone", track:"Learning interest", format:"Preferred format", experience:"Experience", goals:"Goals", category:"Project category", summary:"Summary", details:"Details", targetDate:"Preferred target date", consent:"Consent to review and respond" };
+  const say = message => { $("message").textContent = message; };
+  function lock(message = "Console locked. Private data cleared from this page.") {
+    generation++;
+    token = "";
+    cursor = null;
+    clearTimeout(idleTimer);
+    for (const controller of requests) controller.abort();
+    requests.clear();
+    $("token").value = "";
+    $("records").replaceChildren();
+    $("review-panel").hidden = true;
+    $("login-panel").hidden = false;
+    $("more").hidden = true;
+    say(message);
+  }
+  function touch() {
+    clearTimeout(idleTimer);
+    if (token) idleTimer = setTimeout(() => lock("Session locked after 15 minutes without interaction."), 15 * 60 * 1000);
+  }
+  async function api(path, options = {}) {
+    if (!token) throw new Error("Unlock the console first.");
+    const current = generation;
+    const controller = new AbortController();
+    requests.add(controller);
+    try {
+      const response = await fetch(path, { ...options, cache:"no-store", credentials:"omit", redirect:"error", signal:controller.signal, headers:{ "Authorization":"Bearer " + token, ...(options.body ? { "Content-Type":"application/json" } : {}) } });
+      const data = await response.json();
+      if (current !== generation) throw new DOMException("Console locked", "AbortError");
+      if (response.status === 401 || response.status === 403) { lock("Access was rejected. Check your token and approved website origin."); throw new Error("Access rejected."); }
+      if (!response.ok) throw new Error(data.error || "Request failed. Try again.");
+      return data;
+    } finally { requests.delete(controller); }
+  }
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = String(text);
+    if (className) node.className = className;
+    return node;
+  }
+  function render(item) {
+    const article = element("article");
+    article.append(element("h3", item.data.name + " / " + (item.kind === "applications" ? "Training" : "Project")));
+    article.append(element("code", item.id));
+    const meta = element("p", "Received " + new Date(item.createdAt).toLocaleString() + " | Status: " + item.status + " | Revision " + item.version, "muted");
+    article.append(meta);
+    const details = element("dl");
+    for (const [key, value] of Object.entries(item.data)) {
+      details.append(element("dt", labels[key] || key), element("dd", value === true ? "Yes" : value));
+    }
+    article.append(details);
+    const row = element("div", undefined, "row");
+    const label = element("label", "Review status");
+    const select = element("select");
+    for (const value of ["new", "contacted", "closed"]) {
+      const option = element("option", value);
+      option.value = value;
+      select.append(option);
+    }
+    select.value = item.status;
+    label.append(select);
+    const save = element("button", "Save status");
+    save.type = "button";
+    const feedback = element("p", "", "notice");
+    feedback.setAttribute("role", "status");
+    save.addEventListener("click", async () => {
+      save.disabled = true;
+      select.disabled = true;
+      try {
+        const data = await api("/api/v1/admin/submissions/" + encodeURIComponent(item.id), { method:"PATCH", body:JSON.stringify({ status:select.value, version:item.version }) });
+        item.status = data.status;
+        item.version = data.version;
+        meta.textContent = "Received " + new Date(item.createdAt).toLocaleString() + " | Status: " + item.status + " | Revision " + item.version;
+        feedback.textContent = "Status saved. Refresh the inbox to reapply filters.";
+      } catch (error) { if (error.name !== "AbortError") feedback.textContent = error.message; }
+      finally { save.disabled = false; select.disabled = false; }
+    });
+    row.append(label, save);
+    article.append(row, feedback);
+    const auditBox = element("details");
+    auditBox.append(element("summary", "Status audit"));
+    const auditButton = element("button", "Load status history", "secondary");
+    auditButton.type = "button";
+    const auditItems = element("div");
+    auditButton.addEventListener("click", async () => {
+      auditButton.disabled = true;
+      try {
+        const data = await api("/api/v1/admin/submissions/" + encodeURIComponent(item.id) + "/audit");
+        auditItems.replaceChildren();
+        if (!data.items.length) auditItems.append(element("p", "No status changes yet."));
+        for (const entry of data.items) auditItems.append(element("p", new Date(entry.changedAt).toLocaleString() + ": " + entry.previousStatus + " to " + entry.status + " by " + entry.actor + " (revision " + entry.version + ")"));
+      } catch (error) { if (error.name !== "AbortError") auditItems.textContent = error.message; }
+      finally { auditButton.disabled = false; }
+    });
+    auditBox.append(auditButton, auditItems);
+    article.append(auditBox);
+    return article;
+  }
+  async function load(append = false) {
+    if (listLoading) return;
+    listLoading = true;
+    $("refresh").disabled = true;
+    $("more").disabled = true;
+    const params = new URLSearchParams({ limit:"20" });
+    if ($("kind").value) params.set("kind", $("kind").value);
+    if ($("status").value) params.set("status", $("status").value);
+    if (append && cursor) params.set("cursor", cursor);
+    try {
+      const data = await api("/api/v1/admin/submissions?" + params);
+      if (!append) $("records").replaceChildren();
+      for (const item of data.items) $("records").append(render(item));
+      cursor = data.nextCursor;
+      $("more").hidden = !cursor;
+      $("review-panel").hidden = false;
+      $("login-panel").hidden = true;
+      say(data.items.length ? "Loaded " + data.items.length + " private enquiries." : "No enquiries match these filters.");
+    } finally { listLoading = false; $("refresh").disabled = false; $("more").disabled = false; }
+  }
+  $("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    token = $("token").value.trim();
+    $("token").value = "";
+    $("unlock").disabled = true;
+    touch();
+    try { await load(); }
+    catch (error) { if (error.name !== "AbortError") lock(error.message); }
+    finally { $("unlock").disabled = false; }
+  });
+  $("filters").addEventListener("submit", event => { event.preventDefault(); load().catch(error => { if (error.name !== "AbortError") say(error.message); }); });
+  $("more").addEventListener("click", () => load(true).catch(error => { if (error.name !== "AbortError") say(error.message); }));
+  $("lock").addEventListener("click", () => lock());
+  window.addEventListener("pagehide", () => lock());
+  document.addEventListener("pointerdown", touch, { passive:true });
+  document.addEventListener("keydown", touch);
+})();
+</script>
+</body>
+</html>
