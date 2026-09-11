@@ -7,7 +7,14 @@ export function identifier(value) {
   if (typeof value !== 'string' || value.length > 80 || !SLUG.test(value)) throw new HttpError(400, 'Invalid identifier.');
   return value;
 }
-const builtin = catalog.courses.map(course => ({ ...course, status: 'published', priceMinor: 0, currency: 'NGN', version: 1, builtin: true, lessons: course.lessons.map(lesson => ({ ...lesson, kind: 'text', resourceId: null })) }));
+const builtin = catalog.courses.map(course => ({
+  ...course,
+  summary: course.id === 'web-foundations-intro'
+    ? 'A short, self-paced introduction to how websites work, your first accessible page, and a small JavaScript exercise. No payment or prior coding experience required. Sign in to save your progress.'
+    : course.summary,
+  status: 'published', priceMinor: 0, currency: 'NGN', version: 1, builtin: true,
+  lessons: course.lessons.map(lesson => ({ ...lesson, kind: 'text', resourceId: null })),
+}));
 const rowCourse = row => ({ id: row.id, title: row.title, summary: row.summary, level: row.level, status: row.status, priceMinor: row.price_minor, currency: row.currency, version: row.version, builtin: false });
 export async function getCourse(db, id) {
   const base = builtin.find(course => course.id === id);

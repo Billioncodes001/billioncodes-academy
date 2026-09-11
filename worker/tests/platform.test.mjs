@@ -74,6 +74,7 @@ test('free library and progress are isolated by verified uid, not supplied email
   const courseId = 'web-foundations-intro';
   const before = await (await h.fetch(`/api/v2/courses/${courseId}`)).json();
   assert.equal(before.enrolled,false); assert.equal(before.course.lessons[0].body,undefined);
+  assert.match(before.course.summary,/Sign in to save your progress/);
   for (let i=0;i<2;i++) assert.equal((await h.fetch(`/api/v2/courses/${courseId}/enrol`,post({},undefined,ada))).status,200);
   const lesson = before.course.lessons[0].id;
   const progress = {...post({completed:true},undefined,ada),method:'PUT'};
