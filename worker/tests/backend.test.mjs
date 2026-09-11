@@ -1,14 +1,15 @@
-import { test, before, beforeEach, after } from "node:test";
+import { test, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createHarness, migrate, application, project, post, admin, ORIGIN } from "./harness.mjs";
 import worker from "../index.js";
 import { readJSON } from "../validation.js";
+import { limitPublicAttempt } from "../storage.js";
 
 let app;
-before(async () => { app = await createHarness({ DAILY_SUBMISSION_CAP:"4", DAILY_ATTEMPT_CAP:"20", IP_WINDOW_LIMIT:"8" }); });
 beforeEach(async () => {
-  await app.db.batch([app.db.prepare("DELETE FROM submission_audit"), app.db.prepare("DELETE FROM submissions"), app.db.prepare("DELETE FROM rate_buckets")]);
+  if (app) await app.close();
+  app = await createHarness({ DAILY_SUBMISSION_CAP:"4", DAILY_ATTEMPT_CAP:"20", IP_WINDOW_LIMIT:"8" });
 });
 after(async () => { if (app) await app.close(); });
 
@@ -120,6 +121,121 @@ test("daily attempt cap bounds creation of hashed-IP rate records", async () => 
   assert.equal(response.status, 429);
   assert.match((await response.json()).error, /Today's request limit/);
   assert.equal((await app.db.prepare("SELECT count(*) AS n FROM rate_buckets WHERE bucket_key LIKE 'ip:%'").first()).n, 20);
+});
+
+test("blocked IP cannot drain shared capacity, including concurrent denied attempts", async () => {
+  const local = await createHarness({ DAILY_ATTEMPT_CAP:"5", IP_WINDOW_LIMIT:"1" });
+  try {
+    assert.equal((await local.fetch("/api/v1/applications", post(application()))).status, 201);
+    const responses = await Promise.all(Array.from({ length:8 }, () => local.fetch("/api/v1/applications", post(application()))));
+    assert.ok(responses.every(response => response.status === 429));
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 1);
+    const fresh = await local.fetch("/api/v1/applications", post(application(), undefined, { "CF-Connecting-IP":"192.0.2.20" }));
+    assert.equal(fresh.status, 201);
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 2);
+  } finally { await local.close(); }
+});
+
+test("successful replays are throttled without duplicating or charging submission capacity", async () => {
+  const local = await createHarness({ DAILY_SUBMISSION_CAP:"1", DAILY_ATTEMPT_CAP:"10", IP_WINDOW_LIMIT:"3" });
+  try {
+    const key = crypto.randomUUID();
+    const original = await (await local.fetch("/api/v1/applications", post(application(), key))).json();
+    for (let i = 0; i < 2; i++) {
+      const response = await local.fetch("/api/v1/applications", post(application(), key));
+      assert.equal(response.status, 201);
+      assert.deepEqual(await response.json(), original);
+    }
+    const denied = await local.fetch("/api/v1/applications", post(application(), key));
+    assert.equal(denied.status, 429);
+    assert.ok(Number(denied.headers.get("retry-after")) > 0);
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 3);
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'accepted:%'").first()).count, 1);
+    assert.equal((await local.db.prepare("SELECT count(*) AS n FROM submissions").first()).n, 1);
+    // A permitted caller still receives the original result after this IP is throttled.
+    const retry = await local.fetch("/api/v1/applications", post(application(), key, { "CF-Connecting-IP":"192.0.2.20" }));
+    assert.equal(retry.status, 201);
+    assert.deepEqual(await retry.json(), original);
+  } finally { await local.close(); }
+});
+
+test("atomic ingress cap remains bounded under concurrent new IPs and UTC rollover", async () => {
+  const env = { SECURITY_SALT:"test-only-limiter-salt-123456789012345", DAILY_ATTEMPT_CAP:"3", IP_WINDOW_LIMIT:"2" };
+  const now = 1789149900;
+  const calls = Array.from({ length:8 }, (_, i) => limitPublicAttempt(new Request(ORIGIN, { headers:{ "CF-Connecting-IP":`192.0.2.${i+1}` } }), env, app.db, now));
+  const outcomes = await Promise.allSettled(calls);
+  assert.equal(outcomes.filter(outcome => outcome.status === "fulfilled").length, 3);
+  assert.equal((await app.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 3);
+  assert.equal((await app.db.prepare("SELECT count(*) AS n FROM rate_buckets WHERE bucket_key LIKE 'ip:%'").first()).n, 3);
+  await limitPublicAttempt(new Request(ORIGIN, { headers:{ "CF-Connecting-IP":"192.0.2.100" } }), env, app.db, now + 86400);
+  assert.equal((await app.db.prepare("SELECT count(*) AS n FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).n, 2);
+});
+
+test("denied ingress performs no idempotency lookup", async () => {
+  let lookupCount = 0;
+  const db = {
+    prepare(sql) {
+      if (sql.includes("FROM submissions")) lookupCount++;
+      return { bind() { return {}; } };
+    },
+    async batch() { return [{results:[]}, {results:[]}, {results:[]}, {results:[{count:0}]}]; }
+  };
+  const response = await worker.fetch(new Request(ORIGIN + "/api/v1/applications", post(application())), { DB:db, SECURITY_SALT:"test-only-limiter-salt-123456789012345" });
+  assert.equal(response.status, 429);
+  assert.equal(lookupCount, 0);
+});
+
+test("warm repeated denial skips D1 and short cache expiry rechecks authoritative counters", async () => {
+  let batches = 0;
+  const db = {
+    prepare() { return { bind() { return {}; } }; },
+    async batch() { batches++; return [{results:[]}, {results:[]}, {results:[]}, {results:[{count:0}]}]; }
+  };
+  const env = { SECURITY_SALT:"negative-cache-test-salt-123456789012345" };
+  const request = new Request(ORIGIN, { headers:{ "CF-Connecting-IP":"192.0.2.50" } });
+  const now = 1789149900;
+  await assert.rejects(() => limitPublicAttempt(request, env, db, now), error => error.status === 429);
+  await assert.rejects(() => limitPublicAttempt(request, env, db, now + 1), error => error.status === 429);
+  assert.equal(batches, 1);
+  await assert.rejects(() => limitPublicAttempt(request, env, db, now + 6), error => error.status === 429);
+  assert.equal(batches, 2);
+});
+
+test("IP admission resumes at the next window without resetting the daily counter", async () => {
+  const env = { SECURITY_SALT:"window-reset-test-salt-123456789012345", DAILY_ATTEMPT_CAP:"5", IP_WINDOW_LIMIT:"1" };
+  const request = new Request(ORIGIN, { headers:{ "CF-Connecting-IP":"192.0.2.60" } });
+  const now = 1789149900;
+  await limitPublicAttempt(request, env, app.db, now);
+  await assert.rejects(() => limitPublicAttempt(request, env, app.db, now + 1), error => error.status === 429);
+  await limitPublicAttempt(request, env, app.db, now + 600);
+  assert.equal((await app.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 2);
+});
+
+test("concurrent successful replay flood cannot overshoot the IP or daily request counters", async () => {
+  const local = await createHarness({ DAILY_SUBMISSION_CAP:"1", DAILY_ATTEMPT_CAP:"10", IP_WINDOW_LIMIT:"3" });
+  try {
+    const key = crypto.randomUUID();
+    const original = await (await local.fetch("/api/v1/applications", post(application(), key))).json();
+    const responses = await Promise.all(Array.from({length:10}, () => local.fetch("/api/v1/applications", post(application(), key))));
+    assert.equal(responses.filter(response => response.status === 201).length, 2);
+    assert.equal(responses.filter(response => response.status === 429).length, 8);
+    for (const response of responses.filter(response => response.status === 201)) assert.deepEqual(await response.json(), original);
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'attempts:%'").first()).count, 3);
+    assert.equal((await local.db.prepare("SELECT count FROM rate_buckets WHERE bucket_key LIKE 'accepted:%'").first()).count, 1);
+  } finally { await local.close(); }
+});
+
+test("denial cache evicts old identifiers instead of growing beyond its bound", async () => {
+  let batches = 0;
+  const db = { prepare() { return { bind() { return {}; } }; }, async batch() { batches++; return [{results:[]},{results:[]},{results:[]},{results:[{count:0}]}]; } };
+  const env = { SECURITY_SALT:"bounded-cache-test-salt-123456789012345" };
+  const check = i => limitPublicAttempt(new Request(ORIGIN, { headers:{"CF-Connecting-IP":`2001:db8::${i.toString(16)}`} }), env, db, 1789149900);
+  for (let i = 0; i < 1025; i++) await assert.rejects(() => check(i), error => error.status === 429);
+  assert.equal(batches, 1025);
+  await assert.rejects(() => check(1024), error => error.status === 429);
+  assert.equal(batches, 1025);
+  await assert.rejects(() => check(0), error => error.status === 429);
+  assert.equal(batches, 1026);
 });
 
 test("origin, CSRF and CORS are fail-closed", async () => {

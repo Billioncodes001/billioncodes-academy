@@ -21,7 +21,7 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "billioncodes-academy-db",
-    "database_id": "00000000-0000-0000-0000-000000000000",
+    "database_id": "d1b6aede-e9f0-43c6-b3d4-0e51763aabc9",
     "migrations_dir": "migrations"
   }],
   "vars": {
@@ -30,6 +30,5 @@
     "DAILY_ATTEMPT_CAP": "6000",
     "IP_WINDOW_LIMIT": "30"
   }
-  // Parent operator supplies real D1 ID, domains/routes and secrets ADMIN_TOKEN + SECURITY_SALT.
-  // No secrets belong in this file. Expired rate buckets are cleaned during submissions.
+  // ADMIN_TOKEN and SECURITY_SALT are Cloudflare secrets, never source-controlled vars.
 }

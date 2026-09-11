@@ -62,12 +62,13 @@ async function api(request, env, url) {
     const input = validateSubmission(await readJSON(request), kind);
     if (!configuredSecret(env.SECURITY_SALT)) throw new HttpError(503, "Submissions are temporarily unavailable.");
     const db = database(env);
+    const now = new Date();
+    // Retries share the ingress rate budget, but never consume another submission slot.
+    await limitPublicAttempt(request, env, db, Math.floor(now.getTime() / 1000));
     const payloadHash = await sha256(`${kind}:${JSON.stringify(input)}`);
     const normalizedKey = key.toLowerCase();
     const previous = await getExisting(db, normalizedKey, kind, payloadHash);
     if (previous) return json({ accepted: true, id: previous }, 201);
-    const now = new Date();
-    await limitPublicAttempt(request, env, db, Math.floor(now.getTime() / 1000));
     const id = await createSubmission(db, env, kind, input, normalizedKey, payloadHash, now);
     return json({ accepted: true, id }, 201);
   }

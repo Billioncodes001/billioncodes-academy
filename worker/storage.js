@@ -3,6 +3,14 @@ import { configuredSecret, hmacHex } from "./security.js";
 
 const DAY = 86_400;
 const WINDOW = 600;
+const deniedRequests = new Map();
+const DENIAL_CACHE_LIMIT = 1024;
+
+function denyRequest(key, message, resetAt, nowSeconds) {
+  if (deniedRequests.size >= DENIAL_CACHE_LIMIT) deniedRequests.delete(deniedRequests.keys().next().value);
+  deniedRequests.set(key, { expiresAt:Math.min(nowSeconds + 5, resetAt), resetAt, message });
+  throw new HttpError(429, message, undefined, { "Retry-After":String(resetAt - nowSeconds) });
+}
 export const CONSENT_VERSION = "enquiry-review-v1-2026-09-11";
 
 export function database(env) {
@@ -24,25 +32,44 @@ export async function getExisting(db, idempotencyKey, kind, payloadHash) {
   return existing.id;
 }
 
-async function takeBucket(db, key, limit, expiresAt) {
-  return db.prepare(`INSERT INTO rate_buckets(bucket_key, count, expires_at) VALUES (?, 1, ?)
-    ON CONFLICT(bucket_key) DO UPDATE SET count = count + 1 WHERE count < ? RETURNING count`)
-    .bind(key, expiresAt, limit).first();
-}
-
 export async function limitPublicAttempt(request, env, db, nowSeconds) {
   if (!configuredSecret(env.SECURITY_SALT)) throw new HttpError(503, "Submissions are temporarily unavailable.");
   const day = Math.floor(nowSeconds / DAY);
   const nextDay = (day + 1) * DAY;
-  const global = await takeBucket(db, `attempts:${day}`, setting(env, "DAILY_ATTEMPT_CAP", 6000, 100_000), nextDay + DAY);
-  if (!global) throw new HttpError(429, "Today's request limit has been reached. Please try again tomorrow.", undefined, { "Retry-After": String(nextDay - nowSeconds) });
   // CF-Connecting-IP is set by the edge. Never trust X-Forwarded-For and never persist raw IP.
   const ip = request.headers.get("cf-connecting-ip") || "unavailable-shared";
   const digest = await hmacHex(env.SECURITY_SALT, `public-enquiry:${day}:${ip}`);
   const bucket = Math.floor(nowSeconds / WINDOW);
   const until = (bucket + 1) * WINDOW;
-  const accepted = await takeBucket(db, `ip:${digest}:${bucket}`, setting(env, "IP_WINDOW_LIMIT", 30, 1000), until + 3600);
-  if (!accepted) throw new HttpError(429, "Too many requests. Please wait and try again.", undefined, { "Retry-After": String(until - nowSeconds) });
+  const globalKey = `attempts:${day}`;
+  const ipKey = `ip:${digest}:${bucket}`;
+  const dailyLimit = setting(env, "DAILY_ATTEMPT_CAP", 6000, 100_000);
+  const ipLimit = setting(env, "IP_WINDOW_LIMIT", 30, 1000);
+  // Best-effort negative cache reduces repeated D1 work; never caches an admission.
+  const cacheKey = `${ipKey}:${dailyLimit}:${ipLimit}`;
+  const denied = deniedRequests.get(cacheKey);
+  if (denied && denied.expiresAt > nowSeconds) {
+    throw new HttpError(429, denied.message, undefined, { "Retry-After":String(denied.resetAt - nowSeconds) });
+  }
+  if (denied) deniedRequests.delete(cacheKey);
+  // One transaction admits both counters or neither. No new IP rows after the daily cap.
+  // changes() refers to the immediately preceding IP upsert on this batch's connection.
+  const results = await db.batch([
+    db.prepare("INSERT INTO rate_buckets(bucket_key, count, expires_at) VALUES (?, 0, ?) ON CONFLICT(bucket_key) DO NOTHING")
+      .bind(globalKey, nextDay + DAY),
+    db.prepare(`INSERT INTO rate_buckets(bucket_key, count, expires_at)
+      SELECT ?, 1, ? WHERE (SELECT count FROM rate_buckets WHERE bucket_key = ?) < ?
+      ON CONFLICT(bucket_key) DO UPDATE SET count = count + 1 WHERE count < ? RETURNING count`)
+      .bind(ipKey, until + 3600, globalKey, dailyLimit, ipLimit),
+    db.prepare("UPDATE rate_buckets SET count = count + 1 WHERE bucket_key = ? AND changes() = 1")
+      .bind(globalKey),
+    db.prepare("SELECT count FROM rate_buckets WHERE bucket_key = ?").bind(globalKey)
+  ]);
+  if (results[1].results.length) return;
+  if (results[3].results[0].count >= dailyLimit) {
+    denyRequest(cacheKey, "Today's request limit has been reached. Please try again tomorrow.", nextDay, nowSeconds);
+  }
+  denyRequest(cacheKey, "Too many requests. Please wait and try again.", until, nowSeconds);
 }
 
 export async function createSubmission(db, env, kind, data, idempotencyKey, payloadHash, now) {

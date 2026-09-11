@@ -107,11 +107,11 @@ Each actual status change increments the version and writes an audit row using a
 ## Abuse controls and Free-plan limits
 
 - Default 500 accepted submissions per UTC day, combined across both public write routes. A D1 batch transaction atomically gates insert, unique idempotency key and accepted counter; races cannot overshoot the cap.
-- Default 6,000 new valid-payload attempts per UTC day. Default 30 per HMAC IP identifier per 10-minute fixed window. Denied attempts count against the daily request budget. Valid successful replays bypass these submission counters so network retries remain safe.
+- Default 6,000 admitted valid-payload requests per UTC day, including retries. Default 30 per HMAC IP identifier per 10-minute fixed window. Blocked IPs do not consume shared daily capacity. Admitted successful replays return the original receipt without consuming another submission slot; throttled requests return 429 with Retry-After. A bounded five-second denial cache reduces repeated database work.
 - `CF-Connecting-IP` is supplied by the Cloudflare edge; `X-Forwarded-For` is ignored. No raw IP goes into D1. An HMAC-SHA-256 with `SECURITY_SALT`, day and IP produces the rate identifier. If no IP is present locally, requests share one anonymous bucket. Local IP-injection tests do not mean production callers can choose their trusted edge IP.
 - IP buckets expire one hour after the end of the 10-minute window. Daily counters expire after the following UTC day. Expiry is logical; physical removal occurs opportunistically during new submission transactions, at most 1,000 expired rows per transaction. Quiet periods can retain expired buckets until another write or manual cleanup. No cron or automatic background retention task exists.
 - Daily setting variables have hard upper bounds; invalid settings fall back to defaults rather than disabling protection. Shared campus/network IPs can hit a limit; the UI should preserve the form and display retry guidance.
-- This is not DDoS protection. Invalid requests, catalogue reads, idempotent replays, health checks and rejected admin attempts do not have an application-wide edge request cap. Parent should use available Cloudflare edge controls and watch free quotas without enabling paid features. Never claim the application counters cap all Worker invocations or Cloudflare billing.
+- This is not DDoS protection. Invalid requests, catalogue reads, health checks and rejected admin attempts do not have an application-wide edge request cap. Monitor Cloudflare usage and errors. The owner selected Workers Paid ($5/month plus usage); a 50 ms Worker CPU cap is configured. Application counters do not cap all Worker invocations or Cloudflare billing.
 - All request input and returned lists are bounded. Hashing is small and uses native Web Crypto. D1 waits do not require busy loops. Local integration timings are wall-clock timings, not Cloudflare CPU measurements; the Free plan's per-request CPU limit still requires a deployed smoke check. Worker-first static routing trades extra invocations for consistent API/admin handling; it is not a guarantee that every traffic pattern fits Free quotas.
 
 ## Privacy, retention and recovery
@@ -138,7 +138,7 @@ Keep production exports and credentials outside the public/static tree and restr
 
 ## Verification and launch gates
 
-Local verification completed 2026-09-11: **30/30 backend tests passed**, the standalone Miniflare health smoke returned 200, and the real-Chrome admin workflow test passed. These are local results, not a production deployment sign-off.
+Local verification completed 2026-09-11: **38/38 backend tests passed**, the standalone Miniflare health smoke returned 200, and the real-Chrome admin workflow test passed. Public HTTPS checks also verified persistence, access control and replay handling on the initial production deployment. Re-run those checks after each release.
 
 The integration suite covers real D1 durability, idempotency races, changed-payload conflict, atomic daily quota races, IP and daily attempt limits, strict input/UTF-8 checks, enum/date/consent/honeypot checks, origin/CORS/CSRF, private access, concurrent review edits, audit trigger, pagination, security headers, nonce admin shell, explicit unconfigured payments, expired-bucket cleanup and non-destructive migration reapplication. Production secrets are never needed for these tests.
 
