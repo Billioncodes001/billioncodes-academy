@@ -19,6 +19,11 @@ import { intro } from './intro';
 import { EnquiryForm } from './EnquiryForm';
 import { HomePage } from './HomePage';
 import { Brand } from './Brand';
+import { AccountProvider, AccountPage, AccountNav, useAccount } from './Account';
+import { CourseLibrary, CoursePage, MyLearning } from './LearningPortal';
+import { TrainingLanding, TrainingDashboard, ApplyPage } from './TrainingPortal';
+import { OpenResources } from './OpenResources';
+import { PlatformPolicies } from './PlatformPolicies';
 import '@fontsource/bricolage-grotesque/latin-500.css';
 import '@fontsource/bricolage-grotesque/latin-600.css';
 import '@fontsource/bricolage-grotesque/latin-700.css';
@@ -47,12 +52,13 @@ function Header({ route }: { route: string }) {
   }, [open]);
   return <>
     <a className="skip-link" href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a>
-    <div className="launch-strip"><div className="wrap"><span>BUILD SOMETHING THAT MATTERS.</span><a href="#/workspace">Your learning desk <Arrow /></a></div></div>
+    <div className="launch-strip" role="region" aria-label="Learning desk shortcut"><div className="wrap"><span>BUILD SOMETHING THAT MATTERS.</span><a href="#/workspace">Your learning desk <Arrow /></a></div></div>
     <header className="site-header wrap">
       <a className="brand" href="#/" aria-label="Billion Codes home"><Brand /></a>
       <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? 'Close' : 'Menu'}<span aria-hidden="true">{open ? '−' : '+'}</span></button>
       <nav id="main-nav" className={open ? 'main-nav open' : 'main-nav'} aria-label="Main navigation">
         {links.map(([path, label]) => <a key={path} href={`#${path}`} aria-current={route === path ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
+        <AccountNav />
         <a className="nav-apply" href="#/training" onClick={() => setOpen(false)}>Apply for training <Arrow /></a>
       </nav>
     </header>
@@ -142,28 +148,37 @@ function Footer() {
 
 function App() {
   const route = useRoute();
+  const account = useAccount();
   const data = useCatalog();
   const mainRef = useRef<HTMLElement>(null);
   const firstRoute = useRef(true);
   useEffect(() => {
     const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms', '/practice': 'The practice lab', '/workspace': 'Your learning desk', '/credits': 'About the imagery' };
-    document.title = `Billion Codes | ${titles[route] ?? (route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
+    const platformTitles: Record<string, string> = { '/account':'Your account', '/library':'My learning', '/course-library':'Course library', '/training-dashboard':'Training dashboard', '/resources':'Open resources' };
+    document.title = `Billion Codes | ${platformTitles[route] ?? titles[route] ?? (route.startsWith('/course/') ? 'Course learning' : route.startsWith('/apply/') ? 'Training application' : route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
     window.scrollTo(0, 0);
     if (firstRoute.current) firstRoute.current = false; else mainRef.current?.focus({ preventScroll: true });
   }, [route]);
   let page;
   if (route === '/') page = <HomePage />;
-  else if (route === '/courses') page = <Courses data={data} />;
+  else if (route === '/courses') page = account.config?.enabled ? <CourseLibrary /> : <Courses data={data} />;
+  else if (route === '/account') page = <AccountPage />;
+  else if (route === '/library') page = <MyLearning />;
+  else if (route === '/course-library') page = <CourseLibrary />;
+  else if (route.startsWith('/course/')) page = <CoursePage key={route} id={route.slice(8)} />;
+  else if (route === '/training-dashboard') page = <TrainingDashboard />;
+  else if (route.startsWith('/apply/')) page = <ApplyPage key={route} id={route.slice(7)} />;
+  else if (route === '/resources') page = <OpenResources />;
   else if (route === '/practice' || route.startsWith('/practice/')) page = <PracticeLab key={route} id={route === '/practice' ? undefined : route.slice(10)} />;
   else if (route === '/workspace') page = <Workspace data={data} />;
   else if (route === '/credits') page = <Credits />;
-  else if (route === '/training') page = <Training />;
+  else if (route === '/training') page = account.loading ? <div className="wrap page-section" role="status">Loading training information...</div> : account.config?.enabled ? <TrainingLanding /> : <Training />;
   else if (route === '/services') page = <Services />;
   else if (route === '/about' || route === '/contact') page = <About />;
-  else if (route === '/policies') page = <Policies />;
+  else if (route === '/policies') page = account.config?.enabled ? <PlatformPolicies /> : <Policies />;
   else if (route.startsWith('/learn/')) { let id = ''; try { id = decodeURIComponent(route.slice(7)); } catch { /* Invalid encoded route is handled as not found. */ } page = <Learn id={id} data={data} />; }
   else page = <div className="wrap page-section empty-state"><p className="eyebrow">404 / A DIFFERENT PATH</p><h1>This page is not here.</h1><p>Head back to the learning desk to find your next step.</p><a className="button button-dark" href="#/courses">Explore the introductions <Arrow /></a></div>;
   return <><Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>{page}<SaveStatus /></main><Footer /></>;
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(<AccountProvider><App /></AccountProvider>);

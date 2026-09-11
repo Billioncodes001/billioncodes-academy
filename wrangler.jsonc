@@ -24,7 +24,12 @@
     "database_id": "d1b6aede-e9f0-43c6-b3d4-0e51763aabc9",
     "migrations_dir": "migrations"
   }],
+  "r2_buckets": [{ "binding": "COURSE_FILES", "bucket_name": "billioncodes-academy-courses" }],
   "vars": {
+    "LEARNING_PLATFORM": "enabled",
+    "FIREBASE_PROJECT_ID": "billion-codes-academy",
+    "FIREBASE_API_KEY": "AIzaSyBraribhYJA3-MtoqVFQcABKRBc752QnB8",
+    "FIREBASE_APP_ID": "1:913791673533:web:651214ff64b6f9ab6f43d4",
     "ALLOWED_ORIGINS": "https://learnatbillioncodes.com,https://www.learnatbillioncodes.com",
     "DAILY_SUBMISSION_CAP": "500",
     "DAILY_ATTEMPT_CAP": "6000",

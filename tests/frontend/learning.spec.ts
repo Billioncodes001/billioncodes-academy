@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { catalog } from '../../worker/catalog.js';
 
 const solution = '<main><h1>A community reading club</h1><p>One chapter and one conversation each week.</p></main>';
-test.beforeEach(async ({ page }) => { await page.route('**/api/v1/catalog', route => route.fulfill({ json: catalog })); });
+test.beforeEach(async ({ page }) => { await page.route('**/api/v2/platform', route => route.fulfill({ json: { enabled:false, accountsReady:false } })); await page.route('**/api/v1/catalog', route => route.fulfill({ json: catalog })); });
 
 test('new learning pages are accessible and fit the viewport', async ({ page }) => {
   for (const route of ['/workspace', '/practice', '/practice/profile-card', '/practice/contact-form', '/credits']) {

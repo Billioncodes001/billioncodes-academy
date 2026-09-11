@@ -1,4 +1,6 @@
 import { catalog } from "./catalog.js";
+import { identityRoute, platformEnabled } from './identity.js';
+import { platformRoute } from './platform.js';
 import { HttpError, UUID, readJSON, validateSubmission, validateStatus } from "./validation.js";
 import { authenticateAdmin, checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security.js";
 import { database, getExisting, createSubmission, limitPublicAttempt, listSubmissions, updateStatus, readAudit } from "./storage.js";
@@ -28,12 +30,14 @@ function preflight(request, env, path) {
 async function api(request, env, url) {
   const path = url.pathname;
   if ([...url.searchParams.keys()].some(key => /^(token|access_token|admin_token|authorization)$/i.test(key))) throw new HttpError(400, "Credentials are permitted only in the Authorization header.");
+  if (path.startsWith('/api/auth/')) return identityRoute(request, env, path);
+  if (path.startsWith('/api/v2/')) return platformRoute(request, env, url);
   if (request.method === "OPTIONS") return preflight(request, env, path);
   const publicWrite = path === "/api/v1/applications" || path === "/api/v1/project-requests";
   checkOrigin(request, env, publicWrite && request.method === "POST");
   if (path === "/api/v1/catalog") {
     method(request, ["GET"]);
-    return json(catalog);
+    return json(platformEnabled(env) ? { ...catalog, training: { status: 'account-required' } } : catalog);
   }
   if (path === "/api/health") {
     method(request, ["GET"]);
@@ -55,6 +59,7 @@ async function api(request, env, url) {
   }
   if (publicWrite) {
     method(request, ["POST"]);
+    if (path === '/api/v1/applications' && platformEnabled(env)) throw new HttpError(401, 'Training applications now require a verified account. Use the training portal.');
     if (url.search) throw new HttpError(400, "Query parameters are not accepted on submissions.");
     const key = request.headers.get("idempotency-key") || "";
     if (!UUID.test(key)) throw new HttpError(400, "A valid UUID Idempotency-Key header is required.");

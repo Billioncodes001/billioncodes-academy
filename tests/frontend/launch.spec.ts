@@ -30,6 +30,7 @@ async function fillApplication(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/v2/platform', route => route.fulfill({ json: { enabled:false, accountsReady:false } }));
   await page.route('**/api/v1/catalog', route => route.fulfill({ json: catalog }));
 });
 

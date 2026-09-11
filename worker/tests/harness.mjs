@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
@@ -8,7 +8,11 @@ export const ADMIN = "local-test-admin-not-production-123456789";
 export const SALT = "local-test-salt-not-production-123456789";
 
 export async function migrate(db) {
-  const sql = await readFile(new URL("../../migrations/0001_launch.sql", import.meta.url), "utf8");
+  const folder = new URL('../../migrations/',import.meta.url);
+  const files = (await readdir(folder)).filter(name => name.endsWith('.sql')).sort();
+  const sources = [];
+  for (const name of files) sources.push(await readFile(new URL(name,folder),'utf8'));
+  const sql = sources.join('\n');
   const statements = [];
   let statement = "";
   let trigger = false;
@@ -26,7 +30,7 @@ export async function migrate(db) {
   await db.batch(statements);
 }
 
-export async function createHarness(bindings = {}) {
+export async function createHarness(bindings = {}, overrides = {}) {
   const { Miniflare, convertV4MiniflareOptions } = require(process.env.MINIFLARE_PATH || "miniflare");
   const { build } = require("esbuild");
   const bundled = await build({ entryPoints:[fileURLToPath(new URL("../index.js", import.meta.url))], bundle:true, format:"esm", platform:"browser", write:false });
@@ -38,7 +42,8 @@ export async function createHarness(bindings = {}) {
     compatibilityDate: "2026-09-01",
     d1Databases: { DB: "local-backend-test" },
     serviceBindings: { ASSETS: async request => new Response(new URL(request.url).pathname === "/admin.html" ? adminHTML : "<!doctype html><title>Test public assets</title>", { headers:{ "Content-Type":"text/html" } }) },
-    bindings: { SECURITY_SALT:SALT, ADMIN_TOKEN:ADMIN, ...bindings }
+    bindings: { SECURITY_SALT:SALT, ADMIN_TOKEN:ADMIN, ...bindings },
+    ...overrides
   }] };
   const mf = new Miniflare(convertV4MiniflareOptions ? convertV4MiniflareOptions(options) : options);
   try {

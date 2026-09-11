@@ -1,6 +1,13 @@
 import { parseCatalog, type Catalog } from '@billioncodes/learning';
 export type { Lesson, Course, Catalog } from '@billioncodes/learning';
 
+let tokenProvider: (() => Promise<string | undefined>) | undefined;
+export function setTokenProvider(provider: typeof tokenProvider) { tokenProvider = provider; }
+export async function accountHeaders(): Promise<Record<string, string>> {
+  const token = await tokenProvider?.();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export class ApiError extends Error {
   fields: Record<string, string>;
   constructor(message: string, fields: Record<string, unknown> = {}) {
@@ -13,7 +20,10 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(path, { ...init, signal: controller.signal, headers: { Accept: 'application/json', ...init.headers } });
+    const privatePath = path.startsWith('/api/v2/') || path.startsWith('/api/auth/');
+    const headers = new Headers({ Accept: 'application/json', ...(privatePath ? await accountHeaders() : {}) });
+    new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    const response = await fetch(path, { ...init, signal: controller.signal, headers });
     let body;
     try {
       const content = await response.text();
