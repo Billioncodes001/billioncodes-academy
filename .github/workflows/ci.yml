@@ -39,3 +39,24 @@ jobs:
           path: tests/frontend/results/
           if-no-files-found: ignore
           retention-days: 7
+
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run check
+      - run: npm run export -- --max-workers 2
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui

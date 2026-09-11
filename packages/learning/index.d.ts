@@ -1,0 +1,22 @@
+export type Lesson = { id: string; title: string; body: string[] };
+export type Course = { id: string; title: string; level: string; format: string; summary: string; lessons: Lesson[] };
+export type Catalog = { courses: Course[]; training: { status: string }; payments: { enabled: boolean } };
+export type Challenge = { id: string; title: string; brief: string; minutes: number; starter: string; hint: string; goals: string[] };
+export type Check = { label: string; passed: boolean };
+export type Feedback = { passed: boolean; checks: Check[]; error?: string };
+export type Progress = { version: 1; read: Record<string, string[]>; drafts: Record<string, string>; solved: Record<string, string>; lastLesson: { courseId: string; lessonId: string } | null };
+export const challenges: readonly Challenge[];
+export const MAX_CODE_LENGTH: number;
+export const WORKSPACE_KEY: string;
+export const CATALOG_KEY: string;
+export function gradeChallenge(id: string, code: string): Feedback;
+/** Reconstructs a small inert HTML subset. It is not an arbitrary HTML sanitizer. */
+export function previewHTML(code: string): string;
+export function emptyProgress(): Progress;
+export function normalizeProgress(value: unknown): Progress;
+export function saveDraft(progress: Progress, id: string, code: string): Progress;
+export function recordAttempt(progress: Progress, id: string, code: string): Progress;
+export function recordRead(progress: Progress, courseId: string, lessonId: string, completed: boolean): Progress;
+export function rememberLesson(progress: Progress, courseId: string, lessonId: string): Progress;
+export function parseCatalog(value: unknown): Catalog | null;
+export const primer: Course;

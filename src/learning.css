@@ -1,0 +1,100 @@
+@layer learning {
+  .exercise-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 30px; }
+  .exercise-card { display: block; background: #fff; border: 1px solid var(--line); padding: 30px; text-decoration: none; border-radius: 12px; }
+  .exercise-card:nth-child(2) { background: #e9efdf; }
+  .exercise-card:nth-child(3) { background: #fae8df; }
+  .exercise-card:nth-child(4) { background: #e7eef0; }
+  .exercise-card:hover { border-color: var(--ink); }
+  .exercise-glyph { display: block; font: 600 3.2rem var(--mono); letter-spacing: -.08em; margin-block: 25px; }
+  .exercise-card h2 { font-size: 1.9rem; margin-bottom: 14px; }
+  .exercise-card p { font-size: .92rem; }
+  .exercise-card > div { border-top: 1px solid #152b3a25; display: flex; align-items: center; justify-content: space-between; margin-top: 25px; padding-top: 20px; font-size: .8rem; }
+  .exercise-card > div > span:last-child { font-size: 1.5rem; }
+  .lab-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 35px; }
+  .lab-heading h1 { margin-block: 12px 18px; font-size: clamp(2.5rem, 4vw, 4rem); }
+  .lab-heading p { max-width: 700px; }
+  .lab-heading > a { flex-shrink: 0; font-size: .8rem; }
+  .lab-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 25px; align-items: start; }
+  .lab-editor { background: var(--ink); color: var(--paper); border: 1px solid #213d50; border-radius: 10px; overflow: hidden; }
+  .lab-editor > label { display: block; margin: 20px 22px 10px; font-size: .8rem; }
+  .lab-editor > textarea { display: block; min-height: 400px; width: calc(100% - 44px); margin: 0 22px; resize: vertical; background: #11222f; border: 1px solid #708595; border-radius: 5px; color: #eff7d8; padding: 18px; font: .85rem/1.9 var(--mono); tab-size: 2; }
+  .lab-editor > p { margin: 12px 22px; color: #bbcbd4; font-size: .72rem; }
+  .lab-actions { margin: 20px 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .lab-actions .reset-link { color: #e9f0f4; }
+  .lab-results { background: white; border: 1px solid var(--line); border-radius: 10px; padding: 23px; }
+  .lab-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+  .lab-results h2 { font-size: 1.45rem; }
+  .lab-preview-heading .badge { font-size: .6rem; }
+  .lab-results iframe { display: block; width: 100%; height: 245px; border: 1px solid var(--line); background: #fafbf7; }
+  .lab-results > .small-note { font-size: .7rem; margin-block: 12px; }
+  .lab-hint { border-block: 1px solid var(--line); padding-block: 13px; margin: 19px 0; font-size: .85rem; }
+  .lab-hint summary { cursor: pointer; min-height: 28px; }
+  .lab-hint p { margin-top: 12px; }
+  .build-feedback ul { padding-left: 20px; font-size: .8rem; }
+  .build-feedback li { margin-block: 11px; }
+  .build-feedback .check-pass, .build-feedback .check-miss { display: flex; list-style: none; gap: 10px; margin-left: -20px; }
+  .check-pass { color: #285626; }
+  .check-miss { color: #944025; }
+  .build-feedback .small-note { font-size: .7rem; }
+  .inline-confirm { background: #fff5df; border: 1px solid #cfa45d; border-radius: 8px; padding: 22px; color: var(--ink); margin-block: 20px; }
+  .inline-confirm h2 { font-size: 1.7rem; margin-bottom: 15px; }
+  .inline-confirm p { margin-bottom: 15px; color: #51452e; font-size: .88rem; }
+  .inline-confirm button { background: var(--ink); color: white; padding: 11px 16px; border-radius: 5px; min-height: 44px; margin: 5px 12px 0 0; font-size: .83rem; }
+  .lab-editor .inline-confirm { margin: 20px; }
+  .storage-notice, .workspace-message { padding: 18px 22px; border: 1px solid #b7c496; background: #edf3de; border-radius: 6px; color: #33462c; font-size: .9rem; margin-block: 22px; }
+  .desk-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); margin-bottom: 42px; }
+  .desk-stats > div { padding: 28px; border-right: 1px solid var(--line); }
+  .desk-stats > div:first-child { padding-left: 0; }
+  .desk-stats > div:last-child { border: 0; }
+  .desk-stats strong { display: block; font: 600 3rem var(--heading); letter-spacing: -.06em; }
+  .desk-stats small { font-size: 1.3rem; color: var(--muted); }
+  .desk-stats span { display: block; font-size: .83rem; color: var(--muted); }
+  .desk-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 55px; align-items: start; }
+  .desk-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 15px; margin-bottom: 25px; }
+  .desk-section-heading h2 { font-size: 2.1rem; }
+  .desk-section-heading a { font-size: .8rem; flex-shrink: 0; }
+  .resume-card { display: block; padding: 24px; border-radius: 9px; background: #eaf0db; text-decoration: none; margin-bottom: 20px; }
+  .resume-card h3 { margin-block: 15px 10px; font-size: 1.7rem; }
+  .resume-card p { font-size: .85rem; }
+  .desk-courses > a { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 24px; margin-block: 14px; border: 1px solid var(--line); border-radius: 9px; background: white; text-decoration: none; }
+  .desk-courses h3 { font-size: 1.4rem; }
+  .desk-courses p { font-size: .8rem; margin-top: 8px; }
+  .desk-courses > a > span { font-size: 1.7rem; }
+  .desk-subheading { font-size: 2rem; margin: 39px 0 20px; }
+  .desk-exercise { display: flex; justify-content: space-between; gap: 20px; padding-block: 18px; border-bottom: 1px solid var(--line); text-decoration: none; font-size: .87rem; }
+  .desk-exercise > span:last-child { font-size: .75rem; text-align: right; }
+  .desk-tools { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 30px; }
+  .desk-tools h2 { font-size: 2rem; margin-bottom: 19px; }
+  .desk-tools p { font-size: .85rem; margin-bottom: 17px; }
+  .desk-tools .button { width: 100%; margin-bottom: 14px; justify-content: center; font-size: .85rem; }
+  .desk-tools .small-note { font-size: .7rem; }
+  .desk-tools .reset-link { display: block; min-height: 44px; font-size: .8rem; }
+  .desk-tool-group { margin-top: 25px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .desk-tool-group h3 { font-size: 1.35rem; margin-bottom: 12px; }
+  .backup-label { display: block; font-size: .8rem; margin-top: 8px; }
+  .desk-tools input[type=file] { max-width: 100%; font-size: .75rem; margin-top: 10px; }
+  .desk-tools input[type=file]::file-selector-button { background: #edf0e5; color: var(--ink); border: 1px solid var(--line); padding: 10px; border-radius: 4px; margin-right: 8px; min-height: 44px; }
+  @media (max-width: 900px) { .lab-grid { grid-template-columns: 1fr; } .desk-grid { grid-template-columns: 1fr; } .desk-tools { max-width: 700px; } }
+  @media (max-width: 600px) {
+    .exercise-grid { grid-template-columns: 1fr; }
+    .exercise-card { padding: 24px; }
+    .exercise-glyph { font-size: 2.6rem; }
+    .lab-heading { display: block; }
+    .lab-heading > a { margin-top: 18px; }
+    .lab-editor > textarea { margin-inline: 14px; width: calc(100% - 28px); padding: 14px; font-size: .75rem; }
+    .lab-editor > label, .lab-editor > p { margin-inline: 14px; }
+    .lab-actions { margin-inline: 14px; }
+    .lab-actions .button { font-size: .82rem; padding: 14px; gap: 12px; }
+    .lab-results { padding: 18px; }
+    .desk-stats { gap: 20px; grid-template-columns: 1fr 1fr; padding-block: 25px; }
+    .desk-stats > div { padding: 0; border: 0; }
+    .desk-stats > div:last-child { grid-column: 1 / -1; }
+    .desk-stats strong { font-size: 2.65rem; }
+    .desk-stats span { font-size: .73rem; }
+    .desk-stats > div:last-child strong { font-size: 1.65rem; }
+    .desk-section-heading h2 { font-size: 1.7rem; }
+    .desk-section-heading a { font-size: .73rem; }
+    .desk-tools { padding: 23px; }
+    .desk-courses > a { padding: 20px; }
+  }
+}

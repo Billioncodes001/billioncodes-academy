@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Billion Codes Learning Desk",
+  "short_name": "Billion Codes",
+  "description": "Free coding introductions and practical HTML exercises, at your own pace.",
+  "start_url": "/#/workspace",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf8f2",
+  "theme_color": "#152b3a",
+  "icons": [
+    { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

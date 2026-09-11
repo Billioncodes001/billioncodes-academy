@@ -8,14 +8,27 @@ import '@fontsource/dm-sans/latin-400.css';
 import '@fontsource/dm-sans/latin-500.css';
 import '@fontsource/dm-sans/latin-600.css';
 import '@fontsource/ibm-plex-mono/latin-400.css';
-import { isCatalog, request, type Catalog, type Course } from './api';
+import { type Course } from './api';
+import { useCatalog, type CatalogState } from './useCatalog';
+import { PracticeLab } from './PracticeLab';
+import { Workspace } from './Workspace';
+import { Credits } from './Credits';
+import { changeProgress, useWorkspace } from './learningStore';
+import { rememberLesson, recordRead } from '@billioncodes/learning';
 import { intro } from './intro';
 import { EnquiryForm } from './EnquiryForm';
+import { HomePage } from './HomePage';
+import { Brand } from './Brand';
+import '@fontsource/bricolage-grotesque/latin-500.css';
+import '@fontsource/bricolage-grotesque/latin-600.css';
+import '@fontsource/bricolage-grotesque/latin-700.css';
+import '@fontsource/bricolage-grotesque/latin-800.css';
 import './styles.css';
+import './brand.css';
+import './learning.css';
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
-const CodeMark = () => <svg viewBox="0 0 42 36" fill="none" aria-hidden="true"><path d="m12 8-9 10 9 10M30 8l9 10-9 10M25 3 17 33" stroke="currentColor" strokeWidth="3" /></svg>;
-const links = [['/courses', 'Explore courses'], ['/training', 'Training'], ['/services', 'Expert help'], ['/about', 'About']];
+const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
 
 function useRoute() {
   const read = () => window.location.hash.replace(/^#/, '') || '/';
@@ -23,27 +36,6 @@ function useRoute() {
   useEffect(() => { const change = () => setRoute(read()); window.addEventListener('hashchange', change); return () => window.removeEventListener('hashchange', change); }, []);
   return route;
 }
-
-function useCatalog() {
-  const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [error, setError] = useState('');
-  const active = useRef(false);
-  async function reload() {
-    if (active.current) return;
-    active.current = true;
-    setState('loading');
-    try {
-      const result = await request<unknown>('/api/v1/catalog');
-      if (!isCatalog(result)) throw new Error('The catalogue response could not be read.');
-      setCatalog(result); setState('ready');
-    } catch (error) { setError(error instanceof Error ? error.message : 'The catalogue could not be loaded.'); setState('error'); }
-    finally { active.current = false; }
-  }
-  useEffect(() => { void reload(); }, []);
-  return { catalog, state, error, reload };
-}
-type CatalogState = ReturnType<typeof useCatalog>;
 
 function Header({ route }: { route: string }) {
   const [open, setOpen] = useState(false);
@@ -55,9 +47,9 @@ function Header({ route }: { route: string }) {
   }, [open]);
   return <>
     <a className="skip-link" href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a>
-    <div className="launch-strip"><div className="wrap"><span>THE WEBINAR LAUNCH EDITION</span><span>Free introductions. A real place to begin.</span></div></div>
+    <div className="launch-strip"><div className="wrap"><span>BUILD SOMETHING THAT MATTERS.</span><a href="#/workspace">Your learning desk <Arrow /></a></div></div>
     <header className="site-header wrap">
-      <a className="brand" href="#/" aria-label="Billion Codes home"><span className="brand-mark"><CodeMark /></span><span>Billion<span className="brand-second">Codes<span className="brand-period">.</span></span></span></a>
+      <a className="brand" href="#/" aria-label="Billion Codes home"><Brand /></a>
       <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? 'Close' : 'Menu'}<span aria-hidden="true">{open ? '−' : '+'}</span></button>
       <nav id="main-nav" className={open ? 'main-nav open' : 'main-nav'} aria-label="Main navigation">
         {links.map(([path, label]) => <a key={path} href={`#${path}`} aria-current={route === path ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
@@ -67,43 +59,21 @@ function Header({ route }: { route: string }) {
   </>;
 }
 
-function BuildDiagram() {
-  return <div className="build-diagram" role="img" aria-label="A simple HTML heading becomes a real page: give an idea structure, make it work, then improve it.">
-    <div className="diagram-top"><span>THE MAKING OF A BUILDER</span><span>FIG. 01</span></div>
-    <div className="diagram-orbit orbit-one" /><div className="diagram-orbit orbit-two" />
-    <div className="diagram-code"><div className="window-bar"><span className="file-tab">first-idea.html</span><span>HTML</span></div><div className="code-lines"><span><b>01</b> <i>&lt;main&gt;</i></span><span><b>02</b> &nbsp; <i>&lt;h1&gt;</i>Hello, world.<i>&lt;/h1&gt;</i></span><span><b>03</b> &nbsp; <i>&lt;p&gt;</i>Start with an idea.<i>&lt;/p&gt;</i></span><span><b>04</b> <i>&lt;/main&gt;</i></span></div></div>
-    <div className="diagram-connector"><span>STRUCTURE → POSSIBILITY</span><div /></div>
-    <div className="diagram-page"><div className="page-address"><span /><span>your-first-project /</span><span>↗</span></div><div className="page-preview"><div className="preview-star">✳</div><p className="preview-caption">BUILT, NOT JUST WATCHED.</p><strong>Hello,<br />world<span>.</span></strong><p>One idea. A little structure.<br />Something that works.</p></div></div>
-    <div className="diagram-bottom"><span>01 / THINK</span><span>02 / BUILD</span><span>03 / IMPROVE</span></div>
-  </div>;
-}
 
-function Home() {
-  return <>
-    <section className="hero wrap">
-      <div className="hero-copy"><p className="eyebrow"><span className="short-rule" />A SCHOOL FOR PEOPLE WHO BUILD</p><h1>Big ideas.<br />Start with<br /><span className="highlight-word">one line.</span></h1><p className="hero-tagline">Learn to code. Build real projects.<br />Get expert help.</p><p className="hero-description">From your first web page to a problem worth solving. Begin with a free introduction, find your learning direction, or talk through a software idea.</p><div className="hero-actions"><a className="button button-dark" href="#/courses">Explore the free lessons <Arrow /></a><a className="text-link" href="#/services">Bring us your idea <Arrow /></a></div><div className="hero-note"><span className="mini-brackets">{ '{ }' }</span><span>Curiosity is the only prerequisite.<br /><strong>No account or payment to start.</strong></span></div></div>
-      <BuildDiagram />
-    </section>
-    <div className="principle-band"><div className="wrap"><span>LESS PASSIVE WATCHING.</span><strong>More “I made this.”</strong><span>THE BILLION CODES APPROACH</span></div></div>
-    <section className="section wrap"><div className="section-heading"><div><p className="eyebrow">CHOOSE YOUR STARTING POINT</p><h2>Different goals.<br />The same builder mindset.</h2></div><p>Learn something new, get guided support, or turn a business problem into a clear software brief.</p></div><div className="path-grid">
-      <a href="#/learn/first-web-page" className="path-card"><div className="path-top"><span className="index">01 / LEARN</span><Arrow /></div><div className="path-symbol brackets" aria-hidden="true">&lt;h1&gt;</div><h3>Write your first chapter.</h3><p>A short, original HTML introduction. Read, check your understanding, and leave with a useful next step.</p><span className="card-cta">Open the free primer <Arrow /></span></a>
-      <a href="#/training" className="path-card"><div className="path-top"><span className="index">02 / DEVELOP</span><Arrow /></div><div className="path-symbol steps" aria-hidden="true"><i /><i /><i /></div><h3>Find your learning path.</h3><p>Tell us where you are starting and what you want to build. Express interest in online or physical training.</p><span className="card-cta">Apply for training <Arrow /></span></a>
-      <a href="#/services" className="path-card"><div className="path-top"><span className="index">03 / COLLABORATE</span><Arrow /></div><div className="path-symbol linked" aria-hidden="true"><i /><i /></div><h3>Work on the right problem.</h3><p>Bring a business software idea, a project you are learning through, or code that needs a second pair of eyes.</p><span className="card-cta">Explore expert help <Arrow /></span></a>
-    </div></section>
-    <section className="primer-feature wrap"><div className="primer-art" aria-hidden="true"><span className="index">FIELD NOTE / 001</span><div className="outline-type">HTML<br /><span>FIRST.</span></div><span className="mono">MEANING BEFORE DECORATION.</span></div><div className="primer-copy"><span className="badge">FREE TEXT INTRODUCTION</span><h2>A small lesson.<br />A solid first step.</h2><p>Learn how headings, paragraphs and links give a page meaning. Then put one idea into practice with a quick knowledge check.</p><ul className="clean-list"><li>Original written lessons, no video required</li><li>Read at your own pace, on your phone or laptop</li><li>Progress saved only on this device</li></ul><a href="#/learn/first-web-page" className="button button-dark">Start with HTML <Arrow /></a><p className="small-note">An introduction, not a full course or certification.</p></div></section>
-    <section className="section wrap launch-section"><div><p className="eyebrow">START SMALL. BUILD HONESTLY.</p><h2>Here now.<br />More to come.</h2></div><div className="launch-columns"><div><h3><span className="status-label">AVAILABLE</span>A useful beginning</h3><p>Free text introductions, simple practice, training applications, and software or mentorship enquiries.</p></div><div><h3><span className="status-label future">COMING LATER</span>The next chapters</h3><p>Paid courses, learner accounts, community discussions and mobile learning are not available at this launch. No payments are accepted.</p></div></div></section>
-    <section className="closing-banner"><div className="wrap"><p className="eyebrow">YOU DO NOT HAVE TO KNOW EVERYTHING TO BEGIN.</p><h2>Bring your curiosity.<br />Build from there.</h2><a className="button button-lime" href="#/training">Tell us what you want to learn <Arrow /></a></div><div className="banner-brackets" aria-hidden="true">{'{ }'}</div></section>
-  </>;
+function SaveStatus() {
+  const { saving } = useWorkspace();
+  return saving ? <p className="save-status" role="status">Saving learning changes on this device...</p> : null;
 }
 
 function CatalogNotice({ data }: { data: CatalogState }) {
+  if (data.state === 'ready' && data.source === 'saved') return <div className="catalog-status" role="status"><p>Reading your saved catalogue from {new Date(data.savedAt).toLocaleDateString()}. This is not a live update.</p><button className="button button-outline" onClick={() => void data.reload()}>Retry live catalogue</button></div>;
   if (data.state === 'loading') return <div className="catalog-status" role="status"><span className="loading-line" />Loading the live catalogue...</div>;
   if (data.state === 'error') return <div className="catalog-status catalog-error" role="alert"><div><h3>The live catalogue is unavailable.</h3><p>{data.error} No catalogue data has been substituted. The built-in HTML primer above is still available.</p></div><button type="button" className="button button-outline" onClick={() => void data.reload()}>Retry catalogue <Arrow /></button></div>;
   return null;
 }
 
 function CourseCard({ course, index }: { course: Course; index: number }) {
-  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card"><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><CodeMark /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
+  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card"><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><img src={index % 2 === 0 ? '/images/code-detail.webp' : '/brand/html-cover.svg'} alt="" loading="lazy" /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
 }
 
 function Courses({ data }: { data: CatalogState }) {
@@ -122,18 +92,25 @@ function Practice() {
 }
 
 function LessonReader({ course, builtIn }: { course: Course; builtIn: boolean }) {
-  const [index, setIndex] = useState(0);
-  const storageKey = `billioncodes:progress:v1:${course.id}`;
-  const [storageAvailable, setStorageAvailable] = useState(true);
-  const [completed, setCompleted] = useState<string[]>(() => {
-    try { const value: unknown = JSON.parse(localStorage.getItem(storageKey) || '[]'); return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string' && course.lessons.some(lesson => lesson.id === id)) : []; } catch { return []; }
+  const { progress, notice } = useWorkspace();
+  const [index, setIndex] = useState(() => {
+    const remembered = progress.lastLesson?.courseId === course.id ? course.lessons.findIndex(item => item.id === progress.lastLesson?.lessonId) : 0;
+    return remembered < 0 ? 0 : remembered;
   });
+  const completed = (progress.read[course.id] || []).filter(id => course.lessons.some(lesson => lesson.id === id));
+  const storageAvailable = !notice;
   const lesson = course.lessons[index];
   const articleRef = useRef<HTMLElement>(null);
-  function save(next: string[]) { setCompleted(next); try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { setStorageAvailable(false); } }
-  function selectLesson(next: number) { setIndex(next); requestAnimationFrame(() => { articleRef.current?.focus(); articleRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' }); }); }
+  function save(next: boolean | 'reset') {
+    changeProgress(current => next === 'reset' ? { ...current, read: { ...current.read, [course.id]: [] } } : recordRead(current, course.id, lesson.id, next));
+  }
+  function selectLesson(next: number) {
+    setIndex(next);
+    changeProgress(current => rememberLesson(current, course.id, course.lessons[next].id));
+    requestAnimationFrame(() => { articleRef.current?.focus(); articleRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' }); });
+  }
   if (!lesson) return <div className="empty-state"><h2>No lessons are published for this introduction yet.</h2><a href="#/courses">Back to the course explorer</a></div>;
-  return <div className="wrap page-section reader-page"><a className="back-link" href="#/courses">← All introductions</a><div className="reader-heading"><p className="eyebrow">{builtIn ? 'BUILT-IN PRIMER' : 'FREE INTRODUCTION'} / {course.level}</p><h1>{course.title}</h1><p>{course.summary}</p></div><div className="reader-layout"><aside className="lesson-sidebar"><span className="eyebrow">YOUR READING LIST</span><ol>{course.lessons.map((item, number) => <li key={item.id}><button type="button" aria-current={index === number ? 'step' : undefined} onClick={() => selectLesson(number)}><span className="lesson-number">{String(number + 1).padStart(2, '0')}</span><span>{item.title}{completed.includes(item.id) && <span className="completed-label">Marked as read</span>}</span></button></li>)}</ol><div className="progress-area"><label htmlFor="lesson-progress">{completed.length} of {course.lessons.length} marked as read</label><progress id="lesson-progress" max={course.lessons.length} value={completed.length} /><p><strong>Device-only progress.</strong> No account, cloud sync, qualification or certificate. Clearing browser data removes this record.</p>{!storageAvailable && <p role="status">Browser storage is unavailable. Progress will last only while this lesson page is open.</p>}{completed.length > 0 && <button className="reset-link" onClick={() => save([])}>Reset this introduction's progress</button>}</div></aside><article className="lesson-article" tabIndex={-1} ref={articleRef}><p className="eyebrow">LESSON {String(index + 1).padStart(2, '0')} / {course.lessons.length}</p><h2>{lesson.title}</h2><div className="lesson-body">{lesson.body.map((paragraph, number) => <p key={number}>{paragraph}</p>)}</div>{builtIn && index === 0 && <figure className="lesson-code"><figcaption>A simple page structure · example only</figcaption><pre><code>{'<main>\n  <h1>My first project</h1>\n  <p>A reading list for curious people.</p>\n  <a href="/reading-list">Open the reading list</a>\n</main>'}</code></pre></figure>}{builtIn && index === 0 && <Practice />}<div className="lesson-actions"><button className="button button-dark" onClick={() => save(completed.includes(lesson.id) ? completed.filter(id => id !== lesson.id) : [...completed, lesson.id])}>{completed.includes(lesson.id) ? 'Marked as read · undo' : 'Mark as read on this device'}<span aria-hidden="true">✓</span></button>{index + 1 < course.lessons.length ? <button className="text-link" onClick={() => selectLesson(index + 1)}>Next lesson <Arrow /></button> : <a className="text-link" href="#/courses">Explore another introduction <Arrow /></a>}</div><p role="status" className="small-note">{completed.includes(lesson.id) ? 'This lesson is marked as read on this device.' : 'Marking a lesson as read is your own record, not an assessment.'}</p></article></div></div>;
+  return <div className="wrap page-section reader-page"><a className="back-link" href="#/courses">← All introductions</a><div className="reader-heading"><p className="eyebrow">{builtIn ? 'BUILT-IN PRIMER' : 'FREE INTRODUCTION'} / {course.level}</p><h1>{course.title}</h1><p>{course.summary}</p></div><div className="reader-layout"><aside className="lesson-sidebar"><span className="eyebrow">YOUR READING LIST</span><ol>{course.lessons.map((item, number) => <li key={item.id}><button type="button" aria-current={index === number ? 'step' : undefined} onClick={() => selectLesson(number)}><span className="lesson-number">{String(number + 1).padStart(2, '0')}</span><span>{item.title}{completed.includes(item.id) && <span className="completed-label">Marked as read</span>}</span></button></li>)}</ol><div className="progress-area"><label htmlFor="lesson-progress">{completed.length} of {course.lessons.length} marked as read</label><progress id="lesson-progress" max={course.lessons.length} value={completed.length} /><p><strong>Device-only progress.</strong> No account, cloud sync, qualification or certificate. Clearing browser data removes this record.</p>{!storageAvailable && <p role="status">Browser storage is unavailable. Progress will last only while this site tab is open.</p>}{completed.length > 0 && <button className="reset-link" onClick={() => save('reset')}>Reset this introduction's progress</button>}</div></aside><article className="lesson-article" tabIndex={-1} ref={articleRef}><p className="eyebrow">LESSON {String(index + 1).padStart(2, '0')} / {course.lessons.length}</p><h2>{lesson.title}</h2><div className="lesson-body">{lesson.body.map((paragraph, number) => <p key={number}>{paragraph}</p>)}</div>{builtIn && index === 0 && <figure className="lesson-code"><figcaption>A simple page structure · example only</figcaption><pre><code>{'<main>\n  <h1>My first project</h1>\n  <p>A reading list for curious people.</p>\n  <a href="/reading-list">Open the reading list</a>\n</main>'}</code></pre></figure>}{builtIn && index === 0 && <Practice />}<div className="lesson-actions"><button className="button button-dark" onClick={() => save(!completed.includes(lesson.id))}>{completed.includes(lesson.id) ? 'Marked as read · undo' : 'Mark as read on this device'}<span aria-hidden="true">✓</span></button>{index + 1 < course.lessons.length ? <button className="text-link" onClick={() => selectLesson(index + 1)}>Next lesson <Arrow /></button> : <a className="text-link" href="#/courses">Explore another introduction <Arrow /></a>}</div><p role="status" className="small-note">{completed.includes(lesson.id) ? 'This lesson is marked as read on this device.' : 'Marking a lesson as read is your own record, not an assessment.'}</p></article></div></div>;
 }
 
 function Learn({ id, data }: { id: string; data: CatalogState }) {
@@ -152,15 +129,15 @@ function Services() {
 }
 
 function About() {
-  return <div className="wrap page-section about-page"><div className="page-heading"><p className="eyebrow">THE THINKING BEHIND BILLION CODES</p><h1>Useful skills.<br />Thoughtful software.<br /><span className="ink-muted">People who keep learning.</span></h1></div><div className="about-layout"><div className="founder-panel"><span className="eyebrow">FOUNDER'S NOTE</span><span className="founder-monogram" aria-hidden="true">JA<span>.</span></span><h2>Josiah Adeyemo</h2><p>Founder, Billion Codes</p><a href="https://www.linkedin.com/in/josiah-adeyemo/" target="_blank" rel="noreferrer">Public LinkedIn profile <Arrow /><span className="sr-only"> (opens in a new tab)</span></a></div><div className="about-copy"><h2>Learn it. Question it.<br />Make it useful.</h2><p>Billion Codes brings software learning and practical development support into one place. The aim is straightforward: help people understand what they build and connect their skills to real problems.</p><p>Founder Josiah Adeyemo describes his approach as pragmatic: software should be useful to people and understandable to the teams who maintain it. That is the starting point for this school.</p><p>This launch is deliberately small. You can read original free introductions, check your understanding, apply for training and enquire about software or mentorship. A larger course platform and community will come later.</p><a className="text-link" href="https://github.com/billioncodes001" target="_blank" rel="noreferrer">Explore Josiah's public GitHub <Arrow /><span className="sr-only"> (opens in a new tab)</span></a></div></div><section className="contact-panel" id="contact"><div><p className="eyebrow">LET'S TALK</p><h2>A question before<br />your next step?</h2><p>Email Josiah for launch, training or software enquiries.<br />Please do not send confidential information.</p></div><div><a className="contact-email" href="mailto:jhardeyemor@gmail.com">jhardeyemor@gmail.com <Arrow /></a><div className="contact-actions"><a href="#/training">Training application</a><a href="#/services">Project enquiry</a><a href="#/policies">Privacy & launch terms</a></div></div></section></div>;
+  return <div className="wrap page-section about-page"><div className="page-heading"><p className="eyebrow">THE THINKING BEHIND BILLION CODES</p><h1>Useful skills.<br />Thoughtful software.<br /><span className="ink-muted">People who keep learning.</span></h1></div><div className="about-layout"><div className="founder-panel"><span className="eyebrow">FOUNDER'S NOTE</span><img className="founder-portrait" src="/images/founder.webp" alt="Josiah Adeyemo" loading="lazy" width="720" height="900" /><h2>Josiah Adeyemo</h2><p>Founder, Billion Codes</p><a href="https://www.linkedin.com/in/josiah-adeyemo/" target="_blank" rel="noreferrer">Public LinkedIn profile <Arrow /><span className="sr-only"> (opens in a new tab)</span></a></div><div className="about-copy"><h2>Learn it. Question it.<br />Make it useful.</h2><p>Billion Codes brings software learning and practical development support into one place. The aim is straightforward: help people understand what they build and connect their skills to real problems.</p><p>Founder Josiah Adeyemo describes his approach as pragmatic: software should be useful to people and understandable to the teams who maintain it. That is the starting point for this school.</p><p>This launch is deliberately small. You can read original free introductions, check your understanding, apply for training and enquire about software or mentorship. A larger course platform and community will come later.</p><a className="text-link" href="https://github.com/billioncodes001" target="_blank" rel="noreferrer">Explore Josiah's public GitHub <Arrow /><span className="sr-only"> (opens in a new tab)</span></a></div></div><section className="contact-panel" id="contact"><div><p className="eyebrow">LET'S TALK</p><h2>A question before<br />your next step?</h2><p>Email Josiah for launch, training or software enquiries.<br />Please do not send confidential information.</p></div><div><a className="contact-email" href="mailto:jhardeyemor@gmail.com">jhardeyemor@gmail.com <Arrow /></a><div className="contact-actions"><a href="#/training">Training application</a><a href="#/services">Project enquiry</a><a href="#/policies">Privacy & launch terms</a></div></div></section></div>;
 }
 
 function Policies() {
-  return <div className="wrap page-section policy-page"><div className="page-heading"><p className="eyebrow">PLAIN-LANGUAGE LAUNCH NOTES</p><h1>Clear expectations.<br /><span className="ink-muted">From the start.</span></h1><p>Applies to the Billion Codes introductory launch website. Contact Josiah at <a href="mailto:jhardeyemor@gmail.com">jhardeyemor@gmail.com</a> with a privacy or service question.</p></div><div className="policy-grid"><aside><a href="#privacy" onClick={event => { event.preventDefault(); document.getElementById('privacy')?.scrollIntoView(); }}>Privacy notice</a><a href="#launch-terms" onClick={event => { event.preventDefault(); document.getElementById('launch-terms')?.scrollIntoView(); }}>Launch terms</a><a href="#learning-notes" onClick={event => { event.preventDefault(); document.getElementById('learning-notes')?.scrollIntoView(); }}>Learning & progress</a></aside><div className="policy-copy"><section id="privacy"><p className="eyebrow">01 / PRIVACY NOTICE</p><h2>Your enquiry, your context.</h2><h3>What you choose to send</h3><p>The forms collect your name, email, optional phone number and the learning or project details you enter. The project form also accepts an optional preferred target date. Permission to store and review the enquiry is required to send it.</p><h3>Why it is stored</h3><p>Submitted details are stored so Billion Codes can review and respond to your enquiry. This permission is not marketing consent. Accepted records are accessible through a protected administration service, not a public list.</p><h3>Drafts and browser storage</h3><p>Unsent drafts remain in memory in this browser tab, including after a failed request or navigation within the site. Reloading or closing the page clears the unsent draft. Lesson progress uses this device's browser storage only; it is not sent as an account record or synced between devices.</p><h3>Requests and retention</h3><p>To ask about, correct or request deletion of an enquiry, email Josiah and include your submission reference if you have one. A fixed automatic retention period has not been published for this launch. Do not submit information you are uncomfortable having stored for enquiry review; you can ask about handling by email first.</p><h3>Keep private material out</h3><p>Do not send passwords, payment information, confidential customer data or proprietary code through the forms or email fallback. There are no attachment uploads at launch. Hosting and security services may process technical request information needed to serve the site and limit abuse.</p></section><section id="launch-terms"><p className="eyebrow">02 / LAUNCH TERMS</p><h2>An introduction, not a promise.</h2><p>The free introductions can be read without an account or payment. Paid products, checkout, learner accounts, referral rewards and community discussions are not active. There is no purchase or paid access to refund through this launch website.</p><p>A training application is an expression of interest, not an enrolment, reserved seat or confirmed booking. Training fees, schedules, venue and availability must be confirmed separately.</p><p>A software or mentorship enquiry is not an accepted project, contract, delivery commitment or quotation. Scope, ownership, fees and any later payment or cancellation terms must be agreed before paid work begins.</p><p>Mentorship and code review support learning and the applicant's own work. They are not offers to impersonate a student or produce undisclosed assessed work.</p></section><section id="learning-notes"><p className="eyebrow">03 / LEARNING & PROGRESS</p><h2>Practice without the pressure.</h2><p>These are short text introductions, not a complete professional curriculum or accredited qualification. A fixed-answer knowledge check helps you reflect on one concept. The browser does not evaluate or execute learner code.</p><p>“Marked as read” is your own device-only record. It is not verified assessment, proof of attendance, certification or a guarantee of employment. Use the reset control in each introduction to remove its saved progress, or clear the site's browser data.</p><p>The live catalogue requires a working connection. If the request fails, the page explains the failure and offers a retry. The separately labelled built-in HTML primer is bundled with the page, but this website does not promise offline installation or offline page reloads.</p></section></div></div></div>;
+  return <div className="wrap page-section policy-page"><div className="page-heading"><p className="eyebrow">PLAIN-LANGUAGE LAUNCH NOTES</p><h1>Clear expectations.<br /><span className="ink-muted">From the start.</span></h1><p>Applies to the Billion Codes introductory launch website. Contact Josiah at <a href="mailto:jhardeyemor@gmail.com">jhardeyemor@gmail.com</a> with a privacy or service question.</p></div><div className="policy-grid"><aside><a href="#privacy" onClick={event => { event.preventDefault(); document.getElementById('privacy')?.scrollIntoView(); }}>Privacy notice</a><a href="#launch-terms" onClick={event => { event.preventDefault(); document.getElementById('launch-terms')?.scrollIntoView(); }}>Launch terms</a><a href="#learning-notes" onClick={event => { event.preventDefault(); document.getElementById('learning-notes')?.scrollIntoView(); }}>Learning & progress</a></aside><div className="policy-copy"><section id="privacy"><p className="eyebrow">01 / PRIVACY NOTICE</p><h2>Your enquiry, your context.</h2><h3>What you choose to send</h3><p>The forms collect your name, email, optional phone number and the learning or project details you enter. The project form also accepts an optional preferred target date. Permission to store and review the enquiry is required to send it.</p><h3>Why it is stored</h3><p>Submitted details are stored so Billion Codes can review and respond to your enquiry. This permission is not marketing consent. Accepted records are accessible through a protected administration service, not a public list.</p><h3>Drafts and browser storage</h3><p>Unsent drafts remain in memory in this browser tab, including after a failed request or navigation within the site. Reloading or closing the page clears the unsent draft. Lesson progress, code drafts and completed exercises use this device's browser storage only; they are not sent as account records or automatically synced. The learning desk offers local export/import and reset controls. Do not enter secrets in practice code. Optional offline downloads contain only public learning content and app files.</p><h3>Requests and retention</h3><p>To ask about, correct or request deletion of an enquiry, email Josiah and include your submission reference if you have one. A fixed automatic retention period has not been published for this launch. Do not submit information you are uncomfortable having stored for enquiry review; you can ask about handling by email first.</p><h3>Keep private material out</h3><p>Do not send passwords, payment information, confidential customer data or proprietary code through the forms or email fallback. There are no attachment uploads at launch. Hosting and security services may process technical request information needed to serve the site and limit abuse.</p></section><section id="launch-terms"><p className="eyebrow">02 / LAUNCH TERMS</p><h2>An introduction, not a promise.</h2><p>The free introductions can be read without an account or payment. Paid products, checkout, learner accounts, referral rewards and community discussions are not active. There is no purchase or paid access to refund through this launch website.</p><p>A training application is an expression of interest, not an enrolment, reserved seat or confirmed booking. Training fees, schedules, venue and availability must be confirmed separately.</p><p>A software or mentorship enquiry is not an accepted project, contract, delivery commitment or quotation. Scope, ownership, fees and any later payment or cancellation terms must be agreed before paid work begins.</p><p>Mentorship and code review support learning and the applicant's own work. They are not offers to impersonate a student or produce undisclosed assessed work.</p></section><section id="learning-notes"><p className="eyebrow">03 / LEARNING & PROGRESS</p><h2>Practice without the pressure.</h2><p>These are short text introductions, not a complete professional curriculum or accredited qualification. Fixed-answer checks and a bounded HTML practice lab help you reflect on what you have learned. HTML is parsed to check specific structural goals; learner JavaScript is never executed. The inert preview removes scripts, styles, links and form actions.</p><p>“Marked as read” is your own device-only record. It is not verified assessment, proof of attendance, certification or a guarantee of employment. Use the reset control in each introduction to remove its saved progress, or clear the site's browser data.</p><p>The live catalogue requires a connection. The learning desk lets you explicitly save a dated public catalogue and install public app files for offline reading. Offline content is a saved snapshot, not a live response. Your browser may remove cached files when storage is low. Private admin pages and enquiry requests are never stored by the offline worker.</p></section></div></div></div>;
 }
 
 function Footer() {
-  return <footer className="site-footer"><div className="wrap"><div className="footer-top"><a className="brand footer-brand" href="#/"><span className="brand-mark"><CodeMark /></span><span>Billion Codes.</span></a><p>Learn to code. Build real projects.<br />Get expert help.</p><a href="mailto:jhardeyemor@gmail.com" className="footer-email">Say hello <Arrow /></a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Billion Codes</span><nav aria-label="Footer navigation"><a href="#/about">About & contact</a><a href="#/policies">Privacy & launch terms</a><a href="#/courses">Free introductions</a></nav><span>Built for the next line.</span></div></div></footer>;
+  return <footer className="site-footer"><div className="wrap"><div className="footer-top"><a className="brand footer-brand" href="#/"><Brand /></a><p>Learn to code. Build real projects.<br />Get expert help.</p><a href="mailto:jhardeyemor@gmail.com" className="footer-email">Say hello <Arrow /></a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Billion Codes</span><nav aria-label="Footer navigation"><a href="#/about">About & contact</a><a href="#/policies">Privacy & launch terms</a><a href="#/courses">Free introductions</a><a href="#/workspace">Learning desk</a><a href="#/credits">Photo credits</a></nav><span>Built for the next line.</span></div></div></footer>;
 }
 
 function App() {
@@ -169,21 +146,24 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
   const firstRoute = useRef(true);
   useEffect(() => {
-    const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms' };
-    document.title = `Billion Codes | ${titles[route] ?? (route.startsWith('/learn/') ? 'Free lesson' : 'Page not found')}`;
+    const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms', '/practice': 'The practice lab', '/workspace': 'Your learning desk', '/credits': 'Photo credits' };
+    document.title = `Billion Codes | ${titles[route] ?? (route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
     window.scrollTo(0, 0);
     if (firstRoute.current) firstRoute.current = false; else mainRef.current?.focus({ preventScroll: true });
   }, [route]);
   let page;
-  if (route === '/') page = <Home />;
+  if (route === '/') page = <HomePage />;
   else if (route === '/courses') page = <Courses data={data} />;
+  else if (route === '/practice' || route.startsWith('/practice/')) page = <PracticeLab key={route} id={route === '/practice' ? undefined : route.slice(10)} />;
+  else if (route === '/workspace') page = <Workspace data={data} />;
+  else if (route === '/credits') page = <Credits />;
   else if (route === '/training') page = <Training />;
   else if (route === '/services') page = <Services />;
   else if (route === '/about' || route === '/contact') page = <About />;
   else if (route === '/policies') page = <Policies />;
   else if (route.startsWith('/learn/')) { let id = ''; try { id = decodeURIComponent(route.slice(7)); } catch { /* Invalid encoded route is handled as not found. */ } page = <Learn id={id} data={data} />; }
   else page = <div className="wrap page-section empty-state"><p className="eyebrow">404 / A DIFFERENT PATH</p><h1>This page is not here.</h1><p>Head back to the learning desk to find your next step.</p><a className="button button-dark" href="#/courses">Explore the introductions <Arrow /></a></div>;
-  return <><Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>{page}</main><Footer /></>;
+  return <><Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>{page}<SaveStatus /></main><Footer /></>;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

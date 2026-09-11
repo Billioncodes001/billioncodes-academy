@@ -6,9 +6,9 @@ An honest, public launch for learning and software enquiries. React + Vite + Typ
 
 ## Scope
 
-- Editorial, responsive public school site with locally hosted Space Grotesk, DM Sans and IBM Plex Mono fonts. No external font or image request is required.
-- Original built-in HTML primer: two authored text lessons and one deterministic multiple-choice practice activity. No learner code evaluation or HTML injection.
-- Live catalogue and text lesson reader using `GET /api/v1/catalog`. Failure and malformed responses show an explanation and an explicit retry. No fallback response is fabricated. The independently labelled built-in primer is bundled source content, not a cached server catalogue. Offline page reload/installation is not promised.
+- Editorial, responsive public school site with locally hosted Bricolage Grotesque, DM Sans and IBM Plex Mono fonts. No external font or image request is required.
+- Original built-in HTML primer: two authored text lessons and one deterministic multiple-choice practice activity. Four additional practice builds use bounded HTML parsing and inert sandboxed previews, never learner JavaScript execution.
+- Live catalogue and text lesson reader using `GET /api/v1/catalog`. Failure and malformed responses show an explanation and an explicit retry. No fallback response is fabricated. The independently labelled built-in primer is bundled source content, not a cached server catalogue. Optional offline installation caches the public app shell and built-in exercises; the live text catalogue is saved only by an explicit action, with its download date shown.
 - Search and level filter derive their values from the actual API catalogue. Course bodies are rendered as text; source examples preserve line breaks and wrap on phones.
 - Training applications and business software / mentorship / code-review enquiries use the agreed v1 contracts. Success requires a confirmed response, not an optimistic placeholder.
 - About, verified public contact, and plain-language privacy/launch terms. Dates, prices, locations, response times, testimonials and statistics are not invented.
@@ -54,7 +54,7 @@ npm run test:frontend
 
 Drafts stay in JavaScript memory across in-site navigation. They survive recoverable form errors, but not a page reload or closed tab. Personal form values are never put in localStorage/sessionStorage. Identical retries preserve the UUID Idempotency-Key; any field edit rotates it for the next request. Optional empty fields are omitted. Controls are disabled during submission, and errors link to labelled fields.
 
-Reading progress alone uses localStorage, keyed by course ID and a frontend version. The UI explicitly says device-only, no sync, assessment or certificate. It supports reset and catches unavailable browser storage.
+Reading records, practice drafts and validated completed solutions use versioned device-local storage. Old reading keys migrate to the new shared workspace. Explicit export/import, confirmed reset and separately saved public catalogue controls live at `/#/workspace`. The UI explicitly says device-only, no account sync, qualification or certificate. It supports reset and catches unavailable browser storage.
 
 Launch privacy text accurately discloses that a fixed automatic retention period has not yet been published. The operator still needs to choose and implement the production retention policy with the backend; do not silently claim a deletion schedule. Consent is for storing/reviewing/responding to this enquiry, not marketing. Both forms warn against confidential material and offer the verified `mailto:jhardeyemor@gmail.com` fallback.
 
@@ -66,10 +66,12 @@ Launch privacy text accurately discloses that a fixed automatic retention period
 - `src/intro.ts`: independently labelled authored HTML primer.
 - `src/styles.css`: responsive visual system, focus states, reduced motion and print styles.
 - `tests/frontend/`: configuration, browser checks and verified screenshots.
-- `public/favicon.svg`: original code-mark favicon. No external imagery is required.
+- `public/brand/`, `public/images/`, `src/brand.css`: original monogram/illustrations, self-hosted licensed photographs and editorial design. Source credits are in `docs/BRAND.md`.
+- `packages/learning/`, `src/PracticeLab.tsx`, `src/Workspace.tsx`, `src/learningStore.ts`: shared grading, safe previews, practice and learning records.
+- `public/sw.js`, `scripts/build-offline.mjs`: versioned public-only offline cache; API/admin/POST responses excluded.
 - `public/_headers`: production static-asset CSP restricted to self-hosted scripts, styles, fonts, images and API connections, with no inline-script/eval exception. API/admin responses retain their separate Worker policies. Self-hosted font licenses are in `public/font-licenses/`.
 
-Hash routes keep the launch compatible with static assets: `/#/courses`, `/#/learn/first-web-page`, `/#/training`, `/#/services`, `/#/about`, `/#/policies`. Unknown paths inside the app display an explicit not-found state. Page title, focus and scroll position update after navigation.
+Hash routes keep the launch compatible with static assets: `/#/courses`, `/#/learn/first-web-page`, `/#/training`, `/#/services`, `/#/about`, `/#/policies`, `/#/practice`, `/#/workspace`, `/#/credits`. Unknown paths inside the app display an explicit not-found state. Page title, focus and scroll position update after navigation.
 
 ## Screenshots
 
@@ -80,6 +82,6 @@ Hash routes keep the launch compatible with static assets: `/#/courses`, `/#/lea
 
 These are actual browser captures of the implemented page, not concept mockups. The homepage uses no invented API data. They can be used for the public repository's project preview after the parent finishes repository/deployment setup.
 
-## Verified handoff
+## Verification
 
-11 September 2026: production build and strict TypeScript check pass. The frontend suite passes 28/28 tests using installed Chrome at 1440 and 390 pixels, including the two real Worker/D1 browser integration tests. The finalized backend suite passes 30/30 tests. The separate local Cloudflare asset test also passes: the real static response has the intended CSP, and eight public routes render without CSP violations, external asset requests or page errors. Public-page axe WCAG A/AA scans report no violations in the checked states, and every checked route stays within the viewport. Automated checks do not replace a complete assistive-technology audit. Four final screenshots were regenerated after the last visual adjustment.
+The redesigned release is checked with a strict production build, shared learning unit tests, 38 Worker/D1 backend tests, the protected admin browser test, and desktop/mobile browser flows. The integration bridge applies the production CSP and verifies offline reloads, functional exercises and private-cache exclusion. Additional layout checks cover 320, 768 and 1024 pixels. Automated accessibility scans audit application UI, not arbitrary learner-authored sandbox contents, and do not replace assistive-technology testing. CI reruns the suite for each revision.

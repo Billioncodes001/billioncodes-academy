@@ -1,22 +1,9 @@
-# Future mobile starter: planning only
+# Native Mobile Sidecar
 
-This directory is a handoff template, not an installed or compiled mobile app. No Expo dependencies, native project, account system, paid entitlement or progress sync are included in this launch.
+The planning-only starter has been replaced by a real Expo / React Native app in [`mobile/`](../../mobile/README.md). This directory remains only as a handoff pointer; it is not imported into the website build.
 
-## Reuse
+The app contains a learning desk, bundled HTML primer, live catalog text lessons, four shared HTML practice editors, device-local progress and explicitly downloaded catalog snapshots. Training and privacy links open the public website in the system browser. There is no WebView, learner-script execution, native enquiry POST, account, payment or cloud progress sync.
 
-1. Fetch the real production catalogue from `GET /api/v1/catalog` over HTTPS. Reuse its stable course and lesson IDs and `body: string[]` text. Never render lesson strings as HTML or execute code from them.
-2. Start with catalogue, text reader and deterministic multiple-choice practice screens. Respect loading, empty, error and retry states. Do not substitute local sample data for failed API requests.
-3. If native local reading progress is added, make its device-only nature explicit. Do not claim the web browser's localStorage will transfer or sync. Add a clear-progress control.
-4. If enquiries are included, follow `api-contract.json`: explicit consent, no attachments, exact field names/enums, UUID idempotency keys retained for unchanged retries, and a new key after edits. Do not embed admin tokens or other secrets.
-5. Use the shared versioned API and backend database, not a second mobile backend. Authentication, synced learning records, paid access and push notifications need separate contracts and product decisions before implementation.
+The app has its own package and lockfile, using `@billioncodes/learning` from `file:../packages/learning`. Shared behavior is specified in [`docs/LEARNING-CONTRACT.md`](../../docs/LEARNING-CONTRACT.md). Follow the mobile README for installation, Expo checks, exports, browser tests and storage details.
 
-## Screen template
-
-| Screen | Source | Required states |
-| --- | --- | --- |
-| Learning desk | `/api/v1/catalog` | Loading, empty, ready, error with retry |
-| Text introduction | Selected course and its lessons | Reading, optional device-only progress, clear progress |
-| Practice | Reviewed fixed answer content | Unanswered, correct, explanation with retry |
-| Enquiry | Existing v1 POST contract | Draft, validation, submitting, unconfirmed failure, real accepted receipt |
-
-Native UI, platform accessibility, device testing, app-store distribution, data handling and offline downloads are all future work. Do not add an Expo build to the urgent web release pipeline.
+Android/iOS JavaScript/Hermes exports are not signed binaries or evidence of device verification. No EAS project, paid service or store submission has been created. See [`mobile/evidence/VERIFICATION.md`](../../mobile/evidence/VERIFICATION.md) for exact results and remaining native release checks.

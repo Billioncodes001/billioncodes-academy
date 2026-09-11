@@ -41,6 +41,12 @@ test('home is responsive, accessible and has real preview screenshots', async ({
   await page.evaluate(() => document.fonts.ready);
   await noOverflow(page);
   await accessible(page);
+  for (const image of await page.locator('main img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toHaveJSProperty('complete', true);
+    await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
+  await page.evaluate(() => scrollTo(0, 0));
   await mkdir(artifacts, { recursive: true });
   await page.screenshot({ path: `${artifacts}/${testInfo.project.name}-hero.png`, animations: 'disabled' });
   await page.screenshot({ path: `${artifacts}/${testInfo.project.name}-full.png`, fullPage: true, animations: 'disabled' });
@@ -180,6 +186,7 @@ test('practice is deterministic and device-only progress persists and resets', a
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await expect(page.locator('.practice-feedback')).toContainText('Exactly.');
   await page.getByRole('button', { name: 'Mark as read on this device' }).click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('billioncodes:workspace:v1') || '{}').read?.['first-web-page']?.length)).toBe(1);
   await page.reload();
   await expect(page.getByRole('button', { name: 'Marked as read · undo' })).toBeVisible();
   await expect(page.getByText('Device-only progress.', { exact: false })).toBeVisible();

@@ -11,7 +11,8 @@ let server: Server;
 let app: Awaited<ReturnType<typeof createHarness>>;
 let origin: string;
 const dist = fileURLToPath(new URL('../../dist/', import.meta.url));
-const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png' };
+const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.png': 'image/png', '.webp': 'image/webp', '.json': 'application/json', '.webmanifest': 'application/manifest+json' };
+const securityHeaders = Object.fromEntries((await readFile(new URL('../../public/_headers', import.meta.url), 'utf8')).split('\n').filter(line => /^\s+[^:]+:/.test(line)).map(line => { const index = line.indexOf(':'); return [line.slice(0, index).trim(), line.slice(index + 1).trim()]; }));
 
 test.beforeAll(async () => {
   // A loopback-only transport bridge serves the real production build and forwards
@@ -35,7 +36,7 @@ test.beforeAll(async () => {
       const target = resolve(dist, url.pathname === '/' ? 'index.html' : `.${decodeURIComponent(url.pathname)}`);
       if (!target.startsWith(resolve(dist) + sep)) { response.writeHead(403); response.end(); return; }
       const data = await readFile(target);
-      response.writeHead(200, { 'Content-Type': types[extname(target)] || 'application/octet-stream' });
+      response.writeHead(200, { ...securityHeaders, 'Content-Type': types[extname(target)] || 'application/octet-stream' });
       response.end(data);
     } catch (error) { response.writeHead(500); response.end(error instanceof Error ? error.message : 'Local test server error'); }
   });
@@ -100,4 +101,38 @@ test('production frontend submits both forms to real Worker/D1 and isolates thei
   expect((await app.db.prepare('SELECT COUNT(*) AS count FROM submissions').first()).count).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(pageErrors).toEqual([]);
+});
+
+test('production offline app works without caching APIs, admin or form drafts', async ({ page, context }) => {
+  await page.goto(`${origin}/#/workspace`);
+  await page.getByRole('button', { name: 'Save current catalogue' }).click();
+  await page.getByRole('button', { name: 'Enable offline reading' }).click();
+  await expect(page.getByText('The app shell and built-in exercises are ready offline.', { exact: false })).toBeVisible({ timeout: 20000 });
+  await page.goto(`${origin}/#/training`);
+  await page.getByLabel('Full name').fill('Never cache this private draft');
+  await context.setOffline(true);
+  await page.goto(`${origin}/#/workspace`);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'A little progress. A little more possibility.' })).toBeVisible();
+  await page.goto(`${origin}/#/courses`);
+  await expect(page.getByText('Reading your saved catalogue', { exact: false })).toBeVisible();
+  await page.goto(`${origin}/#/practice/profile-card`);
+  await page.getByLabel('Your HTML').fill('<main><h1>Works offline</h1><p>Meaningful HTML from anywhere.</p></main>');
+  await page.getByRole('button', { name: 'Check my build' }).click();
+  await expect(page.getByRole('heading', { name: 'You made it work.' })).toBeVisible();
+  await expect(page.frameLocator('iframe').getByRole('heading', { name: 'Works offline' })).toBeVisible();
+  const cached = await page.evaluate(async () => {
+    const entries = [];
+    for (const name of await caches.keys()) for (const request of await (await caches.open(name)).keys()) entries.push(new URL(request.url).pathname);
+    return entries;
+  });
+  expect(cached.length).toBeGreaterThan(5);
+  expect(cached.some(path => /admin|api\//i.test(path))).toBe(false);
+  expect(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain('Never cache this private draft');
+  expect(await page.evaluate(async () => { try { await fetch('/api/v1/admin/submissions'); return 'unexpected cache'; } catch { return 'offline'; } })).toBe('offline');
+  await context.setOffline(false);
+  await page.goto(`${origin}/#/workspace`);
+  await page.getByRole('button', { name: 'Remove offline app files' }).click();
+  await expect(page.getByText('Offline app files removed.', { exact: false })).toBeVisible();
+  expect(await page.evaluate(() => caches.keys())).toEqual([]);
 });

@@ -1,6 +1,5 @@
-export type Lesson = { id: string; title: string; body: string[] };
-export type Course = { id: string; title: string; level: string; format: string; summary: string; lessons: Lesson[] };
-export type Catalog = { courses: Course[]; training: { status: string }; payments: { enabled: boolean } };
+import { parseCatalog, type Catalog } from '@billioncodes/learning';
+export type { Lesson, Course, Catalog } from '@billioncodes/learning';
 
 export class ApiError extends Error {
   fields: Record<string, string>;
@@ -16,7 +15,11 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   try {
     const response = await fetch(path, { ...init, signal: controller.signal, headers: { Accept: 'application/json', ...init.headers } });
     let body;
-    try { body = await response.json(); } catch { throw new ApiError('The service returned an unreadable response. Please try again.'); }
+    try {
+      const content = await response.text();
+      if (content.length > 510000) throw new Error('Response is too large');
+      body = JSON.parse(content);
+    } catch { throw new ApiError('The service returned an unreadable response. Please try again.'); }
     if (!response.ok) throw new ApiError(body.error || 'The request could not be completed. Please try again.', body.fields);
     return body as T;
   } catch (error) {
@@ -26,10 +29,5 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
 }
 
 export function isCatalog(value: unknown): value is Catalog {
-  if (!value || typeof value !== 'object') return false;
-  const data = value as Catalog;
-  return Array.isArray(data.courses) && data.courses.every(course =>
-    course && ['id', 'title', 'level', 'format', 'summary'].every(key => typeof course[key as keyof Course] === 'string') &&
-    Array.isArray(course.lessons) && course.lessons.every(lesson => lesson && typeof lesson.id === 'string' && typeof lesson.title === 'string' && Array.isArray(lesson.body) && lesson.body.every(line => typeof line === 'string'))
-  ) && typeof data.training?.status === 'string' && typeof data.payments?.enabled === 'boolean';
+  return parseCatalog(value) !== null;
 }

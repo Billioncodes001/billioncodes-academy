@@ -12,3 +12,10 @@ tests/frontend/results/
 coverage/
 *.log
 .DS_Store
+.asset-sources/
+.sites-runtime/
+mobile/.expo/
+mobile/dist/
+mobile/.env*
+mobile/android/
+mobile/ios/
