@@ -2,7 +2,7 @@
 
 ## Journeys
 
-One Firebase Google identity, two separate spaces:
+One verified Firebase identity (Google or email/password), two separate spaces:
 
 - `/#/library`: published free-course enrolments and account-backed lesson marks.
 - `/#/training-dashboard`: intake applications, draft/submitted/review/offer states.
@@ -20,11 +20,13 @@ Q1 and Q4 are the owner's proposed two annual windows, not a claimed competitor 
 
 Project: `billion-codes-academy`. Web application: Billion Codes Web.
 
-Google provider enabled; public name Billion Codes Academy; existing owner support email. Spark/no-cost plan; Analytics and optional Gemini were not selected during creation. No Firebase Storage, Firestore, paid phone authentication, service-account private keys or billing upgrade is needed for this implementation.
+Google and Email/Password providers enabled; public name Billion Codes Academy; existing owner support email. Spark/no-cost plan; Analytics and optional Gemini were not selected during creation. No Firebase Storage, Firestore, paid phone authentication, service-account private keys or billing upgrade is needed for this implementation.
 
 Authorized production domains: `learnatbillioncodes.com`, `www.learnatbillioncodes.com`. Default Firebase handler domains and `localhost` are also present. The Firebase web API key in Wrangler is public client configuration, not an administrator credential. Restrict any future extra API keys to required APIs; never reuse this key for unrelated billable Google services.
 
-[Google sign-in setup](https://firebase.google.com/docs/auth/web/google-signin) and [server ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens) are the source contracts. The Worker uses `jose` to check RS256 signature, issuer, audience, expiry, issue/authentication times and verified Google provider. A fixed Firebase `accounts:lookup` request additionally checks the current account and revocation time. No token, refresh token, password or profile image is written to D1.
+[Google sign-in setup](https://firebase.google.com/docs/auth/web/google-signin), [email/password authentication](https://firebase.google.com/docs/auth/web/password-auth) and [server ID-token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens) are the source contracts. The Worker uses `jose` to check RS256 signature, issuer, audience, expiry, issue/authentication times and an allowlist of `google.com`/`password` providers. Both require verified email. A fixed Firebase `accounts:lookup` request additionally checks the current account and revocation time. No token, refresh token, password or profile image is written to D1.
+
+The email portal provides sign-up with name, email, password confirmation and consent; email sign-in; password visibility; verification/resend/check instructions; and a privacy-preserving forgot-password confirmation. Firebase enforces a 12-character minimum and 128-character maximum for new passwords, without forced upgrades of existing sign-ins. Credentials go directly to Firebase's SDK, never through Academy form APIs. Unverified identities cannot create Academy profiles or access learner data. The 60-second resend timer is UX feedback, not an abuse boundary; Firebase's own provider quotas also apply. Verification and reset links use Firebase's hosted action handler, with a fixed return URL to the Academy account page. Password changes are entered only in the trusted Firebase flow, not collected by Academy. See [Firebase user-management documentation](https://firebase.google.com/docs/auth/web/manage-users). No custom SMTP server or paid email service is required.
 
 The frontend keeps Firebase authentication in memory. Reloading or closing the page ends local sign-in. Account-backed learning persists in D1. Device-only practice drafts remain separate and are never imported without consent. API responses and protected file downloads use `no-store`; public service-worker caches exclude APIs.
 
@@ -39,6 +41,8 @@ Private R2 Standard bucket: `billioncodes-academy-courses`, binding `COURSE_FILE
 Cloudflare Stream is **not activated or purchased by this release**. [Stream pricing](https://developers.cloudflare.com/stream/pricing/) is $5 per 1,000 stored minutes (capacity increments), plus $1 per 1,000 delivered minutes. Use official external course links first. To publish owned/licensed recordings later, configure the narrowly scoped `STREAM_API_TOKEN` secret and `STREAM_ACCOUNT_ID`, upload through the Stream dashboard, require signed URLs, then register the processed video UID in the publishing API. Token issuance checks course ownership and expires after five minutes. This is access control, not a guarantee against recording/copying.
 
 No new email administration permission was needed after choosing Firebase Google authentication.
+
+The email/password follow-up enables Firebase's built-in email workflow without SMTP or Cloudflare Email Sending. Live SDK checks confirmed the 12-128 character policy, generic invalid-credential errors and an enumeration-safe reset response for a nonexistent test identity. No real inbox receipt or completed password-reset link was tested. On 11 September 2026, Firebase rejected a verification-template customization attempt with "Email template updates are currently unavailable for this project"; the default sender (`noreply@billion-codes-academy.firebaseapp.com`), default templates and Firebase action handler remain in place. No password on the owner's existing Google account was created or changed.
 
 ## Publishing API
 

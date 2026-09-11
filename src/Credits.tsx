@@ -7,6 +7,6 @@ export function Credits() {
   return <div className="wrap page-section">
     <div className="page-heading"><p className="eyebrow">BEHIND THE VISUALS</p><h1>Imagined with purpose.<br />Made for Billion Codes.</h1><p>Our learning scenes are AI-generated illustrations, created for this site. The people and settings are fictional, not actual students, staff, events or testimonials.</p></div>
     <div className="credits-grid">{photos.map(photo => <article key={photo.image}><img src={`/images/${photo.image}.webp`} alt={photo.alt} width="600" height="400" loading="lazy" /><h2>{photo.name}</h2><p>{photo.description}</p><span className="eyebrow">AI-GENERATED SCENE</span></article>)}</div>
-    <div className="catalog-tail"><p>The founder portrait is a real, owner-provided photograph of Josiah Adeyemo and has not been replaced by AI. Billion Codes branding and course illustrations are original vector designs.</p></div>
+    <div className="catalog-tail"><p>The founder portrait is a real, owner-provided photograph of Josiah Adeyemo and has not been replaced by AI. The blue-and-white Billion Codes logo is the company's existing logo, sourced from its <a href="https://vc4a.com/ventures/billioncodes-software-inc/" target="_blank" rel="noopener noreferrer">published company profile</a> at the owner's request. It is not AI-generated. Course illustrations are original vector designs.</p></div>
   </div>;
 }

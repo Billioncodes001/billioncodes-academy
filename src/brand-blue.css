@@ -1,0 +1,99 @@
+:root {
+  --ink: #092f46;
+  --muted: #526577;
+  --paper: #ffffff;
+  --white: #ffffff;
+  --lime: #dcedfa;
+  --line: #d7e5ef;
+  --coral: #176fa8;
+  --brand-blue: #116aa4;
+  --brand-sky: #edf6fc;
+}
+.bc-brand { gap: 14px; }
+.bc-brand img { width: 82px; height: 82px; object-fit: contain; background: white; border-radius: 4px; }
+.bc-brand .bc-brand-academy { font: 600 .75rem/1.45 var(--mono); letter-spacing: .04em; text-transform: uppercase; border-left: 1px solid var(--line); padding-left: 14px; }
+.bc-brand-dot, .brand-period, .bc-hero h1 > span { color: var(--brand-blue); }
+.button-dark, .main-nav .nav-apply { background: var(--brand-blue); color: white; }
+.button-dark:hover, .main-nav .nav-apply:hover { background: #084d7b; color: white; }
+.button-lime { background: #e0f1fc; color: var(--ink); }
+.button-lime:hover { background: #bfdef3; }
+.bc-kicker > span { background: var(--brand-blue); box-shadow: 0 0 0 4px #116aa414; }
+.check-disc, .build-card-icon, .js-mark, .first-win-output, .founder-real, .badge-paper { background: var(--brand-sky); color: var(--ink); border-color: var(--line); }
+.bc-hero-visual::before, .bc-course-card, .hero-build-card { border-color: var(--line); }
+.hero-photo-frame { background: var(--brand-sky); }
+.first-win { box-shadow: 8px 8px 0 #d8e9f5; }
+.site-footer { background: #f0f7fc; }
+.bc-experience, .bc-finale { background: #092f46; }
+.bc-experience p, .bc-finale p, .bc-brand-light { color: #e5f3ff; }
+.bc-experience::before { border-color: #32658b; box-shadow: 0 0 0 40px #103e5d, 0 0 0 41px #32658b; }
+.platform-panel, .portal-card, .portal-reader article { background: white; border-color: var(--line); }
+.portal-card:nth-child(3n+2), .portal-tag, .platform-notice { background: var(--brand-sky); }
+.platform-notice { border-left-color: var(--brand-blue); }
+.portal-card progress { accent-color: var(--brand-blue); }
+.portal-reader li button[aria-current=step] { background: var(--brand-blue); }
+.platform-form input:not([type=checkbox]), .platform-form select, .platform-form textarea, .portal-search input { border-color: #93aec1; }
+.platform-check input { accent-color: var(--brand-blue); }
+
+.account-page { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 64px; align-items: start; padding-block: 44px 80px; }
+.account-intro { background: linear-gradient(150deg, #f0f8ff, #ffffff 72%); border-left: 3px solid #4197c2; padding: 32px 32px 38px; }
+.account-official-logo { width: 140px; height: 140px; object-fit: contain; display: block; margin-bottom: 24px; }
+.account-intro .eyebrow { font-size: .75rem; margin-bottom: 18px; color: var(--brand-blue); }
+.account-intro h1 { font-size: clamp(2.6rem, 4vw, 3.9rem); line-height: 1.06; letter-spacing: -.045em; margin-bottom: 22px; }
+.account-intro > p:not(.eyebrow) { font-size: 1.0625rem; max-width: 32ch; }
+.account-paths { grid-template-columns: 1fr; gap: 22px; margin: 32px 0; }
+.account-paths > div { padding-top: 18px; border-top: 1px solid var(--line); }
+.account-paths span { font-size: .75rem; color: var(--brand-blue); }
+.account-paths h2 { font-size: 1.25rem; margin: 6px 0 8px; }
+.account-paths p { font-size: .9375rem; color: var(--muted); }
+.account-intro > a { font-size: .875rem; }
+.signin-panel { border: 1px solid var(--line); border-top: 4px solid var(--brand-blue); box-shadow: 0 16px 48px #092f4610; border-radius: 12px; margin: 0; padding: 32px; min-width: 0; }
+.signin-panel h2 { font-size: 2rem; margin: 22px 0 12px; }
+.signin-panel p { line-height: 1.65; }
+.account-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: 8px; padding: 4px; background: #edf3f8; }
+.account-tabs button { min-height: 44px; border-radius: 5px; font-size: .9375rem; font-weight: 600; background: transparent; cursor: pointer; }
+.account-tabs button[aria-pressed=true] { color: #085283; background: white; box-shadow: 0 1px 5px #092f4614; }
+.account-form-description { margin-bottom: 24px; font-size: 1rem; }
+.signin-panel .platform-form { gap: 16px; }
+.signin-panel .platform-form label { font-size: .9375rem; }
+.signin-panel .platform-form input { min-height: 48px; border-radius: 6px; cursor: text; }
+.signin-panel .platform-check input { min-height: auto; width: 18px; height: 18px; cursor: pointer; }
+.signin-panel .platform-check { font-size: .875rem; font-weight: 400; }
+.password-control { display: flex; align-items: stretch; margin-top: -10px; border: 1px solid #93aec1; border-radius: 6px; }
+.password-control:focus-within { outline: 3px solid #2467d8; outline-offset: 3px; }
+.signin-panel .password-control input { border: 0; min-width: 0; outline: none; }
+.password-control button { flex: 0 0 62px; background: white; border-radius: 6px; cursor: pointer; color: #075584; font-size: .875rem; }
+.password-help { font-size: .875rem; margin-top: -6px; }
+.account-text-button { display: inline-block; padding: 10px 0; background: transparent; color: #075584; text-decoration: underline; text-underline-offset: 4px; font-size: .9375rem; text-align: left; cursor: pointer; min-height: 44px; }
+.forgot-link { justify-self: end; padding-top: 0; margin-top: -6px; }
+.signin-panel .button { justify-content: center; width: 100%; }
+.account-divider { display: flex; align-items: center; gap: 14px; margin: 24px 0 16px; color: var(--muted); font-size: .875rem; }
+.account-divider::before, .account-divider::after { content: ''; height: 1px; flex: 1; background: var(--line); }
+.signin-panel .google-button { border: 1px solid #93aec1; color: var(--ink); background: white; margin: 0; }
+.signin-panel .google-button:hover { background: var(--brand-sky); }
+.account-notice { margin-top: 18px; background: var(--brand-sky); border-left: 3px solid var(--brand-blue); padding: 14px; font-size: .9375rem; overflow-wrap: anywhere; }
+.signin-panel .platform-error { margin-top: 18px; font-size: .9375rem; }
+.signin-panel .account-security-note { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 18px; font-size: .875rem; }
+.account-support { margin-top: 14px; font-size: .875rem; }
+.verification-step { display: grid; gap: 16px; }
+.verification-step ol { padding-left: 22px; margin: 0; color: var(--muted); }
+.verification-step li { padding-block: 4px; }
+.signin-panel strong { overflow-wrap: anywhere; }
+@media (max-width: 950px) {
+  .account-page { gap: 28px; }
+  .account-intro, .signin-panel { padding: 26px; }
+}
+@media (max-width: 850px) {
+  .account-page { grid-template-columns: minmax(0, 1fr); padding-top: 24px; }
+  .signin-panel { order: -1; }
+  .account-intro h1 { font-size: 2.6rem; }
+  .account-paths { grid-template-columns: 1fr 1fr; }
+  .account-official-logo { width: 100px; height: 100px; }
+}
+@media (max-width: 450px) {
+  .bc-brand img { width: 68px; height: 68px; }
+  .bc-brand .bc-brand-academy { font-size: .75rem; }
+  .account-page { width: calc(100% - 32px); }
+  .signin-panel, .account-intro { padding: 22px; }
+  .account-paths { grid-template-columns: 1fr; }
+  .signin-panel h2 { font-size: 1.8rem; }
+}

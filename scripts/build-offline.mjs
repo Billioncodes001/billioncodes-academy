@@ -8,7 +8,7 @@ async function walk(path, prefix = '') {
   for (const entry of await readdir(path, { withFileTypes: true })) {
     const relative = `${prefix}/${entry.name}`;
     if (entry.isDirectory()) { if (['/assets', '/brand', '/images', '/font-licenses'].some(root => relative === root || relative.startsWith(root + '/'))) await walk(join(path, entry.name), relative); continue; }
-    if (['/index.html', '/manifest.webmanifest'].includes(relative) || (/^\/(assets|brand|images|font-licenses)\//.test(relative) && /\.(js|css|woff2?|svg|webp|png|txt)$/.test(relative))) {
+    if (['/index.html', '/manifest.webmanifest'].includes(relative) || (/^\/(assets|brand|images|font-licenses)\//.test(relative) && /\.(js|css|woff2?|svg|webp|png|jpe?g|txt)$/.test(relative))) {
       const content = await readFile(join(path, entry.name));
       files.push(relative); hash.update(relative).update(content); bytes += content.length;
     }

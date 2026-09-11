@@ -3,9 +3,9 @@ import { Brand } from './Brand';
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 const courses = [
-  { title: 'Your first web page', subtitle: 'Make the internet a little more yours.', kind: 'HTML ESSENTIALS', cover: '/brand/html-cover.svg', href: '#/learn/first-web-page', meta: '2 lessons', className: 'navy' },
+  { title: 'Your first web page', subtitle: 'Make the internet a little more yours.', kind: 'HTML ESSENTIALS', cover: '/brand/html-cover-blue-v1.svg', href: '#/learn/first-web-page', meta: '2 lessons', className: 'navy' },
   { title: 'Web development foundations', subtitle: 'Understand the page. Connect the dots.', kind: 'WEB FOUNDATIONS', cover: '/images/code-detail-generated-v1.webp', href: '#/learn/web-foundations-intro', meta: '3 lessons', className: 'photo' },
-  { title: 'Small builds. Real practice.', subtitle: 'Turn a blank editor into your first win.', kind: 'THE PRACTICE LAB', cover: '/brand/practice-cover.svg', href: '#/practice', meta: '4 HTML challenges', className: 'coral' },
+  { title: 'Small builds. Real practice.', subtitle: 'Turn a blank editor into your first win.', kind: 'THE PRACTICE LAB', cover: '/brand/practice-cover-blue-v1.svg', href: '#/practice', meta: '4 HTML challenges', className: 'coral' },
 ];
 
 function FirstWin() {

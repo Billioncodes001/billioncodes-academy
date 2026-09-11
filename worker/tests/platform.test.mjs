@@ -57,7 +57,7 @@ test('Firebase registration verifies signed identity, consent, and rejects arbit
 });
 test('expired, unverified, future, wrong-provider, forged, disabled and revoked identities fail closed',async t => {
   const h = await setup(t); await h.register();
-  for (const extra of [{exp:1},{email_verified:false},{auth_time:Math.floor(Date.now()/1000)+3600},{firebase:{sign_in_provider:'password'}}]) {
+  for (const extra of [{exp:1},{email_verified:false},{auth_time:Math.floor(Date.now()/1000)+3600},{firebase:{sign_in_provider:'anonymous'}},{firebase:{sign_in_provider:'custom'}}]) {
     assert.equal((await h.fetch('/api/v2/library',{headers:{Authorization:`Bearer ${await h.token('ada',extra)}`}})).status,401);
   }
   const forged = `${await h.token()}bad`;
@@ -68,6 +68,19 @@ test('expired, unverified, future, wrong-provider, forged, disabled and revoked 
   h.state.outage = false;
   await h.db.prepare('UPDATE learner_users SET disabled=1 WHERE id=?').bind('ada').run();
   assert.equal((await h.fetch('/api/v2/library',{headers:h.headers})).status,403);
+});
+test('email/password identities must be verified and retain UID-owned Academy access', async t => {
+  const h = await setup(t);
+  const passwordIdentity = {firebase:{sign_in_provider:'password'}};
+  const unverified = {Authorization:`Bearer ${await h.token('email-learner',{...passwordIdentity,email_verified:false})}`};
+  assert.equal((await h.fetch('/api/auth/register',post({name:'Email Learner',consent:true},undefined,unverified))).status,401);
+  assert.equal((await h.db.prepare('SELECT count(*) AS count FROM learner_users').first()).count,0);
+  const verified = {Authorization:`Bearer ${await h.token('email-learner',passwordIdentity)}`};
+  const registration = await h.fetch('/api/auth/register',post({name:'Email Learner',consent:true},undefined,verified));
+  assert.equal(registration.status,200);
+  assert.equal((await registration.json()).user.id,'email-learner');
+  assert.equal((await h.fetch('/api/v2/library',{headers:verified})).status,200);
+  assert.equal((await h.fetch('/api/auth/register',post({name:'Email Learner',consent:true,password:'never-send-a-password-here'},undefined,verified))).status,400);
 });
 test('free library and progress are isolated by verified uid, not supplied email or user id',async t => {
   const h = await setup(t), ada = await h.register(), ben = await h.register('ben');

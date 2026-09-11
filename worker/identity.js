@@ -42,7 +42,7 @@ async function verifiedIdentity(request, env) {
       issuer:`https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`, requiredClaims:['exp','iat','auth_time','sub','email'] }));
   } catch { throw new HttpError(401,'Your sign-in could not be verified. Please sign in again.'); }
   const now = Math.floor(Date.now()/1000);
-  if (!payload.sub || payload.sub.length > 128 || !Number.isInteger(payload.auth_time) || payload.auth_time > now || payload.auth_time < 0 || payload.iat > now || payload.email_verified !== true || payload.firebase?.sign_in_provider !== 'google.com') throw new HttpError(401,'Use a verified Google account to continue.');
+  if (!payload.sub || payload.sub.length > 128 || !Number.isInteger(payload.auth_time) || payload.auth_time > now || payload.auth_time < 0 || payload.iat > now || payload.email_verified !== true || !['google.com','password'].includes(payload.firebase?.sign_in_provider)) throw new HttpError(401,'Verify your email address before continuing.');
   // Check current account state, not just JWT expiry: deleted/disabled users and
   // revoked sessions must not retain access with an unexpired ID token.
   let response;
@@ -81,7 +81,7 @@ export async function identityRoute(request, env, path) {
   exactFields(input,['name','consent']);
   if (input.consent !== true) throw new HttpError(400,'Accept the account privacy notice before continuing.');
   const name = textValue(input.name,2,100,'Full name'), identity = await verifiedIdentity(request,env);
-  if (!identity) throw new HttpError(401,'Sign in with Google first.');
+  if (!identity) throw new HttpError(401,'Sign in with your verified email or Google account first.');
   const db = database(env), now = Date.now();
   const existing = await db.prepare('SELECT disabled FROM learner_users WHERE id=?').bind(identity.id).first();
   if (existing?.disabled) throw new HttpError(403,'This Academy account is disabled. Contact the team.');
