@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { accountHeaders, request } from './api';
+import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 
-type Lesson = { id: string; title: string; kind: 'text' | 'pdf' | 'video'; body?: string[]; resourceId?: string };
+import { CourseReader, type Lesson } from './CourseReader';
 type Course = { id: string; title: string; summary: string; level: string; priceMinor: number; status: string; lessonCount?: number; completed?: number; lessons: Lesson[] };
 export function useRemote<T>(path: string | null) {
   const { user } = useAccount();
@@ -36,14 +36,28 @@ export function MyLearning() { const { user } = useAccount(); return <div classN
 export function CoursePage({ id }: { id: string }) {
   const { user } = useAccount();
   const state = useRemote<{ course: Course; enrolled: boolean; completed: string[] }>(`/api/v2/courses/${encodeURIComponent(id)}`);
-  const [selected, setSelected] = useState(0), [pending, setPending] = useState(false), [error, setError] = useState(''), [player, setPlayer] = useState<{ resource: string; url: string } | null>(null);
-  const course = state.value?.course, lesson = course?.lessons[selected], enrolled = state.value?.enrolled;
-  async function action(fn: () => Promise<void>) { setPending(true); setError(''); try { await fn(); } catch (error) { setError(message(error)); } finally { setPending(false); } }
-  async function pdf(resourceId: string) {
-    const response = await fetch(`/api/v2/resources/${resourceId}`, { headers: await accountHeaders(), cache: 'no-store', signal: AbortSignal.timeout(30000) });
-    if (!response.ok) { const body = await response.json(); throw new Error(body.error || 'Download is unavailable.'); }
-    const blob = await response.blob(), url = URL.createObjectURL(blob), link = document.createElement('a');
-    link.href = url; link.download = response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] || 'course-resource.pdf'; link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  const [pending, setPending] = useState(false), [error, setError] = useState('');
+  const course = state.value?.course, enrolled = state.value?.enrolled;
+
+  async function enrol() {
+    setPending(true); setError('');
+    try { await request(`/api/v2/courses/${encodeURIComponent(id)}/enrol`, jsonBody({})); state.reload(); }
+    catch (error) { setError(message(error)); } finally { setPending(false); }
   }
-  return <div className="wrap page-section studio-page"><PortalNav /><RemoteNotice state={state} />{course && <><div className="portal-heading"><div><p className="eyebrow">{course.level} / SELF-PACED LEARNING</p><h1>{course.title}</h1><p>{course.summary}</p></div></div>{!enrolled ? <div className="training-layout"><section className="platform-panel"><h2>Inside this course</h2><ol>{course.lessons.map(lesson => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind}</span></li>)}</ol></section><AccountGate><section className="platform-panel"><h2>{course.priceMinor === 0 ? 'Keep it in your library.' : 'Not available to purchase yet.'}</h2><p>{course.priceMinor === 0 ? 'This course is free. Your progress will be saved to your signed-in account.' : 'Paid checkout has not been configured. No enrolment or payment will be created.'}</p><button className="button button-dark" disabled={pending || course.priceMinor !== 0} onClick={() => action(async () => { await request(`/api/v2/courses/${id}/enrol`, jsonBody({})); state.reload(); })}>{pending ? 'Adding...' : 'Add free course to my library'}</button></section></AccountGate></div> : lesson && user && <div className="portal-reader"><aside><h2>Course contents</h2><ol>{course.lessons.map((item, index) => <li key={item.id}><button aria-current={index === selected ? 'step' : undefined} onClick={() => { setSelected(index); setPlayer(null); setError(''); }}>{String(index + 1).padStart(2, '0')} / {item.title}{state.value?.completed.includes(item.id) ? ' (complete)' : ''}</button></li>)}</ol></aside><article><p className="eyebrow">LESSON {selected + 1} / {course.lessons.length}</p><h2>{lesson.title}</h2>{lesson.body?.map((text, index) => <p key={index}>{text}</p>)}{lesson.kind === 'pdf' && lesson.resourceId && <button className="button button-outline" disabled={pending} onClick={() => action(() => pdf(lesson.resourceId!))}>Download lesson PDF</button>}{lesson.kind === 'video' && lesson.resourceId && <>{player?.resource === lesson.resourceId ? <iframe title={lesson.title} src={player.url} allow="fullscreen; encrypted-media; picture-in-picture" allowFullScreen /> : <p>Video playback connects to Cloudflare Stream when you press play.</p>}<button className="button button-outline" disabled={pending} onClick={() => action(async () => { const value = await request<{ url: string }>(`/api/v2/resources/${lesson.resourceId}/playback`, jsonBody({})); if (!/^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9._-]+$/.test(value.url)) throw new Error('Invalid player address.'); setPlayer({ resource: lesson.resourceId!, url: value.url }); })}>{player ? 'Refresh video access' : 'Play lesson video'}</button></>}<div className="platform-actions"><button className="button button-dark" disabled={pending} onClick={() => action(async () => { await request(`/api/v2/courses/${id}/lessons/${lesson.id}/progress`, jsonBody({ completed: !state.value?.completed.includes(lesson.id) }, 'PUT')); state.reload(); })}>{state.value?.completed.includes(lesson.id) ? 'Marked complete / undo' : 'Mark lesson complete'}</button></div><p className="small-note">Account progress is private and requires an internet connection. It does not replace your device-only practice workspace.</p></article></div>}</>}{error && <p role="alert" className="platform-error">{error}</p>}</div>;
+
+  return <div className="wrap page-section studio-page">
+    <PortalNav /><RemoteNotice state={state} />
+    {course && <>
+      <div className="portal-heading"><div><p className="eyebrow">{course.level} / SELF-PACED LEARNING</p><h1>{course.title}</h1><p>{course.summary}</p></div></div>
+      {!enrolled ? <div className="training-layout">
+        <section className="platform-panel"><h2>Inside this course</h2><ol>{course.lessons.map(lesson => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind}</span></li>)}</ol></section>
+        <AccountGate><section className="platform-panel">
+          <h2>{course.priceMinor === 0 ? 'Keep it in your library.' : 'Not available to purchase yet.'}</h2>
+          <p>{course.priceMinor === 0 ? 'This course is free. Your progress will be saved to your signed-in account.' : 'Paid checkout has not been configured. No enrolment or payment will be created.'}</p>
+          <button className="button button-dark" disabled={pending || course.priceMinor !== 0} onClick={enrol}>{pending ? 'Adding...' : 'Add free course to my library'}</button>
+        </section></AccountGate>
+      </div> : user && <CourseReader key={`${course.id}:${user.id}`} courseId={course.id} lessons={course.lessons} initialCompleted={state.value!.completed} />}
+    </>}
+    {error && <p role="alert" className="platform-error">{error}</p>}
+  </div>;
 }
