@@ -106,9 +106,18 @@ test('generated imagery is disclosed without attributing fictional scenes to sto
   for (const image of await page.locator('.credits-grid img').all()) {
     await image.scrollIntoViewIfNeeded();
     await expect(image).toHaveAttribute('alt', /^AI-generated/);
+    await expect(image).toHaveAttribute('src', /-generated-v1\.webp$/);
     await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
   await expect(page.locator('a[href*="unsplash.com"]')).toHaveCount(0);
+  await page.goto('/#/courses');
+  await expect(page.locator('.course-cover img').first()).toBeVisible();
+  for (const image of await page.locator('.course-cover img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    const source = await image.getAttribute('src');
+    if (source?.startsWith('/images/')) expect(source).toMatch(/-generated-v1\.webp$/);
+    await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
 });
 test('small phones and intermediate tablet widths preserve layout and loaded imagery', async ({ page }) => {
   for (const width of [320, 768, 1024]) {

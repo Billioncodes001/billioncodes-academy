@@ -6,13 +6,15 @@ Created 11 September 2026 for Billion Codes using the built-in Codex image-gener
 
 | Final website asset | Local source (ignored) | Original generation filename |
 | --- | --- | --- |
-| `public/images/hero-learner.webp` | `.asset-sources/generated-hero.png` | `exec-b34cabd2-2e8d-4dc9-af15-2fbada02ae4e.png` |
-| `public/images/learning-together.webp` | `.asset-sources/generated-together.png` | `exec-dd1ac2bd-a0e5-44ca-bc9a-aecf56f51dc7.png` |
-| `public/images/code-detail.webp` | `.asset-sources/generated-code.png` | `exec-1fc44bd6-aa5a-4014-8cee-e90321ebe0b2.png` |
+| `public/images/hero-learner-generated-v1.webp` | `.asset-sources/generated-hero.png` | `exec-b34cabd2-2e8d-4dc9-af15-2fbada02ae4e.png` |
+| `public/images/learning-together-generated-v1.webp` | `.asset-sources/generated-together.png` | `exec-dd1ac2bd-a0e5-44ca-bc9a-aecf56f51dc7.png` |
+| `public/images/code-detail-generated-v1.webp` | `.asset-sources/generated-code.png` | `exec-1fc44bd6-aa5a-4014-8cee-e90321ebe0b2.png` |
 
 Original PNGs remain in Codex's generated-images directory, with local working copies at the paths above. After copying the sources, run `node scripts/prepare-brand.mjs`. Sharp resizes to at most 1200px wide for the two people scenes and 900px for the course image, without enlargement, and exports WebP at quality 82. No generative edits or facial retouching were applied after generation. Layout crops use CSS `object-fit`.
 
 The deployed WebP assets are committed to Git. Source PNGs are not required for ordinary builds or deployments. Regenerating from the prompts is nondeterministic; retain the source PNGs to reproduce these specific exports. The generated scenes replace earlier stock images; they are not subject to those photographs' attribution. The website keeps its existing `/#/credits` address but now describes the generated imagery instead.
+
+The `generated-v1` filenames intentionally differ from the retired stock-image URLs. An already-active offline service worker must not serve cached stock photographs under the new AI labels. Increment the filename version when replacing these scenes again, and update all references; do not overwrite a previously deployed image URL with different imagery.
 
 ## Exact final prompts
 

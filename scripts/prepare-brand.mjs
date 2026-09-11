@@ -3,9 +3,9 @@ import { mkdir } from 'node:fs/promises';
 
 await mkdir('public/images', { recursive: true });
 for (const [input, output, width] of [
-  ['.asset-sources/generated-hero.png', 'hero-learner', 1200],
-  ['.asset-sources/generated-together.png', 'learning-together', 1200],
-  ['.asset-sources/generated-code.png', 'code-detail', 900],
+  ['.asset-sources/generated-hero.png', 'hero-learner-generated-v1', 1200],
+  ['.asset-sources/generated-together.png', 'learning-together-generated-v1', 1200],
+  ['.asset-sources/generated-code.png', 'code-detail-generated-v1', 900],
 ]) {
   await sharp(input).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toFile(`public/images/${output}.webp`);
 }

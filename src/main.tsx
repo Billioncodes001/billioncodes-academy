@@ -73,7 +73,7 @@ function CatalogNotice({ data }: { data: CatalogState }) {
 }
 
 function CourseCard({ course, index }: { course: Course; index: number }) {
-  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card"><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><img src={index % 2 === 0 ? '/images/code-detail.webp' : '/brand/html-cover.svg'} alt="" loading="lazy" /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
+  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card"><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><img src={index % 2 === 0 ? '/images/code-detail-generated-v1.webp' : '/brand/html-cover.svg'} alt="" loading="lazy" /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
 }
 
 function Courses({ data }: { data: CatalogState }) {

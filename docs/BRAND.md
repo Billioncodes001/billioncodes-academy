@@ -14,9 +14,9 @@ The three learning scenes were generated specifically for Billion Codes on 11 Se
 
 | File in public/images | Source | Use |
 | --- | --- | --- |
-| hero-learner.webp | AI-generated | Fictional learner scene |
-| learning-together.webp | AI-generated | Fictional collaboration scene |
-| code-detail.webp | AI-generated | Fictional coding workspace |
+| hero-learner-generated-v1.webp | AI-generated | Fictional learner scene |
+| learning-together-generated-v1.webp | AI-generated | Fictional collaboration scene |
+| code-detail-generated-v1.webp | AI-generated | Fictional coding workspace |
 | founder.webp | Owner-provided portrait already used in Josiah's portfolio | Real founder identity, unchanged |
 
 Generated source PNGs are kept in ignored `.asset-sources/` under the filenames documented with the prompts. `node scripts/prepare-brand.mjs` optimizes them to WebP and exports PNG app icons without modifying the founder portrait. Only pass an owner-portrait argument when intentionally replacing that real photograph. Images are self-hosted, not runtime hotlinks. Framing is CSS object-fit. The committed WebP files are sufficient for normal builds; generation is not part of CI.

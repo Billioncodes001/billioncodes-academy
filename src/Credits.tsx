@@ -1,7 +1,7 @@
 const photos = [
-  { image: 'hero-learner', name: 'A moment of focus', description: 'An imagined learner finding her next line of code.', alt: 'AI-generated scene of a woman focused on a laptop' },
-  { image: 'learning-together', name: 'Better, together', description: 'An imagined study session, built around shared curiosity.', alt: 'AI-generated scene of three adults learning together at a laptop' },
-  { image: 'code-detail', name: 'Room for an idea', description: 'An imagined coding desk, ready for a small beginning.', alt: 'AI-generated coding workspace with a laptop and notebook' },
+  { image: 'hero-learner-generated-v1', name: 'A moment of focus', description: 'An imagined learner finding her next line of code.', alt: 'AI-generated scene of a woman focused on a laptop' },
+  { image: 'learning-together-generated-v1', name: 'Better, together', description: 'An imagined study session, built around shared curiosity.', alt: 'AI-generated scene of three adults learning together at a laptop' },
+  { image: 'code-detail-generated-v1', name: 'Room for an idea', description: 'An imagined coding desk, ready for a small beginning.', alt: 'AI-generated coding workspace with a laptop and notebook' },
 ];
 export function Credits() {
   return <div className="wrap page-section">
