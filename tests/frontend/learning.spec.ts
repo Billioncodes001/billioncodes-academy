@@ -17,6 +17,36 @@ test('new learning pages are accessible and fit the viewport', async ({ page }) 
     expect(scan.violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) }))).toEqual([]);
   }
 });
+test('practice path reflects actual completions and resumes an unfinished draft', async ({ page }) => {
+  await page.goto('/#/practice');
+  await expect(page.getByLabel('0 of 4 builds completed')).toHaveAttribute('value', '0');
+  await page.getByRole('link', { name: 'Start your next build' }).click();
+  await expect(page).toHaveURL(/practice\/profile-card/);
+  await expect(page.locator('#main-nav a[href="#/practice"]')).toHaveAttribute('aria-current', 'page');
+  await page.getByLabel('Your HTML').fill(solution);
+  await page.getByRole('button', { name: 'Check my build' }).click();
+  await page.getByRole('link', { name: 'All exercises' }).click();
+  await expect(page.getByLabel('1 of 4 builds completed')).toHaveAttribute('value', '1');
+  await expect(page.getByRole('link', { name: 'Start your next build' })).toHaveAttribute('href', '#/practice/reading-list');
+  await page.getByRole('link', { name: 'Start your next build' }).click();
+  await page.getByLabel('Your HTML').fill('<h1>My draft reading list</h1>');
+  await page.getByRole('link', { name: 'All exercises' }).click();
+  await expect(page.getByRole('link', { name: 'Continue your build', exact: false })).toHaveAttribute('href', '#/practice/reading-list');
+  await expect(page.getByLabel('1 of 4 builds completed')).toHaveAttribute('value', '1');
+});
+test('studio layouts retain readable controls with narrow screens, larger text and reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const width of [320, 768, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const route of ['/practice', '/practice/profile-card', '/workspace']) {
+      await page.goto('/#' + route);
+      await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+      await page.evaluate(() => document.fonts.ready);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      expect(await page.locator('.studio-heading, .studio-page .page-heading, .studio-page .lab-heading').evaluateAll(elements => elements.every(element => getComputedStyle(element).animationName === 'none'))).toBe(true);
+    }
+  }
+});
 test('real practice grades, previews, persists and safely resets a draft', async ({ page }) => {
   await page.goto('/#/practice/profile-card');
   await page.getByRole('button', { name: 'Check my build' }).click();

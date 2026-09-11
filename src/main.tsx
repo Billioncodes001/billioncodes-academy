@@ -32,6 +32,7 @@ import './styles.css';
 import './brand.css';
 import './learning.css';
 import './brand-blue.css';
+import './studio.css';
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
@@ -58,7 +59,7 @@ function Header({ route }: { route: string }) {
       <a className="brand" href="#/" aria-label="Billion Codes home"><Brand /></a>
       <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(!open)}>{open ? 'Close' : 'Menu'}<span aria-hidden="true">{open ? '−' : '+'}</span></button>
       <nav id="main-nav" className={open ? 'main-nav open' : 'main-nav'} aria-label="Main navigation">
-        {links.map(([path, label]) => <a key={path} href={`#${path}`} aria-current={route === path ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
+        {links.map(([path, label]) => <a key={path} href={`#${path}`} aria-current={(route === path || (path === '/practice' && route.startsWith('/practice/')) || (path === '/courses' && (route === '/course-library' || route.startsWith('/course/')))) ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
         <AccountNav />
         <a className="nav-apply" href="#/training" onClick={() => setOpen(false)}>Apply for training <Arrow /></a>
       </nav>

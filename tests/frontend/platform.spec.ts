@@ -31,7 +31,7 @@ test('external learning has creator credit, explicit source links and no purchas
 });
 test('account creation and separate dashboards work; Google SDK is mocked only in this UI test',async ({page}) => {
   let registered = false;
-  await page.route('**/src/firebaseClient.ts',route => route.fulfill({contentType:'text/javascript',body:'export async function googleSignIn(){return {name:"Ada Learner",email:"ada@example.com",verified:true}}; export async function googleSignOut(){}'}));
+  await page.route('**/src/firebaseClient.ts*',route => route.fulfill({contentType:'text/javascript',body:'export async function googleSignIn(){return {name:"Ada Learner",email:"ada@example.com",verified:true}}; export async function googleSignOut(){}'}));
   const member = {id:'ada',name:'Ada Learner',email:'ada@example.com'};
   await page.route('**/api/v2/account',route => route.fulfill({json:{user:registered ? member : null}}));
   await page.route('**/api/auth/register',route => { expect(route.request().postDataJSON()).toEqual({name:'Ada Learner',consent:true}); registered = true; return route.fulfill({json:{user:member}}); });
@@ -51,7 +51,7 @@ test('account creation and separate dashboards work; Google SDK is mocked only i
 });
 test('email signup validates confirmation and waits for verified email before creating an Academy profile',async ({page}) => {
   let registered = false;
-  await page.route('**/src/firebaseClient.ts',route => route.fulfill({contentType:'text/javascript',body:`
+  await page.route('**/src/firebaseClient.ts*',route => route.fulfill({contentType:'text/javascript',body:`
     let checks=0;
     export async function emailSignUp(config,name,email,password){if(name!=="Email Learner"||email!=="email@example.com"||password!=="local-test-passphrase")throw Error("Incorrect signup fields");return {name,email,verified:false}}
     export async function sendVerification(){}
@@ -87,7 +87,7 @@ test('email signup validates confirmation and waits for verified email before cr
   expect(await page.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}))).not.toContain('local-test-passphrase');
 });
 test('email sign-in provides generic errors and the reset flow returns a privacy-preserving confirmation',async ({page}) => {
-  await page.route('**/src/firebaseClient.ts',route => route.fulfill({contentType:'text/javascript',body:`
+  await page.route('**/src/firebaseClient.ts*',route => route.fulfill({contentType:'text/javascript',body:`
     export async function emailSignIn(){throw {code:"auth/invalid-credential"}}
     export async function resetPassword(config,email){if(email!=="learner@example.com")throw Error("Incorrect reset email")}
   `}));
@@ -104,7 +104,7 @@ test('email sign-in provides generic errors and the reset flow returns a privacy
   await expect(page.getByLabel('Password',{exact:true})).toHaveValue('');
 });
 test('verified email sign-in opens the existing account without registering it again',async ({page}) => {
-  await page.route('**/src/firebaseClient.ts',route => route.fulfill({contentType:'text/javascript',body:'export async function emailSignIn(){return {name:"Email Learner",email:"email@example.com",verified:true}}'}));
+  await page.route('**/src/firebaseClient.ts*',route => route.fulfill({contentType:'text/javascript',body:'export async function emailSignIn(){return {name:"Email Learner",email:"email@example.com",verified:true}}'}));
   await page.route('**/api/v2/account',route => route.fulfill({json:{user:{id:'email',name:'Email Learner',email:'email@example.com'}}}));
   await page.route('**/api/v2/library',route => route.fulfill({json:{courses:[]}}));
   await page.goto('/#/account');

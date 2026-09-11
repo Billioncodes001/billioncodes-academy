@@ -10,6 +10,8 @@ The website uses white, deep navy `#092f46`, accessible action blue `#116aa4`, a
 
 ## Typography and existing assets
 
+Working pages extend these tokens with aqua `#087f8c` for learning context. [DESIGN-EVOLUTION.md](DESIGN-EVOLUTION.md) records the current research, applied studio patterns and review rules for future pages. These guidelines do not schedule background research or deployments.
+
 Bricolage Grotesque display type, DM Sans body and IBM Plex Mono technical annotations remain self-hosted through Fontsource. The earlier custom B monogram (`mark.svg`, `mark-light.svg` and raster exports) is retained as a historical asset, but is no longer the website's company logo. `html-cover.svg` and `practice-cover.svg` are original curriculum illustrations, not borrowed from Codecademy. The existing page composition and copy remain independently authored; no learner numbers, testimonials or affiliations are invented.
 
 The three fictional learning scenes remain `hero-learner-generated-v1.webp`, `learning-together-generated-v1.webp` and `code-detail-generated-v1.webp`. Exact prompts and source paths are in [GENERATED-IMAGERY.md](GENERATED-IMAGERY.md). The people and settings are not real students, staff, events or testimonials. `founder.webp` is the owner's unchanged real portrait. Images are self-hosted; CSS handles framing. Source PNGs are in ignored `.asset-sources/`; committed WebP files are sufficient for normal builds. Generation is not part of CI.

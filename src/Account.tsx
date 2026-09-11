@@ -35,7 +35,14 @@ export function AccountGate({ children }: { children: ReactNode }) {
 export function PortalNav() {
   const { user, logout } = useAccount();
   const [error, setError] = useState('');
-  return <><nav className="portal-nav" aria-label="Account navigation"><a href="#/library">My learning</a><a href="#/training-dashboard">Training dashboard</a><a href="#/course-library">Explore courses</a><a href="#/resources">Open resources</a>{user && <button onClick={() => { logout().catch(error => setError(message(error))); }}>Sign out</button>}</nav>{error && <p role="alert">{error}</p>}</>;
+  const [route, setRoute] = useState(() => window.location.hash.slice(1));
+  useEffect(() => {
+    const changed = () => setRoute(window.location.hash.slice(1));
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  }, []);
+  const items = [['/library', 'My learning'], ['/training-dashboard', 'Training dashboard'], ['/course-library', 'Explore courses'], ['/resources', 'Open resources']];
+  return <><nav className="portal-nav" aria-label="Account navigation">{items.map(([path, label]) => <a key={path} href={'#' + path} aria-current={route === path || (path === '/course-library' && (route === '/courses' || route.startsWith('/course/'))) || (path === '/training-dashboard' && route.startsWith('/apply/')) ? 'page' : undefined}>{label}</a>)}{user && <button onClick={() => { logout().catch(error => setError(message(error))); }}>Sign out</button>}</nav>{error && <p role="alert">{error}</p>}</>;
 }
 type AccountMode = 'signin' | 'signup' | 'reset';
 type Profile = { name: string; email: string; verified: boolean };

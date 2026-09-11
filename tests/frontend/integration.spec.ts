@@ -113,7 +113,7 @@ test('production offline app works without caching APIs, admin or form drafts', 
   await context.setOffline(true);
   await page.goto(`${origin}/#/workspace`);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'A little progress. A little more possibility.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your learning desk.', exact: true })).toBeVisible();
   await page.goto(`${origin}/#/courses`);
   await expect(page.getByText('Reading your saved catalogue', { exact: false })).toBeVisible();
   await page.goto(`${origin}/#/practice/profile-card`);
