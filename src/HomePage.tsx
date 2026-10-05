@@ -22,7 +22,7 @@ function MotionToggle({ className, spinRef }: { className: string; spinRef?: Rea
   const paused = useMotionPaused();
   const reduced = useReducedMotion();
   if (reduced) return <div className={`${className} is-static`} aria-hidden="true"><Spark /></div>;
-  return <button ref={spinRef} type="button" className={className} aria-pressed={paused} onClick={() => setMotionPaused(!paused)}><Spark /><span className="sr-only">{paused ? 'Play background animation' : 'Pause background animation'}</span></button>;
+  return <button ref={spinRef} type="button" className={className} aria-label={paused ? 'Play motion' : 'Pause motion'} data-paused={paused} onClick={() => setMotionPaused(!paused)}><Spark /><span className="sr-only">{paused ? 'Play motion' : 'Pause motion'}</span></button>;
 }
 
 const Spark = () => <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6v88M6 50h88M19 19l62 62m0-62L19 81" fill="none" stroke="currentColor" strokeWidth="4"/></svg>;

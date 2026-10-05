@@ -32,11 +32,11 @@ button.hero-corner-stamp, .finale-motion-toggle { border: 0; cursor: pointer; fo
 .hero-corner-stamp { z-index: 5; box-shadow: 0 10px 30px #092f461f; transition: background-color .25s, scale .35s var(--ease-out-expo); }
 .hero-corner-stamp svg { transform: rotate(var(--orbit-spin, 0deg)); }
 button.hero-corner-stamp:hover { scale: 1.06; }
-button.hero-corner-stamp[aria-pressed='true'] { background: white; box-shadow: inset 0 0 0 1px var(--line), 0 10px 30px #092f461f; }
+button.hero-corner-stamp[data-paused='true'] { background: white; box-shadow: inset 0 0 0 1px var(--line), 0 10px 30px #092f461f; }
 button.hero-corner-stamp:focus-visible { outline: 3px solid #2467d8; outline-offset: 5px; }
-button.hero-corner-stamp[aria-pressed='true'] svg, .finale-motion-toggle[aria-pressed='true'] svg { opacity: .55; }
+button.hero-corner-stamp[data-paused='true'] svg, .finale-motion-toggle[data-paused='true'] svg { opacity: .55; }
 button.hero-corner-stamp::after, .finale-motion-toggle::after { content: 'Pause motion'; position: absolute; top: calc(100% + 10px); right: 0; padding: 5px 8px; border-radius: 4px; background: var(--ink); color: white; font: .62rem/1.2 var(--mono); letter-spacing: .04em; white-space: nowrap; rotate: -12deg; pointer-events: none; opacity: 0; transition: opacity .2s; }
-button.hero-corner-stamp[aria-pressed='true']::after, .finale-motion-toggle[aria-pressed='true']::after { content: 'Play motion'; }
+button.hero-corner-stamp[data-paused='true']::after, .finale-motion-toggle[data-paused='true']::after { content: 'Play motion'; }
 button.hero-corner-stamp:hover::after, button.hero-corner-stamp:focus-visible::after, .finale-motion-toggle:hover::after, .finale-motion-toggle:focus-visible::after { opacity: 1; }
 
 /* Layered parallax: photo, outline and card move at different depths. */

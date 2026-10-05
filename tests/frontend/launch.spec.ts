@@ -35,6 +35,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('home is responsive, accessible and has real preview screenshots', async ({ page }, testInfo) => {
+  test.setTimeout(60000);
   const exceptions: string[] = [];
   page.on('pageerror', error => exceptions.push(error.message));
   await page.goto('/');
@@ -47,6 +48,8 @@ test('home is responsive, accessible and has real preview screenshots', async ({
     await expect(image).toHaveJSProperty('complete', true);
     await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
+  for (const section of await page.locator('[data-reveal]').all()) await section.scrollIntoViewIfNeeded();
+  await expect.poll(() => page.locator('[data-reveal]:not([data-revealed])').count()).toBe(0);
   await page.evaluate(() => scrollTo(0, 0));
   await mkdir(artifacts, { recursive: true });
   await page.screenshot({ path: `${artifacts}/${testInfo.project.name}-hero.png`, animations: 'disabled' });
@@ -236,21 +239,21 @@ test('keyboard navigation and mobile menu are usable', async ({ page }, testInfo
 
 test('home motion can be paused and is absent under reduced motion', async ({ page }) => {
   await page.goto('/');
-  const toggles = page.getByRole('button', { name: 'Pause background animation' });
+  const toggles = page.getByRole('button', { name: 'Pause motion' });
   const heroToggle = page.locator('button.hero-corner-stamp');
   await expect(toggles).toHaveCount(2);
   await expect(page.locator('html')).toHaveClass(/motion-ok/);
   await toggles.first().focus();
   await page.keyboard.press('Enter');
-  await expect(heroToggle).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('button', { name: 'Play background animation' })).toHaveCount(2);
-  await expect(page.locator('.finale-motion-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(heroToggle).toHaveAttribute('data-paused', 'true');
+  await expect(page.getByRole('button', { name: 'Play motion' })).toHaveCount(2);
+  await expect(page.locator('.finale-motion-toggle')).toHaveAttribute('data-paused', 'true');
   const frame = () => page.locator('.orbit-back').first().evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());
   const paused = await frame();
   await page.waitForTimeout(300);
   expect(await frame()).toBe(paused);
   await page.keyboard.press('Enter');
-  await expect(heroToggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(heroToggle).toHaveAttribute('data-paused', 'false');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
