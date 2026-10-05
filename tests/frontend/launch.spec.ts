@@ -233,3 +233,34 @@ test('keyboard navigation and mobile menu are usable', async ({ page }, testInfo
   await expect(page.getByRole('heading', { name: 'Apply for training' })).toBeVisible();
   await expect(page.locator('main')).toBeFocused();
 });
+
+test('home motion can be paused and is absent under reduced motion', async ({ page }) => {
+  await page.goto('/');
+  const toggles = page.getByRole('button', { name: 'Pause background animation' });
+  const heroToggle = page.locator('button.hero-corner-stamp');
+  await expect(toggles).toHaveCount(2);
+  await expect(page.locator('html')).toHaveClass(/motion-ok/);
+  await toggles.first().focus();
+  await page.keyboard.press('Enter');
+  await expect(heroToggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Play background animation' })).toHaveCount(2);
+  await expect(page.locator('.finale-motion-toggle')).toHaveAttribute('aria-pressed', 'true');
+  const frame = () => page.locator('.orbit-back').first().evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());
+  const paused = await frame();
+  await page.waitForTimeout(300);
+  expect(await frame()).toBe(paused);
+  await page.keyboard.press('Enter');
+  await expect(heroToggle).toHaveAttribute('aria-pressed', 'false');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Big ideas.');
+  await expect(page.locator('html')).not.toHaveClass(/motion-ok/);
+  await expect(toggles).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(page.locator('html')).toHaveClass(/motion-ok/);
+  await expect(toggles).toHaveCount(2);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('html')).not.toHaveClass(/motion-ok/);
+  expect(await page.locator('[data-reveal]').evaluateAll(elements => elements.every(element => getComputedStyle(element).translate === 'none'))).toBe(true);
+});

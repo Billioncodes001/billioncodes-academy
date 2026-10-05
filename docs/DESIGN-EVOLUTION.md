@@ -30,6 +30,20 @@ These applications are our design decisions, not endorsements from the reference
 - Training: compact blue/white working pages, Q1/Q4 planning windows and a three-step application guide. Draft, submitted, under-review, offered, declined and withdrawn states each explain the next action. Dates come only from stored records; an offer is not a confirmed place. Application fields lock during saves to avoid losing edits made while a request is in flight.
 - Shared brand: no new dependencies, no heavy animation framework, no new stock/generated image downloads and no palette change away from the actual logo.
 
+## Motion and depth, 5 October 2026
+
+The homepage gains art direction with depth; working pages get only quiet entrances. No new dependencies: the 3D is a small perspective renderer on two 2D canvases (about 4 KB gzip JS and 2 KB gzip CSS in total), not WebGL.
+
+- **Orbit scene (homepage hero and finale).** Tilted rings echo the published logo's orbital strokes and carry real HTML/CSS/JS tokens. A back canvas sits behind the portrait and a front canvas over it, so rings wrap the photograph. The caption and build card stay above both canvases. The canvases are `aria-hidden`, deterministic, stop off-screen and in hidden tabs, and never block first paint: the LCP image is unchanged.
+- **Pause control (WCAG 2.2.2).** The orbit runs longer than five seconds, so the hero stamp and a finale button pause and resume all orbits (`aria-pressed`, keyboard operable, visible "Pause motion"/"Play motion" hint). The choice lasts for the browser session.
+- **Hero entrance.** Headline lines rise from a mask; supporting copy and the visual settle with transforms. Text is never faded, so contrast is constant during motion. Pointer parallax moves the photo, outline and build card at different depths (fine pointers only).
+- **Scroll reveals.** Sections and cards move into place once with `translate`/`rotate` only. Offsets apply only after JavaScript adds `html.motion-ok`, which requires reduced motion and Save-Data to be off. The learning steps draw their rules in sequence.
+- **Cards.** Course and founder cards tilt slightly toward the pointer with a soft spotlight. Keyboard focus gets the same lift without tilt.
+- **Learning pages.** A 320 ms transform-only settle on route change, preserving the existing focus-to-main and scroll reset. Exercise and course cards settle with a short stagger. Editors, the reader and forms have no 3D, parallax or continuous motion.
+- **Reduced motion and Save-Data.** One static orbit frame, no reveals, entrances or parallax, and the stamp returns to a decorative mark. The global reduced-motion rule in `styles.css` still overrides everything.
+
+Code lives in `src/motion/` and `src/motion.css` (loaded last, unlayered). The existing infinite-animation-free rule still holds for CSS: the only continuous motion is the pausable canvas, so test helpers that await `document.getAnimations()` still settle.
+
 ## Future page rules
 
 1. Start with the learner's task and an honest data source. Choose a useful primary action before decorating the page.
@@ -44,6 +58,5 @@ These applications are our design decisions, not endorsements from the reference
 - Course video/PDF pages: transcript availability and richer media metadata once licensed material exists. Protected download and explicit-play controls are retained and tested with local fixtures, not fabricated production content.
 - Training history: consider a timeline only after the backend records historical events. Current status and submitted/updated dates are not evidence of every intermediate review stage.
 - Native app: reuse these color and spacing decisions when native authentication and device testing are implemented; this web update does not change native screens.
-- Route transitions: consider only if they preserve focus, scroll position and reduced-motion behavior across the existing hash router.
 
 Avoid glass behind long-form reading, decorative 3D scenes on working pages, autoplay video, scroll hijacking, fake AI controls and automatic external design feeds. They add cost or distraction without demonstrating that learners can complete their work more easily.

@@ -33,6 +33,8 @@ import './brand.css';
 import './learning.css';
 import './brand-blue.css';
 import './studio.css';
+import './motion.css';
+import { installMotionClass, motionAllowed } from './motion/preferences';
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
@@ -159,7 +161,14 @@ function App() {
     const platformTitles: Record<string, string> = { '/account':'Your account', '/library':'My learning', '/course-library':'Course library', '/training-dashboard':'Training dashboard', '/resources':'Open resources' };
     document.title = `Billion Codes | ${platformTitles[route] ?? titles[route] ?? (route.startsWith('/course/') ? 'Course learning' : route.startsWith('/apply/') ? 'Training application' : route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
     window.scrollTo(0, 0);
-    if (firstRoute.current) firstRoute.current = false; else mainRef.current?.focus({ preventScroll: true });
+    if (firstRoute.current) firstRoute.current = false;
+    else {
+      mainRef.current?.focus({ preventScroll: true });
+      // A short settle on the incoming page. Transform only: focus, scroll and
+      // text contrast are untouched, and the homepage keeps its own entrance.
+      const incoming = mainRef.current?.firstElementChild;
+      if (route !== '/' && motionAllowed() && incoming instanceof HTMLElement && typeof incoming.animate === 'function') incoming.animate([{ transform: 'translateY(14px)' }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+    }
   }, [route]);
   let page;
   if (route === '/') page = <HomePage />;
@@ -183,4 +192,5 @@ function App() {
   return <><Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>{page}<SaveStatus /></main><Footer /></>;
 }
 
+installMotionClass();
 createRoot(document.getElementById('root')!).render(<AccountProvider><App /></AccountProvider>);

@@ -1,0 +1,133 @@
+/*
+  Motion and depth layer. Loaded last and unlayered, so it refines the brand
+  layers without editing them. Rules:
+  - Reveal offsets apply only under html.motion-ok (set by JS when reduced
+    motion and Save-Data are off). Without it everything renders in place.
+  - Text never fades: entrances move or unmask text, so contrast is constant.
+  - No infinite CSS animations. The orbit canvas is paused off-screen, in
+    hidden tabs and by the visible pause control.
+  - The global prefers-reduced-motion rule in styles.css still wins.
+*/
+:root { --ease-out-expo: cubic-bezier(.16, 1, .3, 1); --brand-aqua-glow: #56c2cc; }
+
+/* ---------- Hero: headline, copy and orbit composition ---------- */
+.home-stage { overflow-x: clip; }
+.bc-hero .hero-title > .hl { display: block; color: inherit; overflow: hidden; padding: 0 .08em .14em; margin: 0 -.08em -.14em; }
+.bc-hero .hero-title > .hl > span { display: inline-block; }
+.bc-hero .hero-title > .hl-accent { color: var(--brand-blue); }
+.bc-hero .hero-title > .hl-accent > span { background: linear-gradient(90deg, var(--brand-blue), #087f8c 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) { .bc-hero .hero-title > .hl-accent > span { color: var(--brand-blue); } }
+@media (forced-colors: active) { .bc-hero .hero-title > .hl-accent > span { background: none; color: CanvasText; } }
+
+.orbit-layer { position: absolute; display: block; pointer-events: none; }
+.orbit-hero { left: -20%; top: -6%; width: 136%; height: 108%; }
+.orbit-back { z-index: 0; }
+.orbit-front.orbit-hero { z-index: 2; }
+.bc-hero-visual .photo-caption { z-index: 3; }
+.bc-hero-visual .hero-build-card { z-index: 4; }
+.bc-hero-visual .photo-disclaimer { z-index: 4; }
+
+/* The decorative stamp doubles as the WCAG 2.2.2 pause control. */
+button.hero-corner-stamp, .finale-motion-toggle { border: 0; cursor: pointer; font: inherit; }
+.hero-corner-stamp { z-index: 5; box-shadow: 0 10px 30px #092f461f; transition: background-color .25s, scale .35s var(--ease-out-expo); }
+.hero-corner-stamp svg { transform: rotate(var(--orbit-spin, 0deg)); }
+button.hero-corner-stamp:hover { scale: 1.06; }
+button.hero-corner-stamp[aria-pressed='true'] { background: white; box-shadow: inset 0 0 0 1px var(--line), 0 10px 30px #092f461f; }
+button.hero-corner-stamp:focus-visible { outline: 3px solid #2467d8; outline-offset: 5px; }
+button.hero-corner-stamp[aria-pressed='true'] svg, .finale-motion-toggle[aria-pressed='true'] svg { opacity: .55; }
+button.hero-corner-stamp::after, .finale-motion-toggle::after { content: 'Pause motion'; position: absolute; top: calc(100% + 10px); right: 0; padding: 5px 8px; border-radius: 4px; background: var(--ink); color: white; font: .62rem/1.2 var(--mono); letter-spacing: .04em; white-space: nowrap; rotate: -12deg; pointer-events: none; opacity: 0; transition: opacity .2s; }
+button.hero-corner-stamp[aria-pressed='true']::after, .finale-motion-toggle[aria-pressed='true']::after { content: 'Play motion'; }
+button.hero-corner-stamp:hover::after, button.hero-corner-stamp:focus-visible::after, .finale-motion-toggle:hover::after, .finale-motion-toggle:focus-visible::after { opacity: 1; }
+
+/* Layered parallax: photo, outline and card move at different depths. */
+.motion-ok .hero-photo-frame > img { transform: scale(1.06) translate3d(calc(var(--px, 0) * -16px), calc(var(--py, 0) * -12px), 0); transition: transform .9s var(--ease-out-expo); }
+.motion-ok .hero-build-card { transform: translate3d(calc(var(--px, 0) * 22px), calc(var(--py, 0) * 16px), 0); transition: transform .9s var(--ease-out-expo), border-color .2s, box-shadow .3s; }
+.motion-ok .hero-build-card:hover, .motion-ok .hero-build-card:focus-visible { box-shadow: 0 22px 50px #092f4626; }
+.motion-ok .bc-hero-visual::before { transform: rotate(4deg) translate3d(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -8px), 0); transition: transform 1.1s var(--ease-out-expo); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-ok .bc-hero-copy { animation: none; }
+  .motion-ok .bc-hero .hero-title > .hl > span { animation: line-rise 1s var(--ease-out-expo) both; }
+  .motion-ok .bc-hero .hero-title > .hl:nth-child(2) > span { animation-delay: .09s; }
+  .motion-ok .bc-hero .hero-title > .hl:nth-child(3) > span { animation-delay: .18s; }
+  .motion-ok .bc-hero-copy > :not(h1) { animation: copy-rise .9s var(--ease-out-expo) backwards; }
+  .motion-ok .bc-hero-copy > .bc-kicker { animation-delay: 0s; }
+  .motion-ok .bc-hero-copy > .bc-hero-lead { animation-delay: .3s; }
+  .motion-ok .bc-hero-copy > .bc-hero-description { animation-delay: .36s; }
+  .motion-ok .bc-hero-copy > .bc-actions { animation-delay: .44s; }
+  .motion-ok .bc-hero-copy > .bc-start-note { animation-delay: .52s; }
+  .motion-ok .bc-hero-visual { animation: hero-unfold 1.3s .1s var(--ease-out-expo) backwards; transform-origin: 30% 60%; }
+  @keyframes line-rise { from { transform: translateY(108%); } to { transform: none; } }
+  @keyframes copy-rise { from { transform: translateY(22px); } to { transform: none; } }
+  @keyframes hero-unfold { from { transform: perspective(1400px) rotateY(-16deg) rotateX(7deg) translateY(36px) scale(.96); } to { transform: none; } }
+}
+
+/* ---------- Scroll reveals (transform only) ---------- */
+.motion-ok [data-reveal] { translate: 0 44px; transition: translate 1s var(--ease-out-expo) calc(var(--i, 0) * 90ms), rotate 1s var(--ease-out-expo) calc(var(--i, 0) * 90ms); }
+.motion-ok [data-reveal='rise'] { translate: 0 70px; rotate: x 11deg; transform-origin: 50% 0; }
+.motion-ok [data-reveal][data-revealed] { translate: none; rotate: none; }
+.bc-course-grid, .bc-try-section, .bc-support { perspective: 1600px; }
+
+/* ---------- Course cards and founder card: tilt + spotlight ---------- */
+.bc-course-card, .founder-real { position: relative; }
+.bc-course-card::after, .founder-real::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), #116aa41c, transparent 60%); transition: opacity .35s; }
+.bc-course-card:hover::after, .founder-real:hover::after { opacity: 1; }
+.motion-ok .bc-course-card, .motion-ok .founder-real { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); transition: transform .45s var(--ease-out-expo), border-color .2s, box-shadow .35s, translate 1s var(--ease-out-expo) calc(var(--i, 0) * 90ms), rotate 1s var(--ease-out-expo) calc(var(--i, 0) * 90ms); }
+.motion-ok .bc-course-card:hover, .motion-ok .bc-course-card:focus-visible { --lift: -6px; box-shadow: 0 26px 50px -18px #092f4640; }
+.bc-course-card .bc-course-image img { transition: transform .9s var(--ease-out-expo); }
+.motion-ok .bc-course-card:hover .bc-course-image img, .motion-ok .bc-course-card:focus-visible .bc-course-image img { transform: scale(1.045); }
+.bc-course-card .course-arrow { transition: transform .35s var(--ease-out-expo), background-color .2s; }
+.bc-course-card:hover .course-arrow, .bc-course-card:focus-visible .course-arrow { transform: translate(3px, -3px); }
+
+/* ---------- Foundations strip ---------- */
+.bc-foundations .language-mark { display: inline-grid; place-items: center; transition: transform .6s var(--ease-out-expo), color .2s; }
+.motion-ok .bc-foundations > div:hover .language-mark { transform: translateY(-3px); color: var(--brand-blue); }
+.motion-ok .bc-foundations:not([data-revealed]) .language-mark { transform: perspective(300px) rotateX(80deg); }
+.motion-ok .bc-foundations .language-mark { transition-delay: .15s; }
+.motion-ok .bc-foundations > div:nth-of-type(2) .language-mark { transition-delay: .25s; }
+.motion-ok .bc-foundations > div:nth-of-type(3) .language-mark { transition-delay: .35s; }
+
+/* ---------- Learning steps: each rule draws in sequence ---------- */
+.step-rail li { position: relative; }
+.step-rail li::before { content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--brand-aqua-glow), #5fa8d3 70%, transparent); transform-origin: 0 50%; transition: transform 1.2s var(--ease-out-expo); }
+.step-rail li:nth-child(2)::before { transition-delay: .2s; }
+.step-rail li:nth-child(3)::before { transition-delay: .4s; }
+.motion-ok .experience-copy:not([data-revealed]) .step-rail li::before { transform: scaleX(0); }
+.experience-photo { perspective: 1200px; }
+.experience-photo > img { transition: transform 1.4s var(--ease-out-expo); }
+.motion-ok .experience-photo:not([data-revealed]) > img { transform: scale(1.08); }
+
+/* ---------- First-win playground ---------- */
+.first-win-stage { transform-origin: 50% 0; }
+.first-win { transition: box-shadow .5s var(--ease-out-expo); }
+.first-win:focus-within { box-shadow: 8px 8px 0 #cfe6f6, 0 30px 60px -30px #092f4666; }
+.first-win-output strong { transition: color .3s; }
+.first-win:focus-within .first-win-output strong { color: var(--brand-blue); }
+
+/* ---------- Finale: orbit field and a monogram that turns with scroll ---------- */
+.orbit-finale { inset: 0; width: 100%; height: 100%; z-index: 0; }
+.bc-finale .finale-outline { z-index: 0; transform: perspective(1200px) rotateY(calc((var(--finale-progress, .5) - .5) * 46deg)) translateY(calc((var(--finale-progress, .5) - .5) * -90px)) rotate(12deg); }
+.finale-motion-toggle { position: absolute; z-index: 2; right: max(20px, calc((100vw - 1280px) / 2)); bottom: 28px; width: 46px; height: 46px; padding: 12px; display: grid; place-items: center; border-radius: 50%; color: #e5f3ff; background: #ffffff14; box-shadow: inset 0 0 0 1px #ffffff40; }
+.finale-motion-toggle svg { width: 100%; transform: rotate(var(--orbit-spin, 0deg)); }
+.finale-motion-toggle::after { right: 0; rotate: none; top: auto; bottom: calc(100% + 8px); background: white; color: var(--ink); }
+.finale-motion-toggle.is-static { display: none; }
+.finale-motion-toggle:focus-visible { outline: 3px solid #9fd0ef; outline-offset: 4px; }
+
+/* ---------- Learning pages: quiet, task-first entrances ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-ok .practice-page .exercise-card, .motion-ok .studio-page .portal-grid > *, .motion-ok .course-grid > * { animation: card-settle .55s var(--ease-out-expo) backwards; }
+  .motion-ok .practice-page .exercise-card:nth-child(2), .motion-ok .studio-page .portal-grid > :nth-child(2), .motion-ok .course-grid > :nth-child(2) { animation-delay: .06s; }
+  .motion-ok .practice-page .exercise-card:nth-child(3), .motion-ok .studio-page .portal-grid > :nth-child(3), .motion-ok .course-grid > :nth-child(3) { animation-delay: .12s; }
+  .motion-ok .practice-page .exercise-card:nth-child(n+4), .motion-ok .studio-page .portal-grid > :nth-child(n+4), .motion-ok .course-grid > :nth-child(n+4) { animation-delay: .18s; }
+  .practice-page .exercise-card { transition: border-color 160ms ease, box-shadow 220ms ease, translate 260ms var(--ease-out-expo); }
+  .practice-page .exercise-card:hover, .practice-page .exercise-card:focus-within { translate: 0 -3px; }
+  @keyframes card-settle { from { transform: translateY(16px); } to { transform: none; } }
+}
+
+@media (max-width: 700px) {
+  .orbit-hero { left: -14%; width: 128%; top: -4%; height: 106%; }
+  .finale-motion-toggle { bottom: 18px; right: 18px; }
+  .orbit-finale { inset: 18px 0 auto 40%; width: 60%; height: 150px; }
+  .motion-ok [data-reveal] { translate: 0 28px; }
+  .motion-ok [data-reveal='rise'] { translate: 0 40px; rotate: x 7deg; }
+}
