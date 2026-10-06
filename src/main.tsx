@@ -31,6 +31,7 @@ import './brand-blue.css';
 import './studio.css';
 import './design/system.css';
 import './design/home.css';
+import './design/atlas.css';
 import { installMotionClass, motionAllowed } from './motion/preferences';
 import { Arrow, Back, Icon } from './Icon';
 import { CoverArt, coverKinds } from './CoverArt';

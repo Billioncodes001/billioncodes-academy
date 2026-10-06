@@ -20,6 +20,7 @@ const pauseListeners = new Set<() => void>();
 
 export function setMotionPaused(value: boolean) {
   paused = value;
+  document.documentElement.classList.toggle('motion-paused', value);
   try { sessionStorage.setItem(pauseKey, value ? '1' : '0'); } catch { /* Storage is optional for this preference. */ }
   pauseListeners.forEach(listener => listener());
 }
@@ -34,7 +35,9 @@ export function useReducedMotion() {
 
 /** Marks the document so CSS only offsets reveal targets when motion will actually run. */
 export function installMotionClass() {
-  const apply = () => document.documentElement.classList.toggle('motion-ok', motionAllowed());
+  const apply = () => document.documentElement.classList.toggle('motion-ok', motionAllowed() && !paused);
   apply();
+  document.documentElement.classList.toggle('motion-paused', paused);
   reduceQuery?.addEventListener('change', apply);
+  pauseListeners.add(apply);
 }

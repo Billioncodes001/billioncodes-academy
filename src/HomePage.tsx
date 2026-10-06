@@ -12,6 +12,21 @@ const courses: { title: string; subtitle: string; kind: string; cover: CoverKind
   { title: 'Small builds. Real practice.', subtitle: 'Turn a blank editor into your first win.', kind: 'THE PRACTICE LAB', cover: 'lab', href: '#/practice', meta: '4 HTML challenges' },
 ];
 
+// Blueprint sheet label. Decorative: the section heading carries the meaning.
+const Sheet = ({ no, name, grid }: { no: string; name: string; grid: string }) => <div className="atlas-sheet" aria-hidden="true"><span>SHEET {no}</span><span>{name}</span><span>{grid}</span></div>;
+
+// Dimension lines and coordinates drawn over the hero. Purely decorative.
+function AtlasOverlay() {
+  return <div className="atlas-overlay" aria-hidden="true">
+    <div className="wrap atlas-overlay-inner">
+      <span className="atlas-rule atlas-rule-x"><i>0</i><i>320</i><i>640</i><i>960</i><i>1280</i></span>
+      <span className="atlas-rule atlas-rule-y"><i>A</i><i>B</i><i>C</i><i>D</i></span>
+      <span className="atlas-cross atlas-cross-1" /><span className="atlas-cross atlas-cross-2" /><span className="atlas-cross atlas-cross-3" />
+      <span className="atlas-coord">N 06.52° · E 03.38° / BUILD ATLAS v1</span>
+    </div>
+  </div>;
+}
+
 const Kicker = ({ index, children }: { index: string; children: React.ReactNode }) => <p className="hx-kicker"><span className="hx-kicker-index" aria-hidden="true">{index}</span>{children}</p>;
 
 function FirstWin() {
@@ -50,10 +65,14 @@ export function HomePage() {
   const heroSpin = useRef<HTMLButtonElement>(null);
   const finaleSpin = useRef<HTMLButtonElement>(null);
   const reduced = useReducedMotion();
-  useHomeMotion(root, reduced);
+  const paused = useMotionPaused();
+  useHomeMotion(root, reduced || paused);
   return <div className="home-stage" ref={root}>
-    <section className="hx-hero" aria-labelledby="home-title">
+    <div className="atlas-progress" aria-hidden="true" />
+    <section className="hx-hero" aria-labelledby="home-title" data-atlas="exit">
       <SignalField variant="hero" spinTarget={heroSpin} />
+      <div className="atlas-floor" aria-hidden="true" />
+      <AtlasOverlay />
       <div className="hx-hero-grid wrap">
         <div className="hx-hero-copy">
           <p className="hx-kicker hx-kicker-live"><span className="hx-pulse" aria-hidden="true" />FOR THE NEXT GENERATION OF BUILDERS</p>
@@ -86,11 +105,12 @@ export function HomePage() {
 
     <section className="hx-courses" aria-labelledby="home-courses">
       <div className="wrap">
+        <Sheet no="01" name="FIRST STEPS" grid="A1 — C3" />
         <header className="hx-head" data-reveal="">
           <div><Kicker index="01">YOUR FIRST STEP STARTS HERE</Kicker><h2 id="home-courses">Small beginnings.<br /><span>Serious possibilities.</span></h2></div>
           <div><p>Choose a free introduction or jump into a small build. You do not need to know everything to begin.</p><a href="#/courses" className="text-link">Explore all introductions <Arrow /></a></div>
         </header>
-        <div className="hx-modules">{courses.map((course, index) => <a href={course.href} className="hx-module" key={course.title} data-reveal="rise" style={{ '--i': index } as React.CSSProperties}>
+        <div className="hx-modules" data-atlas="enter">{courses.map((course, index) => <a href={course.href} className="hx-module" key={course.title} data-reveal="rise" style={{ '--i': index } as React.CSSProperties}>
           <span className="hx-module-art"><CoverArt kind={course.cover} /><span className="hx-module-no" aria-hidden="true">0{index + 1}</span><span className="hx-chip">FREE TO START</span></span>
           <span className="hx-module-body"><span className="hx-module-kind">{course.kind}</span><h3>{course.title}</h3><span className="hx-module-sub">{course.subtitle}</span><span className="hx-module-foot"><span>Beginner friendly · {course.meta}</span><span className="hx-go" aria-hidden="true"><Icon name="arrow-right" /></span></span></span>
         </a>)}</div>
@@ -102,12 +122,13 @@ export function HomePage() {
 
     <section className="hx-making" aria-labelledby="home-making">
       <div className="wrap hx-making-grid">
-        <div className="experience-photo" data-reveal=""><img src="/images/learning-together-generated-v1.webp" alt="AI-generated scene of three adults learning together at a laptop" width="1122" height="1402" loading="lazy" /><div className="hx-photo-label"><span>FROM “HOW?” TO “I MADE THIS.”</span><Icon name="arrow-up-right" /></div></div>
+        <div className="experience-photo" data-reveal="" data-atlas="pass"><img src="/images/learning-together-generated-v1.webp" alt="AI-generated scene of three adults learning together at a laptop" width="1122" height="1402" loading="lazy" /><div className="hx-photo-label"><span>FROM “HOW?” TO “I MADE THIS.”</span><Icon name="arrow-up-right" /></div></div>
         <div className="hx-making-copy" data-reveal="">
+          <Sheet no="02" name="METHOD" grid="D1 — D3" />
           <Kicker index="02">LEARNING THAT GOES SOMEWHERE</Kicker>
           <h2 id="home-making">Less watching.<br /><span>More making.</span></h2>
           <p>You do not learn to build by collecting open tabs. Read a little, try it yourself, and understand what changed.</p>
-          <ol className="hx-pipeline">
+          <ol className="hx-pipeline" data-atlas="enter">
             <li><span className="hx-node" aria-hidden="true">01</span><div><h3>Get the idea.</h3><p>Clear, original text lessons. No video buffering between you and the next step.</p></div></li>
             <li><span className="hx-node" aria-hidden="true">02</span><div><h3>Make it work.</h3><p>Write HTML, get specific feedback, and see an inert preview of what you made.</p></div></li>
             <li><span className="hx-node" aria-hidden="true">03</span><div><h3>Keep your momentum.</h3><p>Your reading record and practice drafts stay on your device. Pick up where you left off.</p></div></li>
@@ -119,13 +140,15 @@ export function HomePage() {
 
     <section className="hx-try" aria-labelledby="home-try">
       <div className="wrap">
+        <Sheet no="03" name="LIVE BUILD" grid="E1 — F2" />
         <header className="hx-head" data-reveal=""><div><Kicker index="03">DON'T JUST TAKE OUR WORD FOR IT</Kicker><h2 id="home-try">Your first line.<br /><span>Right here, right now.</span></h2></div><p>Every project begins with something small. Give yours a heading, then step into the practice lab to build the rest.</p></header>
-        <div className="hx-try-stage" data-reveal="rise"><FirstWin /></div>
+        <div className="hx-try-stage" data-reveal="rise" data-atlas="enter"><FirstWin /></div>
       </div>
     </section>
 
     <section className="hx-support wrap" aria-labelledby="home-support">
       <div className="hx-support-copy" data-reveal="">
+        <Sheet no="04" name="SUPPORT" grid="G1 — H2" />
         <Kicker index="04">YOU CAN BUILD. YOU CAN ALSO ASK FOR HELP.</Kicker>
         <h2 id="home-support">A little guidance.<br /><span>A clearer next step.</span></h2>
         <p>Want structured training, a second pair of eyes on your code, or help turning a business problem into software? Tell us where you are starting.</p>
@@ -135,8 +158,9 @@ export function HomePage() {
       <div className="founder-real" data-reveal="rise"><img src="/images/founder.webp" alt="Josiah Adeyemo, founder of Billion Codes" width="720" height="900" loading="lazy" /><div><span className="hx-step-label">MEET THE PERSON BEHIND THE IDEA</span><strong>Josiah Adeyemo</strong><span>Software engineer. Founder. Fellow builder.</span><a href="#/about">More about Billion Codes <Arrow /></a></div></div>
     </section>
 
-    <section className="hx-finale" aria-labelledby="home-finale">
+    <section className="hx-finale" aria-labelledby="home-finale" data-atlas="pass">
       <SignalField variant="finale" spinTarget={finaleSpin} />
+      <div className="atlas-floor" aria-hidden="true" />
       <MotionToggle className="finale-motion-toggle" spinRef={finaleSpin} />
       <div className="wrap hx-finale-inner" data-reveal="">
         <Brand light />

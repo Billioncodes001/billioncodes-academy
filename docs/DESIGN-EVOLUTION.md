@@ -70,3 +70,13 @@ A complete visual overhaul, not an added layer: the orbit renderer and `motion.c
 - Native app: reuse these color and spacing decisions when native authentication and device testing are implemented; this web update does not change native screens.
 
 Avoid glass behind long-form reading, decorative 3D scenes on working pages, autoplay video, scroll hijacking, fake AI controls and automatic external design feeds. They add cost or distraction without demonstrating that learners can complete their work more easily.
+
+## Build Atlas, 6 October 2026
+
+**Concept.** Billion Codes becomes a working atlas for the next generation of builders: dark-blue drawing-board chapters for the story, white measured sheets for the work. The real brand mark, original SVG course art and existing generated imagery stay in place. The treatment is not a stock-site clone; no third-party asset was imported. Sharp registration marks, ruler ticks, coordinates and sheet numbers replace the rounded generic card language.
+
+**Motion architecture.** The homepage has a code-native canvas signal field, a CSS perspective blueprint floor, pointer-responsive hero frame, scroll-linked 3D course plates/editor and a measured kinetic word band. `useHomeMotion` measures only visible sections at most once per animation frame. The learning pages share the atlas geometry but keep reading, form entry, code editing and status controls stationary. A single on-page pause preference now also stops CSS atlas animation; reduced-motion and Save-Data bypass it. No WebGL bundle or new dependency was needed. The existing canvas field is already visibility-aware and its pause control remains accessible.
+
+**Route coverage.** The shared `#main` frame, headers, cards and footer carry the identity through discovery, free lessons, practice, workspace, course/account pages, training applications, resources, policies and contact. Existing route, catalogue, account, progress and application behavior is unchanged. The 3D is decorative and never required to understand a choice or a result. CSS and animation do not hide text while waiting for JavaScript.
+
+**Quality gates.** Check production typecheck/build, learning tests, desktop and phone screenshots, keyboard access, console errors, 320px overflow and reduced motion before release. The current Vite bundle warning concerns the existing application chunk; this redesign adds no runtime package.

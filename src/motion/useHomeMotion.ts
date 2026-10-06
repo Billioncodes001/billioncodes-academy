@@ -1,7 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 import { finePointer, motionAllowed } from './preferences';
 
-// Marketing-page motion: scroll reveals, pointer parallax and card tilt.
+// Marketing-page motion: scroll reveals, Build Atlas scroll planes, pointer
+// parallax and card tilt.
 // Every effect writes transforms or CSS custom properties only, so text keeps
 // full contrast and layout at all times. Nothing here runs on working pages.
 export function useHomeMotion(root: RefObject<HTMLElement | null>, reduced: boolean) {
@@ -67,6 +68,42 @@ export function useHomeMotion(root: RefObject<HTMLElement | null>, reduced: bool
       });
       watch.observe(kinetic);
       cleanups.push(() => { watch.disconnect(); window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); });
+    }
+
+    // Build Atlas planes: each [data-atlas] section writes a 0–1 scroll
+    // progress to --atlas, which CSS turns into structural 3D (frames tipping
+    // back, plates settling flat, blueprint floors sliding). Only planes on
+    // screen are measured, once per frame.
+    //   exit  — 0 at rest, 1 once the element has scrolled out the top
+    //   enter — 0 as the top crosses the viewport bottom, 1 at 25% from the top
+    //   pass  — 0 entering at the bottom, 1 leaving at the top
+    const planes = [...scope.querySelectorAll<HTMLElement>('[data-atlas]')];
+    if (planes.length) {
+      const live = new Set<HTMLElement>();
+      let frame = 0;
+      const clamp = (value: number) => Math.max(0, Math.min(1, value));
+      const measure = (plane: HTMLElement) => {
+        const rect = plane.getBoundingClientRect(), view = window.innerHeight;
+        const mode = plane.dataset.atlas;
+        const progress = mode === 'exit' ? clamp(-rect.top / Math.max(rect.height, 1))
+          : mode === 'enter' ? clamp((view - rect.top) / (view * .75))
+          : clamp((view - rect.top) / (view + rect.height));
+        plane.style.setProperty('--atlas', progress.toFixed(4));
+      };
+      const update = () => { frame = 0; live.forEach(measure); };
+      const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+      planes.forEach(measure);
+      const watch = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          const plane = entry.target as HTMLElement;
+          if (entry.isIntersecting) live.add(plane); else { live.delete(plane); measure(plane); }
+        }
+        onScroll();
+      });
+      planes.forEach(plane => watch.observe(plane));
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      cleanups.push(() => { watch.disconnect(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(frame); planes.forEach(plane => plane.style.removeProperty('--atlas')); });
     }
 
     return () => cleanups.forEach(cleanup => cleanup());
