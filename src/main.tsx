@@ -32,7 +32,8 @@ import './studio.css';
 import './design/system.css';
 import './design/home.css';
 import './design/atlas.css';
-import { installMotionClass, motionAllowed } from './motion/preferences';
+import './design/atlas-routes.css';
+import { installMotionClass, isMotionPaused, motionAllowed } from './motion/preferences';
 import { Arrow, Back, Icon } from './Icon';
 import { CoverArt, coverKinds } from './CoverArt';
 const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
@@ -92,7 +93,22 @@ function Courses({ data }: { data: CatalogState }) {
   const courses = data.catalog?.courses ?? [];
   const levels = [...new Set(courses.map(course => course.level))];
   const results = courses.filter(course => (level === 'all' || course.level === level) && `${course.title} ${course.summary} ${course.level}`.toLowerCase().includes(search.toLowerCase()));
-  return <div className="wrap page-section"><div className="page-heading"><p className="eyebrow">THE LEARNING DESK</p><h1>Start with understanding.<br /><span className="ink-muted">Then make something.</span></h1><p>Short, free introductions to help you find your footing. Full paid courses are not available at this launch.</p></div><a className="built-in-primer" href="#/learn/first-web-page"><span className="primer-glyph" aria-hidden="true"><Icon name="code" /></span><div><span className="eyebrow">BUILT-IN FREE PRIMER</span><h2>Your first web page</h2><p>Two original text lessons and a simple knowledge check. Available independently of the live catalogue.</p></div><span className="go-chip" aria-hidden="true"><Icon name="arrow-right" /></span></a><div className="catalog-heading"><h2>Explore the catalogue</h2><span className="badge badge-paper">NO PAYMENT REQUIRED</span></div><CatalogNotice data={data} />{data.state === 'ready' && <><div className="catalog-filters"><div className="search-field"><label htmlFor="course-search">Find an introduction</label><input id="course-search" type="search" placeholder="Search a topic or keyword" value={search} onChange={event => setSearch(event.target.value)} /></div><div><label htmlFor="course-level">Experience level</label><select id="course-level" value={level} onChange={event => setLevel(event.target.value)}><option value="all">All levels</option>{levels.map(item => <option value={item} key={item}>{item}</option>)}</select></div></div><p className="result-count" role="status">{results.length} {results.length === 1 ? 'introduction' : 'introductions'} found</p>{results.length ? <div className="course-grid">{results.map((course, index) => <CourseCard course={course} index={index} key={course.id} />)}</div> : <div className="empty-state"><h3>{courses.length ? 'No matching introductions.' : 'No introductions have been published yet.'}</h3><p>{courses.length ? 'Try another keyword or experience level.' : 'You can still read the built-in primer above.'}</p>{courses.length > 0 && <button className="button button-outline" onClick={() => { setSearch(''); setLevel('all'); }}>Clear filters</button>}</div>}</>}<aside className="catalog-tail"><h3>Want guidance beyond an introduction?</h3><a className="text-link" href="#/training">Tell us about your training goals <Arrow /></a></aside></div>;
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    // "/" jumps to the catalogue search, unless the reader is already typing somewhere.
+    const jump = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (!searchRef.current) return;
+      event.preventDefault();
+      searchRef.current.focus();
+    };
+    window.addEventListener('keydown', jump);
+    return () => window.removeEventListener('keydown', jump);
+  }, []);
+  const clearOne = (which: 'search' | 'level') => { if (which === 'search') setSearch(''); else setLevel('all'); searchRef.current?.focus(); };
+  const active = [search.trim() && { key: 'search' as const, label: `Keyword: “${search.trim()}”` }, level !== 'all' && { key: 'level' as const, label: `Level: ${level}` }].filter(Boolean) as { key: 'search' | 'level'; label: string }[];
+  return <div className="wrap page-section atlas-catalogue"><div className="page-heading"><p className="eyebrow">THE LEARNING DESK</p><h1>Start with understanding.<br /><span className="ink-muted">Then make something.</span></h1><p>Short, free introductions to help you find your footing. Full paid courses are not available at this launch.</p></div><a className="built-in-primer" href="#/learn/first-web-page"><span className="primer-glyph" aria-hidden="true"><Icon name="code" /></span><div><span className="eyebrow">BUILT-IN FREE PRIMER</span><h2>Your first web page</h2><p>Two original text lessons and a simple knowledge check. Available independently of the live catalogue.</p></div><span className="go-chip" aria-hidden="true"><Icon name="arrow-right" /></span></a><div className="catalog-heading"><h2>Explore the catalogue</h2><span className="badge badge-paper">NO PAYMENT REQUIRED</span></div><CatalogNotice data={data} />{data.state === 'ready' && <><div className="catalog-filters"><div className="search-field"><label htmlFor="course-search">Find an introduction</label><input id="course-search" ref={searchRef} type="search" placeholder="Search a topic or keyword" aria-describedby="course-search-key" value={search} onChange={event => setSearch(event.target.value)} /><span id="course-search-key" className="atlas-key-hint">Press <kbd>/</kbd> to search from anywhere on this page</span></div><div><label htmlFor="course-level">Experience level</label><select id="course-level" value={level} onChange={event => setLevel(event.target.value)}><option value="all">All levels</option>{levels.map(item => <option value={item} key={item}>{item}</option>)}</select></div></div><div className="atlas-result-bar"><p className="result-count" role="status">{results.length} {results.length === 1 ? 'introduction' : 'introductions'} found</p>{active.length > 0 && <ul className="atlas-active-filters" aria-label="Active filters">{active.map(item => <li key={item.key}><button type="button" className="atlas-chip" onClick={() => clearOne(item.key)}>{item.label}<span aria-hidden="true" className="atlas-chip-x">×</span><span className="sr-only"> (remove filter)</span></button></li>)}</ul>}</div>{results.length ? <div className="course-grid">{results.map((course, index) => <CourseCard course={course} index={index} key={course.id} />)}</div> : <div className="empty-state"><h3>{courses.length ? 'No matching introductions.' : 'No introductions have been published yet.'}</h3><p>{courses.length ? 'Try another keyword or experience level.' : 'You can still read the built-in primer above.'}</p>{courses.length > 0 && <button className="button button-outline" onClick={() => { setSearch(''); setLevel('all'); }}>Clear filters</button>}</div>}</>}<aside className="catalog-tail"><h3>Want guidance beyond an introduction?</h3><a className="text-link" href="#/training">Tell us about your training goals <Arrow /></a></aside></div>;
 }
 
 function Practice() {
@@ -172,7 +188,7 @@ function App() {
       // A short settle on the incoming page. Transform only: focus, scroll and
       // text contrast are untouched, and the homepage keeps its own entrance.
       const incoming = mainRef.current?.firstElementChild;
-      if (route !== '/' && motionAllowed() && incoming instanceof HTMLElement && typeof incoming.animate === 'function') incoming.animate([{ transform: 'translateY(14px)' }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+      if (route !== '/' && motionAllowed() && !isMotionPaused() && incoming instanceof HTMLElement && typeof incoming.animate === 'function') incoming.animate([{ transform: 'translateY(14px)' }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2, .8, .2, 1)' });
     }
   }, [route]);
   let page;

@@ -16,6 +16,7 @@ function readPaused() {
 }
 
 let paused = typeof window !== 'undefined' ? readPaused() : false;
+export const isMotionPaused = () => paused;
 const pauseListeners = new Set<() => void>();
 
 export function setMotionPaused(value: boolean) {

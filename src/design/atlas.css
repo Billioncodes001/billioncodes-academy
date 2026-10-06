@@ -285,12 +285,7 @@ input:not([type='checkbox']):not([type='radio']), select, textarea { border-radi
 .catalog-tail { border-left: 4px solid var(--cobalt); }
 
 /* Lab challenges resemble work orders. The editor itself remains still. */
-.practice-page .exercise-grid { counter-reset: atlas-exercise; }
-.practice-page .exercise-card { counter-increment: atlas-exercise; position: relative; border-radius: 3px 14px 3px 14px; border-top: 3px solid var(--cobalt); }
-.practice-page .exercise-card::before {
-  content: 'WORK ORDER 0' counter(atlas-exercise); position: absolute; top: 15px; right: 19px;
-  color: var(--cobalt); font: 500 .61rem/1.4 var(--mono); letter-spacing: .08em;
-}
+.practice-page .exercise-card { position: relative; border-radius: 3px 14px 3px 14px; border-top: 3px solid var(--cobalt); }
 .practice-page .exercise-glyph { font-size: clamp(2.5rem, 5vw, 4.5rem); color: var(--cobalt); }
 .practice-path, .training-guide { border-radius: 3px 14px 3px 14px; border-top: 3px solid var(--signal); }
 .lab-editor, .lab-results { border-radius: 4px; }
@@ -356,4 +351,61 @@ input:not([type='checkbox']):not([type='radio']), select, textarea { border-radi
   .page-heading, .portal-heading, .studio-heading, .lab-heading, .reader-heading { padding-left: 16px; }
   .course-card-body { padding: 20px; }
   .training-windows .portal-window { font-size: 3rem; }
+}
+
+/* ---------- The original 3D learning structure ---------- */
+.atlas-construct {
+  position: relative; isolation: isolate; overflow: clip; color: var(--white);
+  background: radial-gradient(70% 90% at 75% 45%, #173e8d 0, transparent 65%), var(--night);
+  border-block: 1px solid #5aa9ff36;
+}
+.atlas-construct::before {
+  content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none;
+  background: linear-gradient(#5aa9ff13 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(90deg, #5aa9ff13 1px, transparent 1px) 0 0 / 36px 36px;
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+.atlas-construct-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 7vw, 104px); min-height: 520px; padding-block: 72px 84px; }
+.atlas-construct-copy .hx-kicker { color: var(--signal); }
+.atlas-construct-copy h2 { color: var(--white); font-size: clamp(2.5rem, 5vw, 5rem); margin: 16px 0 22px; }
+.atlas-construct-copy h2 span { color: var(--signal); }
+.atlas-construct-copy > p:not(.hx-kicker) { color: #c0d1ee; max-width: 45ch; line-height: 1.7; }
+.atlas-construct-copy .text-link { margin-top: 18px; }
+.atlas-structure { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 14px; padding: 70px 12px; margin: 0; list-style: none; perspective: 1100px; transform-style: preserve-3d; }
+.atlas-structure::before { content: ''; position: absolute; z-index: -1; inset: 30px 0; border: 1px solid #5aa9ff64; background: linear-gradient(#5aa9ff28 1px, transparent 1px) 0 0 / 26px 26px, linear-gradient(90deg, #5aa9ff28 1px, transparent 1px) 0 0 / 26px 26px; transform: perspective(700px) rotateX(65deg) scale(1.08); }
+.atlas-structure li { position: relative; display: flex; flex-direction: column; min-height: 172px; padding: 17px 14px 16px; border: 1px solid #8cc7ff9c; border-bottom: 6px solid var(--signal); color: var(--white); background: linear-gradient(150deg, #0b347d, #08214d); box-shadow: 8px 12px 0 #020b1d, 8px 12px 0 1px #5aa9ff66; transform-style: preserve-3d; }
+.atlas-structure li::before { content: ''; position: absolute; left: 9px; right: 9px; top: -12px; height: 10px; border: 1px solid #8cc7ff7a; background: #154b9f; transform: skewX(-42deg); transform-origin: bottom; }
+.atlas-structure li:nth-child(2) { min-height: 212px; background: linear-gradient(150deg, #1252bd, #0a317e); }
+.atlas-structure li:nth-child(3) { min-height: 252px; background: linear-gradient(150deg, #1d6af1, #0a3fa4); }
+.atlas-slab-index { color: #c4dcff; font: 500 .58rem/1.45 var(--mono); letter-spacing: .08em; }
+.atlas-structure strong { margin-top: auto; font: 800 clamp(1.75rem, 3vw, 3.1rem)/1 var(--display); letter-spacing: -.05em; }
+.atlas-structure li > span:last-child { color: #dcecff; font-size: .78rem; margin-top: 9px; }
+@media (prefers-reduced-motion: no-preference) {
+  .motion-ok .atlas-structure li { transition: transform .45s var(--ease-out-expo), box-shadow .45s var(--ease-out-expo); }
+  .motion-ok .atlas-construct[data-atlas] .atlas-structure li:nth-child(1) { transform: translate3d(0, calc((1 - var(--atlas, 1)) * 65px), 0) rotateX(calc((1 - var(--atlas, 1)) * 28deg)); }
+  .motion-ok .atlas-construct[data-atlas] .atlas-structure li:nth-child(2) { transform: translate3d(0, calc((1 - var(--atlas, 1)) * 95px), 0) rotateX(calc((1 - var(--atlas, 1)) * 38deg)); }
+  .motion-ok .atlas-construct[data-atlas] .atlas-structure li:nth-child(3) { transform: translate3d(0, calc((1 - var(--atlas, 1)) * 125px), 0) rotateX(calc((1 - var(--atlas, 1)) * 48deg)); }
+  .motion-ok .atlas-structure li:hover { transform: translate3d(0, -9px, 24px) !important; box-shadow: 10px 18px 0 #020b1d, 10px 18px 0 1px #5aa9ff88; }
+}
+@media (max-width: 900px) {
+  .atlas-construct-layout { grid-template-columns: 1fr; gap: 8px; }
+  .atlas-construct-copy h2 { max-width: 15ch; }
+  .atlas-structure { width: min(100%, 670px); margin-inline: auto; }
+}
+@media (max-width: 620px) {
+  .atlas-construct-layout { padding-block: 56px 72px; }
+  .atlas-structure { gap: 8px; padding: 44px 0 24px; }
+  .atlas-structure li { min-height: 150px; padding: 10px 8px; box-shadow: 4px 8px 0 #020b1d, 4px 8px 0 1px #5aa9ff66; }
+  .atlas-structure li:nth-child(2) { min-height: 172px; }
+  .atlas-structure li:nth-child(3) { min-height: 194px; }
+  .atlas-structure strong { font-size: clamp(1.35rem, 5vw, 2rem); }
+  .atlas-slab-index { font-size: .7rem; letter-spacing: .02em; overflow-wrap: anywhere; }
+  .atlas-structure li > span:last-child { font-size: .75rem; }
+}
+
+@media (max-width: 380px) {
+  .atlas-structure { grid-template-columns: 1fr; gap: 16px; padding-inline: 8px; }
+  .atlas-structure li, .atlas-structure li:nth-child(2), .atlas-structure li:nth-child(3) { min-height: 112px; padding: 16px; }
+  .atlas-structure li::before { top: -8px; height: 6px; }
+  .atlas-structure strong { margin-top: 10px; }
 }

@@ -118,7 +118,21 @@ export function HomePage() {
       </div>
     </section>
 
-    <div className="hx-kinetic" aria-hidden="true"><div className="hx-kinetic-row"><span>Read</span><i /><span>Try</span><i /><span>Build</span><i /><span>Understand</span><i /><span>Repeat</span></div></div>
+    <section className="atlas-construct" aria-labelledby="atlas-construct-title" data-atlas="enter">
+      <div className="wrap atlas-construct-layout">
+        <div className="atlas-construct-copy">
+          <p className="hx-kicker">THE BUILD ATLAS / 001</p>
+          <h2 id="atlas-construct-title">Ideas become<br /><span>things you can make.</span></h2>
+          <p>Start with a clear idea. Test it in code. Leave with something you understand because you built it.</p>
+          <a href="#/practice" className="text-link text-link-light">Open the workbench <Arrow /></a>
+        </div>
+        <ol className="atlas-structure" aria-label="The learning method">
+          <li><span className="atlas-slab-index">01 / FOUNDATION</span><strong>Read</strong><span>Get the idea.</span></li>
+          <li><span className="atlas-slab-index">02 / EXPERIMENT</span><strong>Try</strong><span>Change the code.</span></li>
+          <li><span className="atlas-slab-index">03 / ARTIFACT</span><strong>Build</strong><span>Make it yours.</span></li>
+        </ol>
+      </div>
+    </section>
 
     <section className="hx-making" aria-labelledby="home-making">
       <div className="wrap hx-making-grid">

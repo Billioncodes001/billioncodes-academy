@@ -237,6 +237,21 @@ test('keyboard navigation and mobile menu are usable', async ({ page }, testInfo
   await expect(page.locator('main')).toBeFocused();
 });
 
+test('pause motion also disables route transitions', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLElement.prototype.animate;
+    HTMLElement.prototype.animate = function (...args) {
+      (window as Window & { routeAnimations?: number }).routeAnimations = ((window as Window & { routeAnimations?: number }).routeAnimations ?? 0) + 1;
+      return original.apply(this, args);
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Pause motion' }).first().click();
+  await page.locator('.hx-actions a[href="#/courses"]').click();
+  await expect(page.getByRole('heading', { name: /Start with understanding/ })).toBeVisible();
+  expect(await page.evaluate(() => (window as Window & { routeAnimations?: number }).routeAnimations ?? 0)).toBe(0);
+});
+
 test('home motion can be paused and is absent under reduced motion', async ({ page }) => {
   await page.goto('/');
   const toggles = page.getByRole('button', { name: 'Pause motion' });

@@ -8,7 +8,7 @@ import { finePointer, motionAllowed } from './preferences';
 export function useHomeMotion(root: RefObject<HTMLElement | null>, reduced: boolean) {
   useEffect(() => {
     const scope = root.current;
-    if (!scope || !motionAllowed()) return;
+    if (!scope || reduced || !motionAllowed()) return;
     const cleanups: (() => void)[] = [];
 
     const targets = scope.querySelectorAll<HTMLElement>('[data-reveal]');
