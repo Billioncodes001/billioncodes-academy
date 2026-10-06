@@ -3,6 +3,8 @@ import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 
 import { CourseReader, type Lesson } from './CourseReader';
+import { Icon } from './Icon';
+import { CoverArt, coverKinds } from './CoverArt';
 type Course = { id: string; title: string; summary: string; level: string; priceMinor: number; status: string; lessonCount?: number; completed?: number; lessons: Lesson[] };
 export function useRemote<T>(path: string | null) {
   const { user } = useAccount();
@@ -19,7 +21,14 @@ export function RemoteNotice({ state }: { state: { loading: boolean; error: stri
   return <>{state.loading && <p role="status">Loading your learning space...</p>}{state.error && <div className="platform-error" role="alert"><p>{state.error}</p><button className="button button-outline" onClick={state.reload}>Try again</button></div>}</>;
 }
 function CourseTiles({ courses }: { courses: Course[] }) {
-  return <div className="portal-grid">{courses.map(course => <article className="portal-card learning-course-card" key={course.id}><div className="course-card-category"><span>SELF-PACED LEARNING</span><span aria-hidden="true">&lt;/&gt;</span></div><span className="portal-tag">{course.level} / {course.priceMinor === 0 ? 'Free' : new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(course.priceMinor / 100)}</span><h2>{course.title}</h2><p>{course.summary}</p>{course.completed !== undefined && <><label htmlFor={`progress-${course.id}`}>{course.completed} of {course.lessonCount} lessons marked complete</label><progress id={`progress-${course.id}`} max={course.lessonCount || 1} value={course.completed} /></>}<a className="text-link" href={`#/course/${course.id}`}>{course.completed !== undefined ? 'Continue learning' : 'View course'} <span aria-hidden="true">&rarr;</span></a></article>)}</div>;
+  return <div className="portal-grid">{courses.map((course, index) => <article className="portal-card learning-course-card" key={course.id}>
+    <div className="course-tile-art" aria-hidden="true"><CoverArt kind={coverKinds[index % 3]} /><span className="course-tile-no">{String(index + 1).padStart(2, '0')}</span></div>
+    <div className="course-card-category"><span>SELF-PACED LEARNING</span><Icon name="code" /></div>
+    <span className="portal-tag">{course.level} / {course.priceMinor === 0 ? 'Free' : new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(course.priceMinor / 100)}</span>
+    <h2>{course.title}</h2><p>{course.summary}</p>
+    {course.completed !== undefined && <><label htmlFor={`progress-${course.id}`}>{course.completed} of {course.lessonCount} lessons marked complete</label><progress id={`progress-${course.id}`} max={course.lessonCount || 1} value={course.completed} /></>}
+    <a className="course-tile-link" href={`#/course/${course.id}`}>{course.completed !== undefined ? 'Continue learning' : 'View course'}<span className="go-chip" aria-hidden="true"><Icon name="arrow-right" /></span></a>
+  </article>)}</div>;
 }
 export function CourseLibrary() {
   const state = useRemote<{ courses: Course[] }>('/api/v2/courses');

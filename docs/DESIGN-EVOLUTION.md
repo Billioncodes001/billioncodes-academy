@@ -30,7 +30,7 @@ These applications are our design decisions, not endorsements from the reference
 - Training: compact blue/white working pages, Q1/Q4 planning windows and a three-step application guide. Draft, submitted, under-review, offered, declined and withdrawn states each explain the next action. Dates come only from stored records; an offer is not a confirmed place. Application fields lock during saves to avoid losing edits made while a request is in flight.
 - Shared brand: no new dependencies, no heavy animation framework, no new stock/generated image downloads and no palette change away from the actual logo.
 
-## Motion and depth, 5 October 2026
+## Motion and depth, 5 October 2026 (superseded by the Signal redesign below)
 
 The homepage gains art direction with depth; working pages get only quiet entrances. No new dependencies: the 3D is a small perspective renderer on two 2D canvases (about 4 KB gzip JS and 2 KB gzip CSS in total), not WebGL.
 
@@ -43,6 +43,16 @@ The homepage gains art direction with depth; working pages get only quiet entran
 - **Reduced motion and Save-Data.** One static orbit frame, no reveals, entrances or parallax, and the stamp returns to a decorative mark. The global reduced-motion rule in `styles.css` still overrides everything.
 
 Code lives in `src/motion/` and `src/motion.css` (loaded last, unlayered). The existing infinite-animation-free rule still holds for CSS: the only continuous motion is the pausable canvas, so test helpers that await `document.getAnimations()` still settle.
+
+## Signal redesign, 6 October 2026
+
+A complete visual overhaul, not an added layer: the orbit renderer and `motion.css` are removed, and dead rules from earlier themes were purged.
+
+- **Concept: "Signal".** Night-blue chapters (`--night #040d1c`, `--deep #071b38`) carry the story; white blueprint paper with a faint cobalt grid carries the work. Accents stay strictly blue and white: cobalt `#1652f0` for actions on white (6:1 contrast), signal blue `#5aa9ff` and ice `#e8f3ff` on dark. Red/orange remain only for errors and warnings. Bricolage Grotesque 800 at tight tracking for display type, DM Sans for reading, IBM Plex Mono for annotations. Space Grotesk is no longer loaded.
+- **Icons.** `src/Icon.tsx` is a small deterministic inline-SVG set (arrows, check, circle, menu/close, spark, code, mail). Unicode arrows such as U+2197 are emoji-eligible and rendered as colour emoji on iOS course cards; visible UI must not use glyph arrows. `Arrow` points right for in-site steps and up-right only for external links.
+- **Code-native covers.** `src/CoverArt.tsx` draws HTML, web and practice-lab covers in SVG (grid, dot matrix, one idea per topic). The live course library, the fallback catalogue and the homepage modules use them.
+- **Homepage.** A dot-matrix signal field (`src/motion/SignalField.tsx`, one 2D canvas, about 30 fps, stops off-screen, in hidden tabs, when paused and under reduced motion) behind the hero, and the word BUILD rasterised into the finale field. Includes split-line headline rise, a scroll-linked kinetic word band, a drawn learning pipeline, tilt/spotlight course modules and a dark editor/white preview first-line playground. The pause control (WCAG 2.2.2), `html.motion-ok` gating and transform-only reveals are unchanged in behaviour.
+- **Shared chrome.** Night ribbon, white header on working pages (night on the homepage), wrapping navigation for enlarged text, mobile menu panel and a night footer with a large wordmark. Styles live in `src/design/system.css` (tokens, chrome, course discovery, inner-page frame) and `src/design/home.css`, loaded last and unlayered.
 
 ## Future page rules
 

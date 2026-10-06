@@ -6,7 +6,7 @@ Source asset: https://vc4a.com/wp-content/uploads/2022/11/54457B39-7D71-429A-891
 
 `public/brand/billioncodes-official-v1.jpeg` is the unchanged downloaded image, used for the header, footer branding, account portal and web app icons. This is an existing company logo, not an AI-generated replacement. The owner requested its use for their own business. The source calls the company Software Inc.; the asset does not establish its current registered legal name.
 
-The website uses white, deep navy `#092f46`, accessible action blue `#116aa4`, and pale blue surfaces `#edf6fc`. These are website design tokens informed by the logo and owner's direction, not a claim to have a formal brand manual. Existing generated photography remains accurately disclosed. No new imagery was generated for this update.
+Since the 6 October 2026 Signal redesign, the website uses white, night blue `#040d1c`, cobalt action blue `#1652f0`, signal blue `#5aa9ff` on dark surfaces and pale blue surfaces `#eef4ff`. These are website design tokens informed by the logo and owner's direction, not a claim to have a formal brand manual. Existing generated photography remains accurately disclosed. No new imagery was generated for this update.
 
 ## Typography and existing assets
 

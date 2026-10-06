@@ -3,6 +3,7 @@ import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 import { RemoteNotice, useRemote } from './LearningPortal';
 import { applicationStatus } from './applicationStatus';
+import { Arrow } from './Icon';
 
 type Cohort = { id: string; title: string; year: number; quarter: number; status: string; acceptingApplications: boolean; opensAt: string | null; closesAt: string | null; startsAt: string | null; details: string; tuitionNote: string; format: string };
 type Details = { track: string; format: string; experience: string; goals: string; phone: string };
@@ -61,7 +62,7 @@ function Dashboard() {
         <span className={`application-badge application-badge-${status.tone}`} id={`application-status-${application.id}`}>{status.label}</span>
         <h2>{application.cohortTitle}</h2><p>{application.data.track || 'Track not chosen yet'}</p>
         <ApplicationState application={application} /><ApplicationFacts application={application} />
-        <a className="text-link" href={`#/apply/${application.cohortId}`} aria-describedby={`application-status-${application.id}`}>{status.action}<span className="sr-only"> for {application.cohortTitle}</span> <span aria-hidden="true">&rarr;</span></a>
+        <a className="text-link" href={`#/apply/${application.cohortId}`} aria-describedby={`application-status-${application.id}`}>{status.action}<span className="sr-only"> for {application.cohortTitle}</span> <Arrow /></a>
       </article>;
     })}</div>
     {state.value?.applications.length === 0 && <section className="platform-panel application-empty"><p className="studio-overline">YOUR FIRST STEP</p><h2>A direction starts with you.</h2><p>You have not started an application yet. Choose an announced intake below when one is available.</p><a className="text-link" href="#/training">How training applications work</a></section>}

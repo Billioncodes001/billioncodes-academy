@@ -248,7 +248,7 @@ test('home motion can be paused and is absent under reduced motion', async ({ pa
   await expect(heroToggle).toHaveAttribute('data-paused', 'true');
   await expect(page.getByRole('button', { name: 'Play motion' })).toHaveCount(2);
   await expect(page.locator('.finale-motion-toggle')).toHaveAttribute('data-paused', 'true');
-  const frame = () => page.locator('.orbit-back').first().evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());
+  const frame = () => page.locator('.signal-canvas').first().evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());
   const paused = await frame();
   await page.waitForTimeout(300);
   expect(await frame()).toBe(paused);

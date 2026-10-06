@@ -18,7 +18,7 @@ export function useHomeMotion(root: RefObject<HTMLElement | null>, reduced: bool
     cleanups.push(() => reveal.disconnect());
 
     if (finePointer()) {
-      const visual = scope.querySelector<HTMLElement>('.bc-hero-visual');
+      const visual = scope.querySelector<HTMLElement>('.hx-visual');
       if (visual) {
         const move = (event: PointerEvent) => {
           const rect = visual.getBoundingClientRect();
@@ -45,26 +45,27 @@ export function useHomeMotion(root: RefObject<HTMLElement | null>, reduced: bool
         card.addEventListener('pointerleave', leave);
         cleanups.push(() => { card.removeEventListener('pointermove', move); card.removeEventListener('pointerleave', leave); });
       });
-      tiltCards('.bc-course-card');
+      tiltCards('.hx-module');
       tiltCards('.founder-real');
     }
 
-    // Scroll-linked depth for the finale monogram, only while it is on screen.
-    const finale = scope.querySelector<HTMLElement>('.bc-finale');
-    if (finale) {
+    // Scroll-linked kinetic type: the giant word row slides with the page,
+    // only while it is on screen. No infinite animation is involved.
+    const kinetic = scope.querySelector<HTMLElement>('.hx-kinetic');
+    if (kinetic) {
       let frame = 0;
       const update = () => {
         frame = 0;
-        const rect = finale.getBoundingClientRect();
+        const rect = kinetic.getBoundingClientRect();
         const progress = Math.max(0, Math.min(1, 1 - (rect.top + rect.height) / (window.innerHeight + rect.height)));
-        finale.style.setProperty('--finale-progress', progress.toFixed(3));
+        kinetic.style.setProperty('--kinetic', progress.toFixed(4));
       };
       const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
       const watch = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) { window.addEventListener('scroll', onScroll, { passive: true }); update(); }
         else window.removeEventListener('scroll', onScroll);
       });
-      watch.observe(finale);
+      watch.observe(kinetic);
       cleanups.push(() => { watch.disconnect(); window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); });
     }
 
