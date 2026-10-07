@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 
-import { CourseReader, type Lesson } from './CourseReader';
+import { CourseReader, lessonGroups, type Lesson } from './CourseReader';
 import { Icon } from './Icon';
 import { CoverArt, coverKinds } from './CoverArt';
 type Course = { id: string; title: string; summary: string; level: string; priceMinor: number; status: string; lessonCount?: number; completed?: number; lessons: Lesson[] };
@@ -59,7 +59,7 @@ export function CoursePage({ id }: { id: string }) {
     {course && <>
       <div className="portal-heading"><div><p className="eyebrow">{course.level} / SELF-PACED LEARNING</p><h1>{course.title}</h1><p>{course.summary}</p></div></div>
       {!enrolled ? <div className="training-layout">
-        <section className="platform-panel"><h2>Inside this course</h2><ol>{course.lessons.map(lesson => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind}</span></li>)}</ol></section>
+        <section className="platform-panel"><h2>Inside this course</h2>{lessonGroups(course.lessons).map((group, index) => <div key={index}>{group.section && <h3 className="course-outline-section">{group.section}</h3>}<ol start={group.items[0].index + 1}>{group.items.map(({ lesson }) => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind === 'text' ? 'reading' : lesson.kind}</span></li>)}</ol></div>)}</section>
         <AccountGate><section className="platform-panel">
           <h2>{course.priceMinor === 0 ? 'Keep it in your library.' : 'Not available to purchase yet.'}</h2>
           <p>{course.priceMinor === 0 ? 'This course is free. Your progress will be saved to your signed-in account.' : 'Paid checkout has not been configured. No enrolment or payment will be created.'}</p>

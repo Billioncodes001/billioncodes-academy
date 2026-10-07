@@ -1,5 +1,7 @@
 # Learning platform foundation
 
+> For the current operator workflow and weekly draft queue, see [Course Studio](COURSE-STUDIO.md). The historical foundation notes below describe the original API-only release; Course Studio adds a browser publishing interface and private R2 video uploads.
+
 ## Journeys
 
 One verified Firebase identity (Google or email/password), two separate spaces:

@@ -250,3 +250,31 @@ test('signed-in reader, dashboard and application stay accessible at narrow widt
     await page.setViewportSize(testInfo.project.use.viewport!);
   }
 });
+
+test('reader groups lessons by section and plays Course Studio videos only from signed same-origin paths', async ({ page }, testInfo) => {
+  const signed = `/api/v2/media/video-1/l/${Math.floor(Date.now() / 1000) + 3600}/${'a'.repeat(64)}`;
+  const studioCourse = { ...course, lessons: [
+    { id: 'welcome', title: 'Welcome to the course', kind: 'video', section: 'Getting started', body: ['Install the editor before lesson two.'], resourceId: 'video-1' },
+    { id: 'setup', title: 'Set up your tools', kind: 'text', section: 'Getting started', body: ['Download the editor and open a new folder for your project work.'] },
+    { id: 'recap', title: 'Recap and next steps', kind: 'text', section: 'Wrap-up', body: ['Review what you built and choose your next small project.'] },
+  ] };
+  let playbackURL = 'https://evil.example/video.mp4';
+  await page.route('**/api/v2/courses/test-course', route => route.fulfill({ json: { course: studioCourse, enrolled: true, completed: [] } }));
+  await page.route('**/api/v2/resources/video-1/playback', route => route.fulfill({ json: { kind: 'file', url: playbackURL, expiresAt: 0 } }));
+  await page.route('**/api/v2/media/**', route => route.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.alloc(64) }));
+  await signIn(page);
+  await page.goto('/#/course/test-course');
+  const contents = page.getByRole('navigation', { name: 'Course contents', exact: true });
+  await expect(contents.getByRole('list', { name: 'Getting started' }).getByRole('listitem')).toHaveCount(2);
+  await expect(contents.getByRole('list', { name: 'Wrap-up' }).getByRole('listitem')).toHaveCount(1);
+  await expect(page.getByText('GETTING STARTED / LESSON 1 / 3')).toBeVisible();
+  await page.getByRole('button', { name: 'Play lesson video' }).click();
+  await expect(page.getByRole('alert')).toContainText('Invalid player address.');
+  await expect(page.locator('video')).toHaveCount(0);
+  playbackURL = signed;
+  await page.getByRole('button', { name: 'Play lesson video' }).click();
+  await expect(page.locator('video')).toHaveAttribute('src', signed);
+  await expect(page.getByRole('button', { name: 'Reload video' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('studio-video-reader.png'), fullPage: true });
+});

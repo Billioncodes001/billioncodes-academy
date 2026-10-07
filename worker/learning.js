@@ -1,6 +1,7 @@
 import { catalog } from './catalog.js';
 import { HttpError } from './validation.js';
 import { exactFields, textValue, quota } from './identity.js';
+import { signedMediaPath, storageLimit } from './studio.js';
 
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export function identifier(value) {
@@ -21,8 +22,8 @@ export async function getCourse(db, id) {
   if (base) return base;
   const row = await db.prepare('SELECT * FROM learning_courses WHERE id=?').bind(id).first();
   if (!row) throw new HttpError(404, 'Course not found.');
-  const { results } = await db.prepare('SELECT * FROM learning_lessons WHERE course_id=? ORDER BY position').bind(id).all();
-  return { ...rowCourse(row), lessons: results.map(lesson => ({ id: lesson.id, title: lesson.title, kind: lesson.kind, body: JSON.parse(lesson.body_json), resourceId: lesson.resource_id })) };
+  const { results } = await db.prepare('SELECT l.*,s.section FROM learning_lessons l LEFT JOIN learning_lesson_sections s ON s.lesson_id=l.id WHERE l.course_id=? ORDER BY l.position').bind(id).all();
+  return { ...rowCourse(row), lessons: results.map(lesson => ({ id: lesson.id, title: lesson.title, kind: lesson.kind, section: lesson.section || '', body: JSON.parse(lesson.body_json), resourceId: lesson.resource_id })) };
 }
 export async function courseCatalogue(db, staff = false) {
   const { results } = await db.prepare(`SELECT c.*,(SELECT count(*) FROM learning_lessons WHERE course_id=c.id) AS lesson_count FROM learning_courses c ${staff ? '' : "WHERE status='published'"} ORDER BY created_at DESC LIMIT 100`).all();
@@ -36,7 +37,7 @@ export async function courseForLearner(db, user, id) {
   const enrolled = !!user && await hasEnrolment(db, user.id, id);
   if (course.status !== 'published' && !(enrolled && course.status === 'archived')) throw new HttpError(404, 'Course not available.');
   const { results } = user && enrolled ? await db.prepare('SELECT lesson_id FROM learning_progress WHERE user_id=? AND course_id=? AND completed=1').bind(user.id, id).all() : { results: [] };
-  return { course: { ...course, lessons: course.lessons.map(lesson => enrolled ? lesson : { id: lesson.id, title: lesson.title, kind: lesson.kind }) }, enrolled, completed: results.map(row => row.lesson_id), checkoutEnabled: false };
+  return { course: { ...course, lessons: course.lessons.map(lesson => enrolled ? lesson : { id: lesson.id, title: lesson.title, kind: lesson.kind, section: lesson.section || '' }) }, enrolled, completed: results.map(row => row.lesson_id), checkoutEnabled: false };
 }
 export async function enrol(db, user, id) {
   const course = await getCourse(db, identifier(id));
@@ -82,8 +83,13 @@ export async function createCourse(db, input) {
   await audit(db, 'course', id, 'created');
   return { course: await getCourse(db, id) };
 }
+export function sectionValue(value) {
+  if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) return '';
+  return textValue(value, 2, 80, 'Section name');
+}
 export async function addLesson(db, id, input) {
-  exactFields(input, ['title', 'kind', 'body', 'resourceId']);
+  exactFields(input, ['title', 'kind', 'body', 'resourceId', 'section']);
+  const section = sectionValue(input.section);
   const course = await getCourse(db, identifier(id));
   if (course.builtin || course.status !== 'draft') throw new HttpError(409, 'Only unpublished draft courses can be edited.');
   if (course.lessons.length >= 100) throw new HttpError(400, 'A course may have at most 100 lessons.');
@@ -103,6 +109,7 @@ export async function addLesson(db, id, input) {
     AND (SELECT COALESCE(SUM(length(CAST(body_json AS BLOB))),0) FROM learning_lessons WHERE course_id=?) + ? <= 250000 RETURNING id`)
     .bind(lessonId,id,title,input.kind,JSON.stringify(body),resource?.id || null,id,id,id,id,new TextEncoder().encode(JSON.stringify(body)).length).first();
   if (!inserted) throw new HttpError(409,'This course changed, is no longer editable, or reached its 100-lesson/250 KB text budget.');
+  if (section) await db.prepare('INSERT INTO learning_lesson_sections(lesson_id,section) VALUES (?,?)').bind(lessonId, section).run();
   await audit(db, 'course', id, 'lesson-added');
   return { course: await getCourse(db, id) };
 }
@@ -138,9 +145,9 @@ export async function uploadPDF(request, env, db, id) {
   const resourceId = crypto.randomUUID(), key = `courses/${id}/${resourceId}.pdf`;
   // Reserve space atomically before storage writes. Failed/unfinished uploads also count until reviewed.
   const reserved = await db.prepare(`INSERT INTO learning_resources(id,course_id,kind,object_key,filename,size_bytes,status,created_at,rights_confirmed)
-    SELECT ?,?,'pdf',?,?,?,'uploading',?,1 WHERE (SELECT COALESCE(SUM(size_bytes),0) FROM learning_resources) + ? <= 2000000000 RETURNING id`)
-    .bind(resourceId,id,key,filename,size,new Date().toISOString(),size).first();
-  if (!reserved) throw new HttpError(409, 'The initial 2 GB file-storage budget has been reached. Contact the operator before increasing it.');
+    SELECT ?,?,'pdf',?,?,?,'uploading',?,1 WHERE (SELECT COALESCE(SUM(size_bytes),0) FROM learning_resources) + ? <= ? RETURNING id`)
+    .bind(resourceId,id,key,filename,size,new Date().toISOString(),size,storageLimit(env)).first();
+  if (!reserved) throw new HttpError(409, 'The course file-storage budget has been reached. Remove unused files or contact the operator before increasing it.');
   try {
     await env.COURSE_FILES.put(key, bytes, { httpMetadata: { contentType: 'application/pdf' } });
     await db.prepare("UPDATE learning_resources SET status='ready' WHERE id=?").bind(resourceId).run();
@@ -179,10 +186,12 @@ export async function registerVideo(env, db, id, input) {
   return { resource: { id: resourceId, kind: 'video', status: 'ready' } };
 }
 export async function videoPlayback(env, resource) {
+  // Videos uploaded through Course Studio live in private R2 and stream through a short-lived signed path.
+  if (resource.kind === 'video' && resource.object_key && !resource.stream_uid) return { kind: 'file', ...await signedMediaPath(env, resource.id, 'l') };
   if (resource.kind !== 'video' || !env.STREAM_API_TOKEN || !env.STREAM_ACCOUNT_ID) throw new HttpError(503, 'Protected video playback is not configured.');
   const expires = Math.floor(Date.now()/1000) + 300;
   const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.STREAM_ACCOUNT_ID}/stream/${resource.stream_uid}/token`, { method:'POST', headers:{ Authorization:`Bearer ${env.STREAM_API_TOKEN}`, 'Content-Type':'application/json' }, body:JSON.stringify({ exp: expires }), signal:AbortSignal.timeout(10000) });
   const result = await response.json();
   if (!response.ok || !result.success || typeof result.result?.token !== 'string' || !/^[A-Za-z0-9._-]+$/.test(result.result.token)) throw new HttpError(503, 'Protected playback could not be started.');
-  return { url: `https://iframe.videodelivery.net/${result.result.token}`, expiresAt: expires };
+  return { kind: 'stream', url: `https://iframe.videodelivery.net/${result.result.token}`, expiresAt: expires };
 }

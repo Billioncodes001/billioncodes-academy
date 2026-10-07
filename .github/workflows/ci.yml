@@ -30,7 +30,7 @@ jobs:
       - run: npm run build
       - run: npm run test:backend
       - run: npx playwright install --with-deps chromium
-      - run: node --test worker/tests/admin-ui.test.mjs
+      - run: node --test worker/tests/admin-ui.test.mjs worker/tests/studio-ui.test.mjs
       - run: npm run test:frontend
       - uses: actions/upload-artifact@v4
         if: always()

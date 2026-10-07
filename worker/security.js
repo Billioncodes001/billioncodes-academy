@@ -77,7 +77,7 @@ export function secureHeaders(response, request, env, { api = false, admin = fal
     headers.set("Access-Control-Expose-Headers", "Retry-After");
   }
   if (admin && nonce) {
-    headers.set("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
+    headers.set("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

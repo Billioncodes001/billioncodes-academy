@@ -233,3 +233,12 @@
   .studio-page .desk-stats strong { font-size: 2rem; }
   .studio-page .desk-tools { padding: 22px; }
 }
+
+/* Course Studio sections and uploaded video lessons. */
+.reader-contents nav { max-height: 440px; overflow: auto; scrollbar-gutter: stable; }
+.reader-contents nav ol { max-height: none; overflow: visible; }
+.reader-section-title { color: var(--brand-blue); margin: 18px 10px 4px; text-transform: uppercase; }
+.course-outline-section { font-size: 1.05rem; margin: 1.4rem 0 .2rem; }
+.reader-video { margin: 0 0 1.5rem; }
+.reader-video video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #0e1f38; margin-bottom: 1rem; }
+.reader-video iframe { margin-bottom: 1rem; }
