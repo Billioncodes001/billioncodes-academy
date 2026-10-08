@@ -23,13 +23,6 @@ function useBoard(period: Period, refresh = 0) {
   return state;
 }
 
-// The top player, shown as a challenge next to the Play button.
-export function TopChallenge() {
-  const { entries, status } = useBoard('all');
-  if (status !== 'ready' || !entries.length) return null;
-  return <span className="game-top">TOP SCORE · {entries[0].name} · {entries[0].score.toLocaleString()}</span>;
-}
-
 export function BoardPanel({ onClose }: { onClose: () => void }) {
   const [period, setPeriod] = useState<Period>('all');
   const { entries, status } = useBoard(period);

@@ -13,8 +13,9 @@ type Bug = { x: number; y: number; tx: number; ty: number; speed: number; hp: nu
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; max: number; r: number; g: number; b: number };
 type Wave = { x: number; y: number; t: number; power: number };
 
-const WORDS_WIDE = [['BIG IDEAS.'], ['REAL SKILLS.'], ['BUILT BY YOU.'], ['</>']];
-const WORDS_NARROW = [['BIG', 'IDEAS.'], ['REAL', 'SKILLS.'], ['BUILT', 'BY YOU.'], ['</>']];
+// The brand promise. The headline copy beside it carries the full message for readers.
+const WORDS_WIDE = [['LEARN.'], ['BUILD.'], ['GROW.'], ['</>']];
+const WORDS_NARROW = WORDS_WIDE;
 const BEST_KEY = 'bc-debug-defender-best';
 
 function readBest() { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; } }
@@ -107,7 +108,7 @@ export function createParticleHero(canvas: HTMLCanvasElement, opts: Options): He
     camera.left = 0; camera.right = W; camera.top = 0; camera.bottom = H; camera.updateProjectionMatrix();
     camera.scale.y = 1;
     const gap = small ? 4 : Math.max(4, Math.round(Math.sqrt((W * H * .16) / COUNT)));
-    const centerY = small ? 250 : H * .33;
+    const centerY = small ? 220 : H * .3;
     shapes.length = 0;
     for (const lines of words) shapes.push(sampleText(lines, W, H, centerY, W * (small ? .9 : .84), small ? 300 : H * .4, gap));
     coreY = small ? H * .42 : H * .5;

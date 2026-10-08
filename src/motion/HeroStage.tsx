@@ -3,13 +3,14 @@ import type { GameState, HeroEngine } from './particleHero';
 import { canUseWebGL, useMotionEnabled } from './prefs';
 import { fetchEntry, startRun, type BoardEntry } from './arcadeApi';
 import { SharePanel } from './SharePanel';
-import { BoardPanel, ScoreSubmit, TopChallenge } from './Leaderboard';
+import { BoardPanel, ScoreSubmit } from './Leaderboard';
 
 const initial: GameState = { mode: 'idle', score: 0, best: 0, wave: 0, integrity: 100, combo: 0, banner: '' };
 
 // Full-screen particle hero with the Debug Defender game. Three.js loads as a
 // separate chunk after first paint, so the copy never waits for it.
-export function HeroStage({ children }: { children: ReactNode }) {
+// `paths` is the learning panel shown beside the copy; the game is an optional break beneath it.
+export function HeroStage({ children, paths }: { children: ReactNode; paths: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLElement>(null);
@@ -68,11 +69,10 @@ export function HeroStage({ children }: { children: ReactNode }) {
     <div className="hero-vignette" aria-hidden="true" />
     <div className="bc-hero-copy">{children}</div>
 
-    {ready === 'ready' && motion && game.mode === 'idle' && <div className="game-launch">
-      <button type="button" className="game-play" onClick={start}><span className="game-play-icon" aria-hidden="true">▶</span><span><strong>Play Debug Defender</strong><small>Bugs are coming for your code. Zap them.</small></span></button>
-      {challenge && <p className="game-challenge"><strong>{challenge.name}</strong> challenges you to beat <strong>{challenge.score.toLocaleString()}</strong></p>}
-      <div className="game-meta"><TopChallenge />{game.best > 0 && <span className="game-best">YOUR BEST {game.best}</span>}<button type="button" className="game-board-open" onClick={() => setBoardOpen(true)}>View leaderboard</button></div>
-      <span className="hero-hint">Move your cursor through the words. Click to blast them.</span>
+    {game.mode === 'idle' && <div className="hero-side">
+      {challenge && ready === 'ready' && motion && <div className="game-challenge"><p><strong>{challenge.name}</strong> challenged you to beat <strong>{challenge.score.toLocaleString()}</strong> in Debug Defender.</p><button type="button" className="game-play" onClick={start}><span className="game-play-icon" aria-hidden="true">▶</span><strong>Accept the challenge</strong></button></div>}
+      {paths}
+      {ready === 'ready' && motion && !challenge && <p className="game-break">Need a break? <button type="button" className="game-break-play" onClick={start}>Play Debug Defender</button>{game.best > 0 && <span> · your best {game.best}</span>} · <button type="button" className="game-break-board" onClick={() => setBoardOpen(true)}>leaderboard</button></p>}
     </div>}
 
     {playing && <div className="game-hud" role="group" aria-label="Debug Defender">

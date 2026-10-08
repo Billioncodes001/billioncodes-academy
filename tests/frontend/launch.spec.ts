@@ -296,11 +296,15 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
     const entry = { rank: 2, id: '33333333-3333-4333-8333-333333333333', name: submitted!.name, score: submitted!.score, wave: submitted!.wave, createdAt: '2026-10-08T11:00:00.000Z' };
     return route.fulfill({ status: 201, json: { accepted: true, entry, top: [...top, entry] } });
   });
-  // Arrive through a friend's challenge link.
-  await page.goto(`/?challenge=${top[0].id}`);
-  await expect(page.locator('.game-challenge')).toHaveText('Grace challenges you to beat 2,400');
-  await expect(page.getByText('TOP SCORE · Grace · 2,400')).toBeVisible();
-  await page.getByRole('button', { name: 'View leaderboard' }).click();
+  // The homepage leads with learning; the game is a secondary break.
+  await page.goto('/');
+  const paths = page.getByRole('navigation', { name: 'Where to start' });
+  await expect(paths.getByRole('link')).toHaveCount(3);
+  await expect(paths.getByRole('link', { name: /Your first web page/ })).toHaveAttribute('href', '#/learn/first-web-page');
+  await expect(paths.getByRole('link', { name: /The practice lab/ })).toHaveAttribute('href', '#/practice');
+  await expect(paths.getByRole('link', { name: /Training and expert help/ })).toHaveAttribute('href', '#/training');
+  await expect(page.getByText('Need a break?')).toBeVisible();
+  await page.getByRole('button', { name: 'leaderboard', exact: true }).click();
   const panel = page.getByRole('dialog', { name: 'Debug Defender leaderboard' });
   await expect(panel.getByText('Grace')).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Close' })).toBeFocused();
@@ -310,7 +314,10 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
 
-  await page.getByRole('button', { name: /Play Debug Defender/ }).click();
+  // A friend's challenge link puts the game up front.
+  await page.goto(`/?challenge=${top[0].id}`);
+  await expect(page.locator('.game-challenge p')).toHaveText('Grace challenged you to beat 2,400 in Debug Defender.');
+  await page.getByRole('button', { name: 'Accept the challenge' }).click();
   // Bugs spawn a moment after the wave starts; keep zapping until one is fixed.
   await expect.poll(async () => {
     await page.getByRole('button', { name: 'Zap nearest bug' }).click();

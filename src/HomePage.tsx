@@ -71,6 +71,24 @@ function Terminal() {
   return <div className="terminal" ref={ref} data-tilt="flat"><div className="workbench-bar"><span><i /><i /><i /></span><span>first-project.html</span><span>LIVE</span></div><pre><span className="sr-only">{code.join('\n')}</span><code aria-hidden="true">{typed}<span className="caret" /></code></pre><div className="terminal-preview"><span className="eyebrow">PREVIEW</span><strong>{chars > 30 ? 'My first project' : ''}</strong>{chars > 70 && <p>A reading list for curious people.</p>}{chars > 115 && <span className="terminal-link">Open the list ↗</span>}</div></div>;
 }
 
+// Three honest ways in, matching what the site offers today.
+const startPaths = [
+  { step: '01', who: 'NEW TO CODE', title: 'Your first web page', meta: '2 short lessons · free · no account', href: '#/learn/first-web-page' },
+  { step: '02', who: 'LEARN BY DOING', title: 'The practice lab', meta: '4 HTML builds with instant feedback', href: '#/practice' },
+  { step: '03', who: 'WANT GUIDANCE', title: 'Training and expert help', meta: 'Tell us your goals; we reply personally', href: '#/training' },
+];
+
+function StartPaths() {
+  return <nav className="start-paths" aria-label="Where to start">
+    <p className="start-paths-title">Start here</p>
+    {startPaths.map(path => <a key={path.step} href={path.href} className="start-path" data-tilt="flat">
+      <span className="start-step" aria-hidden="true">{path.step}</span>
+      <span className="start-copy"><span className="start-who">{path.who}</span><strong>{path.title}</strong><span className="start-meta">{path.meta}</span></span>
+      <span className="go-chip" aria-hidden="true">→</span>
+    </a>)}
+  </nav>;
+}
+
 function FirstWin() {
   const [heading, setHeading] = useState('My next big idea');
   return <div className="first-win" data-tilt="flat"><div className="workbench-bar"><span><i /><i /><i /></span><span>your-first-page.html</span><span>HTML</span></div><div className="first-win-grid"><div className="first-win-editor"><p className="eyebrow">01 / GIVE IT A NAME</p><label htmlFor="first-heading">What would you like to build?</label><div className="heading-input"><code>&lt;h1&gt;</code><input id="first-heading" value={heading} onChange={event => setHeading(event.target.value)} maxLength={56} autoComplete="off" /><code>&lt;/h1&gt;</code></div><p>Change the text. See your heading come to life.</p></div><div className="first-win-output"><span className="eyebrow">02 / SEE YOUR FIRST LINE</span><strong aria-live="polite" key={heading.length % 2}>{heading || 'Your idea goes here'}</strong><p>A little structure. A world of possibility.</p><span className="output-label"><span className="live-dot" aria-hidden="true" />LIVE TEXT PREVIEW</span></div></div><div className="first-win-bottom"><span>No setup. No experience required.</span><a href="#/practice/profile-card">Now build the whole introduction <Arrow /></a></div></div>;
@@ -78,7 +96,7 @@ function FirstWin() {
 
 export function HomePage() {
   return <div className="bc-home">
-    <HeroStage>
+    <HeroStage paths={<StartPaths />}>
       <Scramble className="bc-kicker" text="FOR THE NEXT GENERATION OF BUILDERS" dot />
       <h1 id="home-title"><SplitLines lines={['Big ideas.', 'Real skills.', <span className="shimmer" key="you">Built by you.</span>]} delay={.2} /></h1>
       <Reveal delay={.6} y={20}><p className="bc-hero-lead">The next chapter of your life could start with a line of code. Learn the foundations, try things for yourself, and build something that matters.</p></Reveal>
