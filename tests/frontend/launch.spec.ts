@@ -281,3 +281,45 @@ test('home motion can be switched off and starts off under reduced motion', asyn
   await expect(reduced.locator('.auto-reveal:not(.is-revealed)')).toHaveCount(0);
   await fresh.close();
 });
+
+test('Debug Defender leaderboard: idle challenge, panel, and score submission after a real game', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1440', 'One full game is enough; the layout is covered elsewhere.');
+  test.setTimeout(150000);
+  const top = [{ rank: 1, id: '11111111-1111-4111-8111-111111111111', name: 'Grace', score: 2400, wave: 6, createdAt: '2026-10-08T10:00:00.000Z' }];
+  let submitted: Record<string, unknown> | undefined;
+  await page.route('**/api/v1/arcade/leaderboard?period=*', route => route.fulfill({ json: { entries: route.request().url().endsWith('week') ? [] : top } }));
+  await page.route('**/api/v1/arcade/runs', route => route.fulfill({ status: 201, json: { runId: '22222222-2222-4222-8222-222222222222' } }));
+  await page.route('**/api/v1/arcade/scores', route => {
+    submitted = route.request().postDataJSON();
+    const entry = { rank: 2, id: '33333333-3333-4333-8333-333333333333', name: submitted!.name, score: submitted!.score, wave: submitted!.wave, createdAt: '2026-10-08T11:00:00.000Z' };
+    return route.fulfill({ status: 201, json: { accepted: true, entry, top: [...top, entry] } });
+  });
+  await page.goto('/');
+  await expect(page.getByText('TOP SCORE · Grace · 2,400')).toBeVisible();
+  await page.getByRole('button', { name: 'View leaderboard' }).click();
+  const panel = page.getByRole('dialog', { name: 'Debug Defender leaderboard' });
+  await expect(panel.getByText('Grace')).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Close' })).toBeFocused();
+  await panel.getByRole('button', { name: 'This week' }).click();
+  await expect(panel.getByText('No scores yet. Be the first name on the board.')).toBeVisible();
+  expect((await new AxeBuilder({ page }).include('.board-panel').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+
+  await page.getByRole('button', { name: /Play Debug Defender/ }).click();
+  // Bugs spawn a moment after the wave starts; keep zapping until one is fixed.
+  await expect.poll(async () => {
+    await page.getByRole('button', { name: 'Zap nearest bug' }).click();
+    return Number(await page.locator('.game-hud .hud-cell strong').first().innerText());
+  }, { timeout: 15000 }).toBeGreaterThan(0);
+  await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible({ timeout: 130000 });
+  const name = page.getByLabel('Put your score on the leaderboard');
+  await name.fill('x');
+  await expect(page.getByRole('button', { name: 'Submit score' })).toBeDisabled();
+  await name.fill('Ada');
+  await page.getByRole('button', { name: 'Submit score' }).click();
+  await expect(page.getByText('You placed #2 all time.')).toBeVisible();
+  await expect(page.locator('.board-list li.is-you')).toContainText('Ada');
+  expect(submitted).toMatchObject({ runId: '22222222-2222-4222-8222-222222222222', name: 'Ada' });
+  expect(Number(submitted!.score)).toBeGreaterThan(0);
+});

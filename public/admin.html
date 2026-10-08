@@ -121,6 +121,7 @@
     <button type="button" id="tab-inbox" aria-pressed="true">Enquiries</button>
     <button type="button" id="tab-studio" aria-pressed="false">Course studio</button>
     <button type="button" id="tab-team" aria-pressed="false">Team</button>
+    <button type="button" id="tab-arcade" aria-pressed="false">Leaderboard</button>
     <span class="spacer"></span>
     <span id="who" class="who"></span>
     <button class="secondary" id="lock" type="button">Lock and clear</button>
@@ -134,6 +135,11 @@
   <section id="team-panel" hidden aria-labelledby="team-heading">
     <h2 id="team-heading">Team access</h2>
     <div id="team-root"></div>
+  </section>
+  <section id="arcade-panel" hidden aria-labelledby="arcade-heading">
+    <h2 id="arcade-heading">Debug Defender leaderboard</h2>
+    <p class="muted">Names are chosen by players and shown publicly on the homepage. Hide a name to take it off the public board while keeping the record; delete removes it permanently.</p>
+    <div id="arcade-root"></div>
   </section>
   <section id="review-panel" hidden aria-labelledby="review-heading">
     <div class="row"><h2 id="review-heading">Submission inbox</h2></div>
@@ -179,6 +185,8 @@
     $("who").textContent = "";
     $("team-panel").hidden = true;
     $("team-root").replaceChildren();
+    $("arcade-panel").hidden = true;
+    $("arcade-root").replaceChildren();
     $("records").replaceChildren();
     $("review-panel").hidden = true;
     $("studio-panel").hidden = true;
@@ -332,13 +340,14 @@
   const root = () => $("studio-root");
   const report = error => { if (error.name !== "AbortError") say(error.message); };
 
-  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"] };
+  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"], arcade:["tab-arcade", "arcade-panel"] };
   function show(name) {
     for (const [key, [tab, panel]] of Object.entries(panels)) { $(tab).setAttribute("aria-pressed", String(key === name)); $(panel).hidden = key !== name; }
   }
   async function openStudio() { show("studio"); await showCourses(); }
   function openInbox() { show("inbox"); }
   async function openTeam() { show("team"); await showTeam(); }
+  async function openArcade() { show("arcade"); await showArcade(); }
 
   // ---- Sign-in and roles -------------------------------------------------------------------
   // The server decides the role on every request; the UI only hides areas the role cannot use.
@@ -350,6 +359,7 @@
     $("tab-inbox").hidden = !session.permissions.inbox;
     $("tab-studio").hidden = !session.permissions.studio;
     $("tab-team").hidden = !session.permissions.team;
+    $("tab-arcade").hidden = !session.permissions.inbox;
     $("who").textContent = roleName[session.role] + " | " + (session.method === "token" ? "owner access token" : session.email);
     $("login-panel").hidden = true; $("tabs").hidden = false;
     if (session.permissions.inbox) { openInbox(); await load(); }
@@ -431,6 +441,26 @@
   }
   async function teamAction(fn, success) {
     try { await fn(); await showTeam(); say(success); } catch (error) { report(error); }
+  }
+
+  // ---- Leaderboard moderation (owners and reviewers) ------------------------------------------
+  async function showArcade() {
+    const data = await api("/api/v1/admin/arcade");
+    const list = h("section", { class:"panel", "aria-labelledby":"arcade-list-heading" }, h("h3", { id:"arcade-list-heading" }, "Latest scores (" + data.entries.length + ")"));
+    if (!data.entries.length) list.append(h("p", {}, "No scores have been submitted yet."));
+    for (const item of data.entries) {
+      const label = item.name + " (" + item.score + " points)";
+      const row = h("div", { class:"member" }, h("span", { class:"grow" }, h("strong", {}, item.name), h("span", { class:"muted hint" }, item.score + " points | wave " + item.wave + " | " + Math.round(item.duration / 60) + " min game | " + when(item.createdAt) + (item.moderatedBy ? " | moderated by " + actorName(item.moderatedBy) : ""))));
+      if (item.hidden) row.append(h("span", { class:"chip warn" }, "Hidden"));
+      row.append(
+        h("button", { type:"button", class:"secondary", "aria-label":(item.hidden ? "Show " : "Hide ") + label, onclick:() => arcadeAction(() => api("/api/v1/admin/arcade/" + encodeURIComponent(item.id), { method:"PATCH", body:JSON.stringify({ hidden:!item.hidden }) }), item.hidden ? item.name + " is back on the public leaderboard." : item.name + " is hidden from the public leaderboard.") }, item.hidden ? "Show" : "Hide"),
+        h("button", { type:"button", class:"secondary", "aria-label":"Delete " + label, onclick:() => { if (confirm("Permanently delete " + label + "? This cannot be undone.")) arcadeAction(() => api("/api/v1/admin/arcade/" + encodeURIComponent(item.id), { method:"DELETE" }), item.name + " was deleted."); } }, "Delete"));
+      list.append(row);
+    }
+    $("arcade-root").replaceChildren(list);
+  }
+  async function arcadeAction(fn, success) {
+    try { await fn(); await showArcade(); say(success); } catch (error) { report(error); }
   }
 
   async function showCourses() {
@@ -721,6 +751,7 @@
   $("tab-studio").addEventListener("click", () => openStudio().catch(report));
   $("tab-inbox").addEventListener("click", openInbox);
   $("tab-team").addEventListener("click", () => openTeam().catch(report));
+  $("tab-arcade").addEventListener("click", () => openArcade().catch(report));
   $("google-signin").addEventListener("click", () => accountSignIn(config => staffAuth().google(config)));
   $("staff-form").addEventListener("submit", event => { event.preventDefault(); accountSignIn(config => staffAuth().email(config, $("staff-email").value, $("staff-password").value)); });
   $("reset-password").addEventListener("click", async () => {

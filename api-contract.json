@@ -14,36 +14,467 @@
     "website": "Optional honeypot string. Must be empty or whitespace; nonempty rejected with 422. Do not show to real users."
   },
   "definitions": {
-    "name": {"type": "string", "minLength": 2, "maxLength": 100, "multiline": false},
-    "email": {"type": "string", "minLength": 3, "maxLength": 254, "format": "practical ASCII email, local part <=64; no whitespace; domain must have a dot", "normalization": "domain lowercased, local part preserved"},
-    "phone": {"type": "string", "optional": true, "minLength": 7, "maxLength": 30, "pattern": "^[+0-9(). -]+$", "empty": "treated as omitted"},
-    "track": {"type": "string", "minLength": 2, "maxLength": 80, "multiline": false},
-    "format": {"enum": ["online", "physical", "undecided"]},
-    "experience": {"type": "string", "minLength": 2, "maxLength": 1000, "multiline": true},
-    "goals": {"type": "string", "minLength": 10, "maxLength": 2000, "multiline": true},
-    "category": {"enum": ["business-software", "mentorship", "code-review"]},
-    "summary": {"type": "string", "minLength": 10, "maxLength": 160, "multiline": false},
-    "details": {"type": "string", "minLength": 20, "maxLength": 5000, "multiline": true},
-    "targetDate": {"type": "string", "optional": true, "format": "real calendar date YYYY-MM-DD, years 2026-2100", "empty": "treated as omitted", "note": "Preference only; no deadline or availability commitment."},
-    "consent": {"const": true},
-    "website": {"type": "string", "optional": true, "maxLength": 200, "empty": "must be empty after trim"}
+    "name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 100,
+      "multiline": false
+    },
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 254,
+      "format": "practical ASCII email, local part <=64; no whitespace; domain must have a dot",
+      "normalization": "domain lowercased, local part preserved"
+    },
+    "phone": {
+      "type": "string",
+      "optional": true,
+      "minLength": 7,
+      "maxLength": 30,
+      "pattern": "^[+0-9(). -]+$",
+      "empty": "treated as omitted"
+    },
+    "track": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80,
+      "multiline": false
+    },
+    "format": {
+      "enum": [
+        "online",
+        "physical",
+        "undecided"
+      ]
+    },
+    "experience": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 1000,
+      "multiline": true
+    },
+    "goals": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000,
+      "multiline": true
+    },
+    "category": {
+      "enum": [
+        "business-software",
+        "mentorship",
+        "code-review"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 160,
+      "multiline": false
+    },
+    "details": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 5000,
+      "multiline": true
+    },
+    "targetDate": {
+      "type": "string",
+      "optional": true,
+      "format": "real calendar date YYYY-MM-DD, years 2026-2100",
+      "empty": "treated as omitted",
+      "note": "Preference only; no deadline or availability commitment."
+    },
+    "consent": {
+      "const": true
+    },
+    "website": {
+      "type": "string",
+      "optional": true,
+      "maxLength": 200,
+      "empty": "must be empty after trim"
+    }
   },
   "endpoints": {
-    "GET /api/health": {"success": {"ok": true, "service": "billioncodes-academy", "apiVersion": "v1", "submissions": "ready", "payments": "unconfigured"}, "note": "503 if D1 schema or SECURITY_SALT missing; health does not expose private values."},
-    "GET /api/v1/catalog": {"success": {"courses": [{"id": "string", "title": "string", "level": "string", "format": "string", "summary": "string", "lessons": [{"id": "string", "title": "string", "body": ["string"]}]}], "training": {"status": "applications-open"}, "payments": {"enabled": false}}},
-    "POST /api/v1/applications": {"required": ["name", "email", "track", "format", "experience", "goals", "consent"], "optional": ["phone", "website"], "status": 201, "success": {"accepted": true, "id": "UUID"}},
-    "POST /api/v1/project-requests": {"required": ["name", "email", "category", "summary", "details", "consent"], "optional": ["phone", "targetDate", "website"], "status": 201, "success": {"accepted": true, "id": "UUID"}},
-    "GET /api/v1/admin/submissions": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner", "query": {"kind": "optional applications|project-requests", "status": "optional new|contacted|closed", "limit": "integer 1-50, default 20", "cursor": "opaque nextCursor from prior response"}, "success": {"items": [{"id": "UUID", "kind": "applications|project-requests", "status": "new|contacted|closed", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "version": 1, "data": {}}], "nextCursor": "string|null"}},
-    "PATCH /api/v1/admin/submissions/{id}": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner", "body": {"status": "new|contacted|closed", "version": "positive integer current row version"}, "success": {"updated": true, "id": "UUID", "status": "new|contacted|closed", "version": 2}, "note": "409 on stale version. Same status is a no-op. Status changes are atomically audited; no deletion endpoint."},
-    "GET /api/v1/admin/submissions/{id}/audit": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner", "success": {"items": [{"id": "integer", "previousStatus": "string", "status": "string", "changedAt": "UTC ISO timestamp", "actor": "admin|staff:<email>", "version": "integer"}]}, "note": "Last 100 changes; no body, token or IP in audit."},
-    "GET /api/v1/admin/me": {"authorization": "Bearer ADMIN_TOKEN (owner bootstrap) or Bearer Firebase ID token of a verified email with an active staff grant", "success": {"staff": {"method": "token|account", "role": "owner|editor|reviewer", "email": "string|null", "name": "string", "permissions": {"inbox": true, "studio": true, "training": true, "team": true}}}, "note": "401 without valid credentials; 403 when a verified account has no active staff grant. There is no staff self-registration."},
-    "GET /api/v1/admin/staff": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner", "success": {"members": [{"id": "UUID", "email": "lowercase string", "name": "string", "role": "owner|editor|reviewer", "status": "active|revoked", "linked": true, "grantedBy": "admin|staff:<email>", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "lastSeenAt": "UTC ISO timestamp|null", "version": 1}], "audit": [{"email": "string", "action": "grant|role|revoke", "role": "string", "actor": "admin|staff:<email>", "createdAt": "UTC ISO timestamp"}], "roles": ["owner", "editor", "reviewer"]}},
-    "POST /api/v1/admin/staff": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner", "body": {"email": "required email", "role": "required owner|editor|reviewer", "name": "optional 2-100 characters"}, "success": {"member": {"id": "UUID", "email": "lowercase string", "name": "string", "role": "owner|editor|reviewer", "status": "active|revoked", "linked": true, "grantedBy": "admin|staff:<email>", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "lastSeenAt": "UTC ISO timestamp|null", "version": 1}}, "note": "409 if the email already has active access or is the caller's own. Re-granting a revoked email reactivates it and clears the previous Firebase account link."},
-    "PATCH /api/v1/admin/staff/{id}": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner", "body": {"role": "owner|editor|reviewer", "version": "positive integer"}, "success": {"member": {"id": "UUID", "email": "lowercase string", "name": "string", "role": "owner|editor|reviewer", "status": "active|revoked", "linked": true, "grantedBy": "admin|staff:<email>", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "lastSeenAt": "UTC ISO timestamp|null", "version": 1}}, "note": "409 on stale version, revoked member or own record."},
-    "POST /api/v1/admin/staff/{id}/revoke": {"authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner", "body": {"version": "positive integer"}, "success": {"member": {"id": "UUID", "email": "lowercase string", "name": "string", "role": "owner|editor|reviewer", "status": "active|revoked", "linked": true, "grantedBy": "admin|staff:<email>", "createdAt": "UTC ISO timestamp", "updatedAt": "UTC ISO timestamp", "lastSeenAt": "UTC ISO timestamp|null", "version": 1}}, "note": "Effective on the member's next request. 409 on stale version, already revoked or own record."},
-    "/api/v1/payments/*, /api/v1/checkout, /api/v1/enrolments, /api/v1/referrals/*": {"status": 503, "error": "Payments, paid enrolments and referral credits are not configured."}
+    "GET /api/health": {
+      "success": {
+        "ok": true,
+        "service": "billioncodes-academy",
+        "apiVersion": "v1",
+        "submissions": "ready",
+        "payments": "unconfigured"
+      },
+      "note": "503 if D1 schema or SECURITY_SALT missing; health does not expose private values."
+    },
+    "GET /api/v1/catalog": {
+      "success": {
+        "courses": [
+          {
+            "id": "string",
+            "title": "string",
+            "level": "string",
+            "format": "string",
+            "summary": "string",
+            "lessons": [
+              {
+                "id": "string",
+                "title": "string",
+                "body": [
+                  "string"
+                ]
+              }
+            ]
+          }
+        ],
+        "training": {
+          "status": "applications-open"
+        },
+        "payments": {
+          "enabled": false
+        }
+      }
+    },
+    "POST /api/v1/applications": {
+      "required": [
+        "name",
+        "email",
+        "track",
+        "format",
+        "experience",
+        "goals",
+        "consent"
+      ],
+      "optional": [
+        "phone",
+        "website"
+      ],
+      "status": 201,
+      "success": {
+        "accepted": true,
+        "id": "UUID"
+      }
+    },
+    "POST /api/v1/project-requests": {
+      "required": [
+        "name",
+        "email",
+        "category",
+        "summary",
+        "details",
+        "consent"
+      ],
+      "optional": [
+        "phone",
+        "targetDate",
+        "website"
+      ],
+      "status": 201,
+      "success": {
+        "accepted": true,
+        "id": "UUID"
+      }
+    },
+    "GET /api/v1/admin/submissions": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner",
+      "query": {
+        "kind": "optional applications|project-requests",
+        "status": "optional new|contacted|closed",
+        "limit": "integer 1-50, default 20",
+        "cursor": "opaque nextCursor from prior response"
+      },
+      "success": {
+        "items": [
+          {
+            "id": "UUID",
+            "kind": "applications|project-requests",
+            "status": "new|contacted|closed",
+            "createdAt": "UTC ISO timestamp",
+            "updatedAt": "UTC ISO timestamp",
+            "version": 1,
+            "data": {}
+          }
+        ],
+        "nextCursor": "string|null"
+      }
+    },
+    "PATCH /api/v1/admin/submissions/{id}": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner",
+      "body": {
+        "status": "new|contacted|closed",
+        "version": "positive integer current row version"
+      },
+      "success": {
+        "updated": true,
+        "id": "UUID",
+        "status": "new|contacted|closed",
+        "version": 2
+      },
+      "note": "409 on stale version. Same status is a no-op. Status changes are atomically audited; no deletion endpoint."
+    },
+    "GET /api/v1/admin/submissions/{id}/audit": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role reviewer or owner",
+      "success": {
+        "items": [
+          {
+            "id": "integer",
+            "previousStatus": "string",
+            "status": "string",
+            "changedAt": "UTC ISO timestamp",
+            "actor": "admin|staff:<email>",
+            "version": "integer"
+          }
+        ]
+      },
+      "note": "Last 100 changes; no body, token or IP in audit."
+    },
+    "GET /api/v1/admin/me": {
+      "authorization": "Bearer ADMIN_TOKEN (owner bootstrap) or Bearer Firebase ID token of a verified email with an active staff grant",
+      "success": {
+        "staff": {
+          "method": "token|account",
+          "role": "owner|editor|reviewer",
+          "email": "string|null",
+          "name": "string",
+          "permissions": {
+            "inbox": true,
+            "studio": true,
+            "training": true,
+            "team": true
+          }
+        }
+      },
+      "note": "401 without valid credentials; 403 when a verified account has no active staff grant. There is no staff self-registration."
+    },
+    "GET /api/v1/admin/staff": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner",
+      "success": {
+        "members": [
+          {
+            "id": "UUID",
+            "email": "lowercase string",
+            "name": "string",
+            "role": "owner|editor|reviewer",
+            "status": "active|revoked",
+            "linked": true,
+            "grantedBy": "admin|staff:<email>",
+            "createdAt": "UTC ISO timestamp",
+            "updatedAt": "UTC ISO timestamp",
+            "lastSeenAt": "UTC ISO timestamp|null",
+            "version": 1
+          }
+        ],
+        "audit": [
+          {
+            "email": "string",
+            "action": "grant|role|revoke",
+            "role": "string",
+            "actor": "admin|staff:<email>",
+            "createdAt": "UTC ISO timestamp"
+          }
+        ],
+        "roles": [
+          "owner",
+          "editor",
+          "reviewer"
+        ]
+      }
+    },
+    "POST /api/v1/admin/staff": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner",
+      "body": {
+        "email": "required email",
+        "role": "required owner|editor|reviewer",
+        "name": "optional 2-100 characters"
+      },
+      "success": {
+        "member": {
+          "id": "UUID",
+          "email": "lowercase string",
+          "name": "string",
+          "role": "owner|editor|reviewer",
+          "status": "active|revoked",
+          "linked": true,
+          "grantedBy": "admin|staff:<email>",
+          "createdAt": "UTC ISO timestamp",
+          "updatedAt": "UTC ISO timestamp",
+          "lastSeenAt": "UTC ISO timestamp|null",
+          "version": 1
+        }
+      },
+      "note": "409 if the email already has active access or is the caller's own. Re-granting a revoked email reactivates it and clears the previous Firebase account link."
+    },
+    "PATCH /api/v1/admin/staff/{id}": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner",
+      "body": {
+        "role": "owner|editor|reviewer",
+        "version": "positive integer"
+      },
+      "success": {
+        "member": {
+          "id": "UUID",
+          "email": "lowercase string",
+          "name": "string",
+          "role": "owner|editor|reviewer",
+          "status": "active|revoked",
+          "linked": true,
+          "grantedBy": "admin|staff:<email>",
+          "createdAt": "UTC ISO timestamp",
+          "updatedAt": "UTC ISO timestamp",
+          "lastSeenAt": "UTC ISO timestamp|null",
+          "version": 1
+        }
+      },
+      "note": "409 on stale version, revoked member or own record."
+    },
+    "POST /api/v1/admin/staff/{id}/revoke": {
+      "authorization": "Bearer ADMIN_TOKEN or staff Firebase ID token; role owner",
+      "body": {
+        "version": "positive integer"
+      },
+      "success": {
+        "member": {
+          "id": "UUID",
+          "email": "lowercase string",
+          "name": "string",
+          "role": "owner|editor|reviewer",
+          "status": "active|revoked",
+          "linked": true,
+          "grantedBy": "admin|staff:<email>",
+          "createdAt": "UTC ISO timestamp",
+          "updatedAt": "UTC ISO timestamp",
+          "lastSeenAt": "UTC ISO timestamp|null",
+          "version": 1
+        }
+      },
+      "note": "Effective on the member's next request. 409 on stale version, already revoked or own record."
+    },
+    "/api/v1/payments/*, /api/v1/checkout, /api/v1/enrolments, /api/v1/referrals/*": {
+      "status": 503,
+      "error": "Payments, paid enrolments and referral credits are not configured."
+    },
+    "POST /api/v1/arcade/runs": {
+      "success": {
+        "runId": "uuid"
+      },
+      "status": 201,
+      "note": "Opens a server-timed Debug Defender run. Origin required. Rate limited to 40 runs per connection per 10 minutes and 50,000 per day; 429 with Retry-After. Stores only an HMAC of day+IP, never the raw address. Runs expire after 3 hours."
+    },
+    "POST /api/v1/arcade/scores": {
+      "required": [
+        "runId",
+        "name",
+        "score",
+        "wave"
+      ],
+      "success": {
+        "accepted": true,
+        "entry": {
+          "rank": "integer",
+          "id": "uuid",
+          "name": "string",
+          "score": "integer",
+          "wave": "integer",
+          "createdAt": "ISO-8601"
+        },
+        "top": [
+          {
+            "rank": "integer",
+            "id": "uuid",
+            "name": "string",
+            "score": "integer",
+            "wave": "integer",
+            "createdAt": "ISO-8601"
+          }
+        ]
+      },
+      "status": 201,
+      "note": "name: 2-16 letters, numbers, spaces, dots, dashes or underscores; offensive names rejected (400 with fields.name). 404 unknown/expired run, 409 already submitted, 422 when the score is not a multiple of 10, exceeds the most the game allows by that wave, or arrives faster than that wave can be reached. Unknown fields rejected."
+    },
+    "GET /api/v1/arcade/leaderboard": {
+      "query": {
+        "period": "all | week (default all)"
+      },
+      "success": {
+        "period": "all|week",
+        "entries": [
+          {
+            "rank": "integer",
+            "id": "uuid",
+            "name": "string",
+            "score": "integer",
+            "wave": "integer",
+            "createdAt": "ISO-8601"
+          }
+        ]
+      },
+      "note": "Top 10 visible entries, ties broken by earliest submission."
+    },
+    "GET /api/v1/admin/arcade": {
+      "auth": "Staff with inbox access (owner, reviewer)",
+      "success": {
+        "entries": [
+          {
+            "id": "uuid",
+            "name": "string",
+            "score": "integer",
+            "wave": "integer",
+            "duration": "seconds",
+            "createdAt": "ISO-8601",
+            "hidden": "boolean",
+            "moderatedBy": "string|null"
+          }
+        ]
+      },
+      "note": "Latest 200 entries including hidden ones."
+    },
+    "PATCH /api/v1/admin/arcade/{id}": {
+      "auth": "Staff with inbox access",
+      "required": [
+        "hidden"
+      ],
+      "success": {
+        "id": "uuid",
+        "hidden": "boolean"
+      }
+    },
+    "DELETE /api/v1/admin/arcade/{id}": {
+      "auth": "Staff with inbox access",
+      "success": {
+        "deleted": true,
+        "id": "uuid"
+      },
+      "note": "Permanent."
+    }
   },
-  "errors": {"shape": {"error": "string", "fields": "optional object mapping field names to messages"}, "statuses": {"400": "Malformed request", "401": "Staff authentication required", "403": "Origin or browser request rejected, or staff role does not allow this area", "404": "Not found", "405": "Method not allowed", "409": "Idempotency or review version conflict", "413": "Body too large", "415": "Unsupported content type or encoding", "422": "Validation failed", "429": "Rate or daily capacity limit; inspect Retry-After", "503": "Required service or secrets not configured/unavailable"}},
-  "privacy": {"publicReads": "Only catalog and health; no public submission lookup", "stored": "Validated enquiry, consent version/time, payload digest, UUID idempotency key, status and audit. IP is never stored raw; rotating daily HMAC identifiers in expiring rate buckets only.", "adminToken": "Header only, browser memory only. Never URL/cookie/localStorage/sessionStorage."},
-  "clientNotes": ["An accepted submission is an enquiry, not a confirmed place, contract, reply promise or payment.", "Do not execute or render lesson/submission strings as HTML.", "Do not embed an administrator token in any public client.", "Native application implementation, user identity and progress sync are deferred; v1 catalog is reusable now."]
+  "errors": {
+    "shape": {
+      "error": "string",
+      "fields": "optional object mapping field names to messages"
+    },
+    "statuses": {
+      "400": "Malformed request",
+      "401": "Staff authentication required",
+      "403": "Origin or browser request rejected, or staff role does not allow this area",
+      "404": "Not found",
+      "405": "Method not allowed",
+      "409": "Idempotency or review version conflict",
+      "413": "Body too large",
+      "415": "Unsupported content type or encoding",
+      "422": "Validation failed",
+      "429": "Rate or daily capacity limit; inspect Retry-After",
+      "503": "Required service or secrets not configured/unavailable"
+    }
+  },
+  "privacy": {
+    "publicReads": "Only catalog and health; no public submission lookup",
+    "stored": "Validated enquiry, consent version/time, payload digest, UUID idempotency key, status and audit. IP is never stored raw; rotating daily HMAC identifiers in expiring rate buckets only.",
+    "adminToken": "Header only, browser memory only. Never URL/cookie/localStorage/sessionStorage."
+  },
+  "clientNotes": [
+    "An accepted submission is an enquiry, not a confirmed place, contract, reply promise or payment.",
+    "Do not execute or render lesson/submission strings as HTML.",
+    "Do not embed an administrator token in any public client.",
+    "Native application implementation, user identity and progress sync are deferred; v1 catalog is reusable now."
+  ]
 }
