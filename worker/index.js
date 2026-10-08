@@ -2,7 +2,8 @@ import { catalog } from "./catalog.js";
 import { identityRoute, identityReady, platformEnabled } from './identity.js';
 import { platformRoute } from './platform.js';
 import { HttpError, UUID, readJSON, validateSubmission, validateStatus } from "./validation.js";
-import { authenticateAdmin, checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security.js";
+import { checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security.js";
+import { requireStaff, staffSession, staffProfile, listStaff, grantStaff, updateStaffRole, revokeStaff, ensureStaffSchema } from "./staff.js";
 import { database, getExisting, createSubmission, limitPublicAttempt, listSubmissions, updateStatus, readAudit } from "./storage.js";
 
 function json(data, status = 200, headers = {}) {
@@ -51,13 +52,19 @@ async function api(request, env, url) {
       if (!configuredSecret(env.SECURITY_SALT)) throw new Error();
       if (platformEnabled(env)) {
         if (!identityReady(env)) throw new Error();
+        await ensureStaffSchema(db);
         await db.batch([
           db.prepare('SELECT id,disabled FROM learner_users LIMIT 0'),
           db.prepare('SELECT user_id FROM learner_profiles LIMIT 0'),
           db.prepare('SELECT id FROM learning_courses LIMIT 0'),
+          db.prepare('SELECT lesson_id FROM learning_lesson_sections LIMIT 0'),
+          db.prepare('SELECT resource_id FROM learning_media_uploads LIMIT 0'),
+          db.prepare('SELECT resource_id FROM learning_upload_parts LIMIT 0'),
           db.prepare('SELECT user_id FROM learning_enrolments LIMIT 0'),
           db.prepare('SELECT id FROM training_cohorts LIMIT 0'),
-          db.prepare('SELECT id FROM training_applications LIMIT 0')
+          db.prepare('SELECT id FROM training_applications LIMIT 0'),
+          db.prepare('SELECT id,uid FROM staff_members LIMIT 0'),
+          db.prepare('SELECT id FROM staff_audit LIMIT 0')
         ]);
       }
       return json({ ok: true, service: "billioncodes-academy", apiVersion: "v1", submissions: "ready", payments: "unconfigured" });
@@ -89,8 +96,26 @@ async function api(request, env, url) {
     return json({ accepted: true, id }, 201);
   }
   if (path === "/api/v1/admin" || path.startsWith("/api/v1/admin/")) {
-    await authenticateAdmin(request, env);
     const db = database(env);
+    if (path === "/api/v1/admin/me") {
+      method(request, ["GET"]);
+      if (url.search) throw new HttpError(400, "Query parameters are not accepted here.");
+      return json({ staff: staffProfile(await staffSession(request, env)) });
+    }
+    if (path === "/api/v1/admin/staff" || path.startsWith("/api/v1/admin/staff/")) {
+      const session = await requireStaff(request, env, "team");
+      if (url.search) throw new HttpError(400, "Query parameters are not accepted here.");
+      if (path === "/api/v1/admin/staff") {
+        method(request, ["GET", "POST"]);
+        return json(request.method === "GET" ? await listStaff(db) : await grantStaff(db, session, await readJSON(request)));
+      }
+      const member = /^\/api\/v1\/admin\/staff\/([^/]+)(\/revoke)?$/.exec(path);
+      if (!member) throw new HttpError(404, "API endpoint not found.");
+      if (member[2]) { method(request, ["POST"]); return json(await revokeStaff(db, session, member[1], await readJSON(request))); }
+      method(request, ["PATCH"]);
+      return json(await updateStaffRole(db, session, member[1], await readJSON(request)));
+    }
+    const session = await requireStaff(request, env, "inbox");
     if (path === "/api/v1/admin/submissions") {
       method(request, ["GET"]);
       return json(await listSubmissions(db, url.searchParams));
@@ -103,7 +128,7 @@ async function api(request, env, url) {
         return json(await readAudit(db, match[1].toLowerCase()));
       }
       method(request, ["PATCH"]);
-      return json(await updateStatus(db, match[1].toLowerCase(), validateStatus(await readJSON(request))));
+      return json(await updateStatus(db, match[1].toLowerCase(), validateStatus(await readJSON(request)), session.actor));
     }
   }
   throw new HttpError(404, "API endpoint not found.");

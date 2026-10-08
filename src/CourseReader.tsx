@@ -2,13 +2,27 @@ import { useEffect, useRef, useState } from 'react';
 import { accountHeaders, request } from './api';
 import { jsonBody, message } from './Account';
 
-export type Lesson = { id: string; title: string; kind: 'text' | 'pdf' | 'video'; body?: string[]; resourceId?: string };
+export type Lesson = { id: string; title: string; kind: 'text' | 'pdf' | 'video'; section?: string; body?: string[]; resourceId?: string };
+type Player = { resource: string; url: string; kind: 'file' | 'stream' };
+const SIGNED_MEDIA = /^\/api\/v2\/media\/[a-z0-9-]+\/l\/\d{10}\/[a-f0-9]{64}$/;
+const STREAM_PLAYER = /^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9._-]+$/;
+
+// Consecutive lessons sharing a section form one chapter group, like a course curriculum.
+export function lessonGroups(lessons: Lesson[]) {
+  const groups: { section: string; items: { lesson: Lesson; index: number }[] }[] = [];
+  lessons.forEach((lesson, index) => {
+    const section = lesson.section || '';
+    if (!groups.length || groups[groups.length - 1].section !== section) groups.push({ section, items: [] });
+    groups[groups.length - 1].items.push({ lesson, index });
+  });
+  return groups;
+}
 
 export function CourseReader({ courseId, lessons, initialCompleted }: { courseId: string; lessons: Lesson[]; initialCompleted: string[] }) {
   const [completed, setCompleted] = useState(() => new Set(initialCompleted));
   const [selected, setSelected] = useState(() => Math.max(0, lessons.findIndex(lesson => !initialCompleted.includes(lesson.id))));
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
-  const [player, setPlayer] = useState<{ resource: string; url: string } | null>(null);
+  const [player, setPlayer] = useState<Player | null>(null);
   const heading = useRef<HTMLHeadingElement>(null), focusLesson = useRef(false);
   const lesson = lessons[selected], completeCount = lessons.filter(item => completed.has(item.id)).length;
 
@@ -54,9 +68,10 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
   }
 
   async function playVideo(resourceId: string) {
-    const value = await request<{ url: string }>(`/api/v2/resources/${encodeURIComponent(resourceId)}/playback`, jsonBody({}));
-    if (!/^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9._-]+$/.test(value.url)) throw new Error('Invalid player address.');
-    setPlayer({ resource: resourceId, url: value.url });
+    const value = await request<{ url: string; kind?: 'file' | 'stream' }>(`/api/v2/resources/${encodeURIComponent(resourceId)}/playback`, jsonBody({}));
+    const kind = value.kind === 'file' ? 'file' : 'stream';
+    if (!(kind === 'file' ? SIGNED_MEDIA : STREAM_PLAYER).test(value.url)) throw new Error('Invalid player address.');
+    setPlayer({ resource: resourceId, url: value.url, kind });
   }
 
   if (!lesson) return <section className="platform-panel"><h2>No lessons published yet.</h2><p>This course is in your library. Check back when its lessons are available.</p><a className="text-link" href="#/library">Back to my library</a></section>;
@@ -71,24 +86,31 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
       </div>
       <details className="reader-contents" open>
         <summary>Course contents</summary>
-        <nav aria-label="Course contents"><ol>{lessons.map((item, index) => <li key={item.id}>
-          <button aria-current={index === selected ? 'step' : undefined} aria-describedby={`lesson-state-${index}`} disabled={pending} onClick={() => selectLesson(index)}>
-            <span className="reader-chapter-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-            <span><span className="reader-chapter-title">{item.title}</span><span className="reader-chapter-state" id={`lesson-state-${index}`}>{completed.has(item.id) ? 'Complete' : 'Not marked complete'} / {item.kind === 'text' ? 'Read' : item.kind.toUpperCase()}</span></span>
-          </button>
-        </li>)}</ol></nav>
+        <nav aria-label="Course contents">{lessonGroups(lessons).map((group, groupIndex) => <div key={groupIndex} className="reader-section">
+          {group.section && <p className="studio-overline reader-section-title" id={`reader-section-${groupIndex}`}>{group.section}</p>}
+          <ol aria-labelledby={group.section ? `reader-section-${groupIndex}` : undefined}>{group.items.map(({ lesson: item, index }) => <li key={item.id}>
+            <button aria-current={index === selected ? 'step' : undefined} aria-describedby={`lesson-state-${index}`} disabled={pending} onClick={() => selectLesson(index)}>
+              <span className="reader-chapter-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <span><span className="reader-chapter-title">{item.title}</span><span className="reader-chapter-state" id={`lesson-state-${index}`}>{completed.has(item.id) ? 'Complete' : 'Not marked complete'} / {item.kind === 'text' ? 'Read' : item.kind.toUpperCase()}</span></span>
+            </button>
+          </li>)}</ol>
+        </div>)}</nav>
       </details>
       <a className="text-link reader-library-link" href="#/library">Back to my library</a>
     </aside>
     <article aria-labelledby="lesson-title">
-      <div className="reader-lesson-meta"><p className="eyebrow">LESSON {selected + 1} / {lessons.length}</p><span className="portal-tag">{completed.has(lesson.id) ? 'Marked complete' : 'In your own time'}</span></div>
+      <div className="reader-lesson-meta"><p className="eyebrow">{lesson.section ? `${lesson.section.toUpperCase()} / ` : ''}LESSON {selected + 1} / {lessons.length}</p><span className="portal-tag">{completed.has(lesson.id) ? 'Marked complete' : 'In your own time'}</span></div>
       <h2 id="lesson-title" tabIndex={-1} ref={heading}>{lesson.title}</h2>
+      {lesson.kind === 'video' && lesson.resourceId && <div className="reader-video">
+        {player?.resource === lesson.resourceId
+          ? player.kind === 'file'
+            ? <video key={player.url} controls preload="metadata" playsInline controlsList="nodownload" src={player.url} aria-label={`${lesson.title} video`} />
+            : <iframe title={lesson.title} src={player.url} allow="fullscreen; encrypted-media; picture-in-picture" allowFullScreen />
+          : <p>Press play to load this lesson video.</p>}
+        <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => playVideo(lesson.resourceId!))}>{player?.resource === lesson.resourceId ? 'Reload video' : 'Play lesson video'}</button>
+      </div>}
       {lesson.body?.map((text, index) => <p key={index}>{text}</p>)}
       {lesson.kind === 'pdf' && lesson.resourceId && <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => downloadPdf(lesson.resourceId!))}>Download lesson PDF</button>}
-      {lesson.kind === 'video' && lesson.resourceId && <>
-        {player?.resource === lesson.resourceId ? <iframe title={lesson.title} src={player.url} allow="fullscreen; encrypted-media; picture-in-picture" allowFullScreen /> : <p>Video playback connects to Cloudflare Stream when you press play.</p>}
-        <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => playVideo(lesson.resourceId!))}>{player ? 'Refresh video access' : 'Play lesson video'}</button>
-      </>}
       {lesson.kind !== 'text' && !lesson.resourceId && <p className="platform-notice">The {lesson.kind.toUpperCase()} resource is not available yet.</p>}
       <section className="reader-completion" aria-label="Lesson progress">
         <p>Ready to keep going?</p>

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 
-import { CourseReader, type Lesson } from './CourseReader';
+import { CourseReader, lessonGroups, type Lesson } from './CourseReader';
+import { Icon } from './Icon';
+import { CoverArt, coverKinds } from './CoverArt';
 type Course = { id: string; title: string; summary: string; level: string; priceMinor: number; status: string; lessonCount?: number; completed?: number; lessons: Lesson[] };
 export function useRemote<T>(path: string | null) {
   const { user } = useAccount();
@@ -19,7 +21,14 @@ export function RemoteNotice({ state }: { state: { loading: boolean; error: stri
   return <>{state.loading && <p role="status">Loading your learning space...</p>}{state.error && <div className="platform-error" role="alert"><p>{state.error}</p><button className="button button-outline" onClick={state.reload}>Try again</button></div>}</>;
 }
 function CourseTiles({ courses }: { courses: Course[] }) {
-  return <div className="portal-grid">{courses.map(course => <article className="portal-card learning-course-card" key={course.id}><div className="course-card-category"><span>SELF-PACED LEARNING</span><span aria-hidden="true">&lt;/&gt;</span></div><span className="portal-tag">{course.level} / {course.priceMinor === 0 ? 'Free' : new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(course.priceMinor / 100)}</span><h2>{course.title}</h2><p>{course.summary}</p>{course.completed !== undefined && <><label htmlFor={`progress-${course.id}`}>{course.completed} of {course.lessonCount} lessons marked complete</label><progress id={`progress-${course.id}`} max={course.lessonCount || 1} value={course.completed} /></>}<a className="text-link" href={`#/course/${course.id}`}>{course.completed !== undefined ? 'Continue learning' : 'View course'} <span aria-hidden="true">&rarr;</span></a></article>)}</div>;
+  return <div className="portal-grid">{courses.map((course, index) => <article className="portal-card learning-course-card" key={course.id}>
+    <div className="course-tile-art" aria-hidden="true"><CoverArt kind={coverKinds[index % 3]} /><span className="course-tile-no">{String(index + 1).padStart(2, '0')}</span></div>
+    <div className="course-card-category"><span>SELF-PACED LEARNING</span><Icon name="code" /></div>
+    <span className="portal-tag">{course.level} / {course.priceMinor === 0 ? 'Free' : new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(course.priceMinor / 100)}</span>
+    <h2>{course.title}</h2><p>{course.summary}</p>
+    {course.completed !== undefined && <><label htmlFor={`progress-${course.id}`}>{course.completed} of {course.lessonCount} lessons marked complete</label><progress id={`progress-${course.id}`} max={course.lessonCount || 1} value={course.completed} /></>}
+    <a className="course-tile-link" href={`#/course/${course.id}`}>{course.completed !== undefined ? 'Continue learning' : 'View course'}<span className="go-chip" aria-hidden="true"><Icon name="arrow-right" /></span></a>
+  </article>)}</div>;
 }
 export function CourseLibrary() {
   const state = useRemote<{ courses: Course[] }>('/api/v2/courses');
@@ -50,7 +59,7 @@ export function CoursePage({ id }: { id: string }) {
     {course && <>
       <div className="portal-heading"><div><p className="eyebrow">{course.level} / SELF-PACED LEARNING</p><h1>{course.title}</h1><p>{course.summary}</p></div></div>
       {!enrolled ? <div className="training-layout">
-        <section className="platform-panel"><h2>Inside this course</h2><ol>{course.lessons.map(lesson => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind}</span></li>)}</ol></section>
+        <section className="platform-panel"><h2>Inside this course</h2>{lessonGroups(course.lessons).map((group, index) => <div key={index}>{group.section && <h3 className="course-outline-section">{group.section}</h3>}<ol start={group.items[0].index + 1}>{group.items.map(({ lesson }) => <li key={lesson.id}>{lesson.title} <span className="portal-tag">{lesson.kind === 'text' ? 'reading' : lesson.kind}</span></li>)}</ol></div>)}</section>
         <AccountGate><section className="platform-panel">
           <h2>{course.priceMinor === 0 ? 'Keep it in your library.' : 'Not available to purchase yet.'}</h2>
           <p>{course.priceMinor === 0 ? 'This course is free. Your progress will be saved to your signed-in account.' : 'Paid checkout has not been configured. No enrolment or payment will be created.'}</p>

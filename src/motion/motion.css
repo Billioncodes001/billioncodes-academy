@@ -43,6 +43,18 @@ html.lenis, html.lenis body { height: auto; }
 .launch-strip a, .launch-strip span:first-child { color: #ffffff !important; }
 @keyframes strip-flow { to { background-position: 300% 0; } }
 .site-header { position: sticky; top: 10px; z-index: 50; height: 76px; margin-top: 12px; padding: 0 12px 0 16px; border: 1px solid #5cc8ff26 !important; border-radius: 18px; background: #03101fb8 !important; backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6); box-shadow: 0 20px 50px -24px #000, inset 0 1px 0 #ffffff12; }
+/* One row on wide screens; on narrower screens or with enlarged text the nav wraps instead of overflowing. */
+.site-header { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; height: auto !important; min-height: 76px; padding-block: 8px; }
+.site-header .main-nav { min-width: 0; }
+.launch-strip .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; font: .7rem/1.5 var(--mono); letter-spacing: .06em; }
+@media (min-width: 1180px) {
+  .site-header { flex-wrap: nowrap; }
+  .site-header .main-nav { flex-wrap: nowrap; gap: 2px; }
+  .site-header .main-nav > a:not(.nav-apply) { padding: 8px 11px; white-space: nowrap; }
+  .site-header .main-nav > a[aria-current='page'] { color: #ffffff; }
+  .site-header .main-nav > a:hover { background: #ffffff10; }
+  .site-header .main-nav .motion-toggle { margin-inline: 6px; }
+}
 .site-header .bc-brand img { width: 52px; height: 52px; border-radius: 10px; }
 .site-header .bc-brand-academy { color: #bfe6ff; border-left-color: #5cc8ff33 !important; }
 .main-nav a { color: #dcecf9; }

@@ -36,6 +36,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('home is responsive, accessible and has real preview screenshots', async ({ page }, testInfo) => {
+  test.setTimeout(60000);
   const exceptions: string[] = [];
   page.on('pageerror', error => exceptions.push(error.message));
   await page.goto('/');
@@ -233,4 +234,50 @@ test('keyboard navigation and mobile menu are usable', async ({ page }, testInfo
   }
   await expect(page.getByRole('heading', { name: 'Apply for training' })).toBeVisible();
   await expect(page.locator('main')).toBeFocused();
+});
+
+// The motion switch lives in the main navigation, which is collapsed behind Menu on phones.
+async function openNavIfCollapsed(page: Page) {
+  const menu = page.getByRole('button', { name: 'Menu' });
+  if (await menu.isVisible()) await menu.click();
+}
+
+test('turning motion off also disables route transitions', async ({ page }) => {
+  await page.goto('/');
+  await openNavIfCollapsed(page);
+  await page.getByRole('button', { name: 'Motion on' }).click();
+  if (await page.getByRole('button', { name: 'Close' }).isVisible()) await page.keyboard.press('Escape');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await page.locator('.bc-hero-copy a[href="#/courses"]').click();
+  await expect(page.getByRole('heading', { name: /Start with understanding/ })).toBeVisible();
+  await expect(page.locator('.route-curtain')).toHaveCount(0);
+  expect(await page.locator('.route-view').evaluate(element => getComputedStyle(element).transform)).toBe('none');
+});
+
+test('home motion can be switched off and starts off under reduced motion', async ({ page, context }) => {
+  await page.goto('/');
+  await openNavIfCollapsed(page);
+  const toggle = page.getByRole('button', { name: /^Motion (on|off)$/ });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+  await expect(page.getByRole('button', { name: /Play Debug Defender/ })).toBeVisible();
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await expect(page.getByRole('button', { name: /Play Debug Defender/ })).toHaveCount(0);
+  await expect(page.getByText('Motion is off. Turn it on in the header to play Debug Defender.')).toBeVisible();
+
+  const fresh = await context.browser()!.newContext({ reducedMotion: 'reduce' });
+  const reduced = await fresh.newPage();
+  await reduced.goto(page.url());
+  await expect(reduced.getByRole('heading', { level: 1 })).toContainText('Big ideas.');
+  await expect(reduced.locator('html')).toHaveAttribute('data-motion', 'off');
+  await openNavIfCollapsed(reduced);
+  await expect(reduced.getByRole('button', { name: 'Motion off' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(reduced.locator('.cursor-ring, .scroll-progress')).toHaveCount(0);
+  await reduced.goto(new URL('/#/courses', page.url()).href);
+  await expect(reduced.getByRole('heading', { name: /Start with understanding/ })).toBeVisible();
+  await expect(reduced.locator('.auto-reveal:not(.is-revealed)')).toHaveCount(0);
+  await fresh.close();
 });

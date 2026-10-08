@@ -18,7 +18,7 @@ p {
     color: #e8f3fd
 }
 .button-lime:hover {
-    background: rgba(10, 27, 46, .9)
+    background: rgba(18, 45, 74, .92)
 }
 .button-outline {
     border-color: #5a86ad;
@@ -31,87 +31,7 @@ p {
     background: rgba(10, 27, 46, .9)
 }
 .ink-muted {
-    color: #a9c0d6
-}
-.skip-link {
-    background: rgba(10, 27, 46, .9);
-    color: #e8f3fd
-}
-.site-header {
-    border-bottom: 1px solid #21405f
-}
-.brand-period {
-    color: #a9c0d6
-}
-.main-nav .nav-apply {
-    border: 1px solid #5a86ad
-}
-.main-nav .nav-apply:hover {
-    background: rgba(10, 27, 46, .9)
-}
-.highlight-word::before {
-    background: rgba(10, 27, 46, .9)
-}
-.mini-brackets {
-    color: #e8f3fd
-}
-.build-diagram {
-    background: rgba(10, 27, 46, .9);
-    border: 1px solid #21405f
-}
-.diagram-top {
-    border-bottom: 1px solid #21405f
-}
-.window-bar {
-    border-bottom: 1px solid #5a86ad
-}
-.code-lines b {
-    color: #a9c0d6
-}
-.diagram-orbit {
-    border: 1px solid #21405f
-}
-.diagram-page {
-    border: 1px solid #5a86ad;
-    background: rgba(10, 27, 46, .9)
-}
-.page-address {
-    background: rgba(10, 27, 46, .9);
-    border-bottom: 1px solid #5a86ad
-}
-.page-address > span:first-child {
-    border: 1px solid #5a86ad
-}
-.page-preview {
-    background: rgba(10, 27, 46, .9)
-}
-.preview-caption {
-    color: #e8f3fd
-}
-.page-preview strong > span {
-    color: #a9c0d6
-}
-.page-preview > p:last-child {
-    color: #e8f3fd
-}
-.diagram-bottom {
-    border-top: 1px solid #21405f
-}
-.principle-band {
-    background: rgba(10, 27, 46, .9)
-}
-.path-grid {
-    border: 1px solid #21405f
-}
-.path-card + .path-card {
-    border-left: 1px solid #21405f
-}
-.path-card:hover {
-    background: rgba(10, 27, 46, .9)
-}
-.steps i {
-    background: rgba(10, 27, 46, .9);
-    border: 1px solid #5a86ad
+    color: #7fd2ff
 }
 .linked i {
     border: 1px solid #5a86ad
@@ -119,27 +39,15 @@ p {
 .linked i + i {
     background: rgba(10, 27, 46, .9)
 }
-.card-cta {
-    border-top: 1px solid #21405f
-}
-.primer-feature {
-    background: rgba(10, 27, 46, .9)
-}
-.status-label.future::before {
-    border: 1px solid #5a86ad
-}
-.banner-brackets {
-    color: #e8f3fd
-}
 .built-in-primer {
     border: 1px solid #5a86ad;
     background: rgba(10, 27, 46, .9)
 }
 .built-in-primer .eyebrow {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .built-in-primer p {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .round-arrow {
     border: 1px solid #5a86ad
@@ -191,7 +99,7 @@ input:not([type='radio']):not([type='checkbox']), select, textarea {
     background: rgba(10, 27, 46, .9)
 }
 .completed-label {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .progress-area {
     border: 1px solid #21405f
@@ -203,7 +111,7 @@ progress::-webkit-progress-bar {
     border-top: 1px solid #5a86ad
 }
 .lesson-body p {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .lesson-code {
     border: 1px solid #5a86ad
@@ -281,35 +189,13 @@ progress::-webkit-progress-bar {
 .founder-panel {
     background: rgba(10, 27, 46, .9)
 }
-.founder-monogram > span {
-    color: #a9c0d6
-}
 .contact-panel {
     border-top: 1px solid #5a86ad
 }
 .policy-grid {
     border-top: 1px solid #5a86ad
 }
-.site-footer {
-    border-top: 1px solid #21405f
-}
-.footer-bottom {
-    border-top: 1px solid #21405f;
-    color: #a9c0d6
-}
-@media (max-width: 900px) {
-    .menu-toggle {
-        border: 1px solid #5a86ad
-    }
-    .main-nav {
-        border: 1px solid #21405f;
-        background: rgba(10, 27, 46, .9)
-    }
-}
 @media (max-width: 620px) {
-    .path-card + .path-card {
-        border-top: 1px solid #21405f
-    }
     .policy-grid aside {
         border-bottom: 1px solid #21405f
     }
@@ -319,48 +205,8 @@ progress::-webkit-progress-bar {
         background: rgba(10, 27, 46, .9)
     }
 }
-.bc-brand {
-    color: #e8f3fd
-}
-.bc-brand-dot {
-    color: #a9c0d6
-}
-.main-nav .nav-apply:hover {
-    color: #e8f3fd
-}
-.bc-kicker {
-    color: #e8f3fd
-}
-.check-disc {
-    border: 1px solid #21405f;
-    color: #a9c0d6;
-    background: rgba(10, 27, 46, .9)
-}
-.build-card-icon {
-    background: rgba(10, 27, 46, .9)
-}
-.language-mark {
-    color: #e8f3fd
-}
-.js-mark {
-    background: rgba(10, 27, 46, .9)
-}
-.course-free {
-    background: rgba(10, 27, 46, .9);
-    color: #e8f3fd
-}
-.course-arrow {
-    background: rgba(10, 27, 46, .9)
-}
 .workbench-bar i {
     background: rgba(18, 45, 74, .92)
-}
-.output-label {
-    color: #a9c0d6;
-    border: 1px solid #21405f
-}
-.site-footer {
-    background: rgba(10, 27, 46, .9)
 }
 .credits-grid article {
     background: rgba(10, 27, 46, .9);
@@ -397,7 +243,7 @@ progress::-webkit-progress-bar {
     background: rgba(10, 27, 46, .9)
 }
 .check-pass {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .check-miss {
     color: #a9c0d6
@@ -407,12 +253,11 @@ progress::-webkit-progress-bar {
     color: #e8f3fd
 }
 .inline-confirm p {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .storage-notice, .workspace-message {
-    border: 1px solid #21405f;
     background: rgba(10, 27, 46, .9);
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .desk-stats > div {
     border-right: 1px solid #21405f
@@ -445,15 +290,6 @@ progress::-webkit-progress-bar {
     color: #e8f3fd;
     border: 1px solid #21405f
 }
-.bc-brand img {
-    background: rgba(10, 27, 46, .9)
-}
-.bc-brand .bc-brand-academy {
-    border-left: 1px solid #21405f
-}
-.bc-brand-dot, .brand-period {
-    color: #7fd2ff
-}
 .button-lime {
     background: rgba(10, 27, 46, .9);
     color: #e8f3fd
@@ -461,13 +297,10 @@ progress::-webkit-progress-bar {
 .button-lime:hover {
     background: rgba(10, 27, 46, .9)
 }
-.check-disc, .build-card-icon, .js-mark, .badge-paper {
+.badge-paper {
     background: rgba(10, 27, 46, .9);
     color: #e8f3fd;
     border-color: #21405f
-}
-.site-footer {
-    background: rgba(10, 27, 46, .9)
 }
 .platform-panel, .portal-card, .portal-reader article {
     background: rgba(10, 27, 46, .9);
@@ -530,9 +363,6 @@ progress::-webkit-progress-bar {
 .verification-step ol {
     color: #a9c0d6
 }
-.studio-heading .bc-kicker, .studio-page .bc-kicker {
-    color: #7fd2ff
-}
 .practice-page .exercise-card {
     border: 1px solid #21405f;
     background: rgba(10, 27, 46, .9)
@@ -550,14 +380,11 @@ progress::-webkit-progress-bar {
     border-color: #21405f;
     color: #7fd2ff
 }
-.practice-path progress::-webkit-progress-value {
-    background: rgba(10, 27, 46, .9)
-}
-.practice-path progress::-moz-progress-bar {
-    background: rgba(10, 27, 46, .9)
-}
 .practice-path li {
     border-bottom: 1px solid #5a86ad
+}
+.practice-path li > span:first-child {
+    color: #7fd2ff
 }
 .practice-path .button {
     background: rgba(10, 27, 46, .9);
@@ -576,7 +403,7 @@ progress::-webkit-progress-bar {
     background: rgba(10, 27, 46, .9)
 }
 .studio-page .check-pass {
-    color: #a9c0d6
+    color: #e8f3fd
 }
 .studio-page .check-miss {
     color: #a9c0d6
@@ -638,9 +465,6 @@ progress::-webkit-progress-bar {
 .reader-completion {
     background: rgba(10, 27, 46, .9)
 }
-.reader-completion .reader-all-complete {
-    border-top: 1px solid #21405f
-}
 .training-windows .portal-card {
     background: rgba(10, 27, 46, .9)
 }
@@ -649,9 +473,6 @@ progress::-webkit-progress-bar {
 }
 .training-windows .studio-overline {
     color: #7fd2ff
-}
-.training-guide li {
-    border-bottom: 1px solid #5a86ad
 }
 .training-page .intake-card, .training-page .application-card {
     background: rgba(10, 27, 46, .9)
@@ -665,13 +486,11 @@ progress::-webkit-progress-bar {
 }
 .application-badge-blue {
     background: rgba(10, 27, 46, .9);
-    color: #7fd2ff;
-    border-color: #21405f
+    color: #7fd2ff
 }
 .application-badge-aqua {
     background: rgba(10, 27, 46, .9);
-    color: #a9c0d6;
-    border-color: #21405f
+    color: #e8f3fd
 }
 .application-next {
     background: rgba(10, 27, 46, .9)
@@ -692,14 +511,17 @@ progress::-webkit-progress-bar {
     background: rgba(10, 27, 46, .9)
 }
 .application-form-panel input:disabled, .application-form-panel select:disabled, .application-form-panel textarea:disabled {
-    color: #a9c0d6;
+    color: #7fd2ff;
     background: rgba(10, 27, 46, .9)
+}
+.reader-section-title {
+    color: #7fd2ff
 }
 .portal-nav {
     border-bottom: 1px solid var(--line,#21405f)
 }
 .account-paths p {
-    color: #a9c0d6
+    color: #7fd2ff
 }
 .platform-panel {
     border: 1px solid #21405f;
@@ -734,7 +556,7 @@ progress::-webkit-progress-bar {
     border: 1px solid #21405f
 }
 .resource-attribution {
-    color: #a9c0d6
+    color: #7fd2ff
 }
 .platform-notice {
     background: rgba(10, 27, 46, .9)
@@ -742,5 +564,433 @@ progress::-webkit-progress-bar {
 @media (max-width:850px) {
     .signin-panel {
         box-shadow: 6px 6px 0 #00000059
+    }
+}
+:root {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+body {
+    background: rgba(10, 27, 46, .9);
+    color: #e8f3fd
+}
+p {
+    color: #a9c0d6
+}
+.back-link {
+    color: #7fd2ff
+}
+.go-chip {
+    color: #7fd2ff;
+    background: rgba(10, 27, 46, .9)
+}
+.button-signal {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9);
+    box-shadow: 0 0 0 1px #00000059, 0 18px 40px -18px #5aa9ffcc
+}
+.button-signal:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.button-light, .button-lime {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+.button-light:hover, .button-lime:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.button-outline {
+    color: #e8f3fd;
+    border-color: #5a86ad
+}
+.button-outline:hover {
+    border-color: #5a86ad
+}
+.text-link {
+    color: #7fd2ff
+}
+.eyebrow, .bc-kicker {
+    color: #7fd2ff
+}
+.badge {
+    color: #7fd2ff;
+    background: rgba(10, 27, 46, .9)
+}
+.bc-ribbon i {
+    background: rgba(18, 45, 74, .92)
+}
+.bc-ribbon a:hover {
+    color: #7fd2ff
+}
+.bc-top {
+    background: rgba(10, 27, 46, .9);
+    border-bottom: 1px solid #21405f
+}
+.bc-brand {
+    color: #e8f3fd
+}
+.bc-brand img {
+    background: rgba(10, 27, 46, .9);
+    box-shadow: 0 0 0 1px #00000059
+}
+.bc-brand-academy {
+    border-left: 1px solid #21405f
+}
+.bc-brand-light img {
+    box-shadow: 0 0 0 1px #00000059, 0 10px 30px -12px #5aa9ff80
+}
+.bc-brand-light .bc-brand-academy {
+    border-left-color: #21405f
+}
+.main-nav > a:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.main-nav > a[aria-current='page'] {
+    color: #7fd2ff
+}
+.bc-top-night .main-nav > a[aria-current='page'] {
+    color: #7fd2ff
+}
+.bc-top-night .main-nav .nav-apply {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+.bc-top-night .main-nav .nav-apply:hover {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+.bc-foot-top {
+    border-bottom: 1px solid #21405f
+}
+.bc-foot-line span {
+    color: #7fd2ff
+}
+.bc-foot-mail {
+    box-shadow: inset 0 0 0 1px #00000059
+}
+.bc-foot-nav a:hover {
+    color: #7fd2ff
+}
+.bc-foot-bottom {
+    color: #7fd2ff
+}
+.bc-foot-word {
+    color: #e8f3fd
+}
+.page-heading .ink-muted, .ink-muted {
+    color: #7fd2ff
+}
+.lime-underline {
+    color: #7fd2ff;
+    background: rgba(18, 45, 74, .92)
+}
+.platform-panel, .portal-card {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.portal-tag {
+    color: #7fd2ff;
+    background: rgba(10, 27, 46, .9)
+}
+.contact-panel .eyebrow {
+    color: #7fd2ff
+}
+.built-in-primer .eyebrow {
+    color: #7fd2ff
+}
+.built-in-primer .primer-glyph {
+    box-shadow: inset 0 0 0 1px #00000059
+}
+.built-in-primer .go-chip {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+.catalog-filters {
+    background: rgba(10, 27, 46, .9);
+    border: 1px solid #21405f
+}
+.catalog-filters label {
+    color: #a9c0d6
+}
+.catalog-filters input, .catalog-filters select {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.result-count {
+    color: #a9c0d6
+}
+.course-card {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9);
+    color: #e8f3fd
+}
+.course-cover > img {
+    box-shadow: 0 0 0 2px #00000059, 0 16px 30px -12px #000a
+}
+.course-cover > .course-cover-tag {
+    color: #e8f3fd;
+    background: rgba(10, 27, 46, .9)
+}
+.course-meta span {
+    color: #7fd2ff;
+    background: rgba(10, 27, 46, .9)
+}
+.course-bottom {
+    border-top: 1px dashed #21405f;
+    color: #a9c0d6
+}
+.catalog-tail {
+    background: rgba(10, 27, 46, .9)
+}
+.learning-course-card, .studio-page .learning-course-card {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.learning-course-card .course-card-category {
+    color: #a9c0d6
+}
+.learning-course-card .course-card-category .icon {
+    color: #7fd2ff
+}
+.course-tile-link {
+    border-top: 1px dashed #21405f;
+    color: #7fd2ff
+}
+.portal-search {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.portal-search label {
+    color: #a9c0d6
+}
+.portal-search input {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.studio-results {
+    color: #a9c0d6
+}
+@media (max-width: 900px) {
+    .main-nav {
+        color: #e8f3fd;
+        background: rgba(10, 27, 46, .9);
+        border-bottom: 1px solid #21405f
+    }
+    .bc-top-night .main-nav {
+        border-bottom-color: #21405f
+    }
+    .main-nav > a {
+        border-bottom: 1px solid #21405f
+    }
+}
+.atlas-sheet {
+    border: 1px solid #21405f;
+    color: #a9c0d6
+}
+.atlas-sheet span + span {
+    border-left: 1px solid #21405f
+}
+.hx-making .atlas-sheet {
+    border-color: #21405f;
+    color: #7fd2ff
+}
+.hx-making .atlas-sheet span + span {
+    border-left-color: #21405f
+}
+.hx-making .atlas-sheet span:first-child {
+    color: #e8f3fd;
+    background: rgba(18, 45, 74, .92)
+}
+.atlas-rule {
+    color: #7fd2ff
+}
+.atlas-rule-x {
+    background: rgba(18, 45, 74, .92)
+}
+.atlas-rule-y {
+    background: rgba(18, 45, 74, .92)
+}
+.atlas-cross {
+    background: rgba(18, 45, 74, .92)
+}
+.atlas-coord {
+    color: #7fd2ff
+}
+.atlas-floor::before {
+    background: rgba(18, 45, 74, .92)
+}
+.hx-kinetic {
+    background: rgba(10, 27, 46, .9)
+}
+.page-heading::after, .portal-heading::after, .studio-heading::after, .lab-heading::after, .reader-heading::after {
+    background: rgba(18, 45, 74, .92)
+}
+#main:not(:has(.home-stage)) {
+    background: rgba(10, 27, 46, .9)
+}
+#main:not(:has(.home-stage)) > .wrap.page-section::before {
+    color: #7fd2ff
+}
+.page-heading .eyebrow, .portal-heading .eyebrow, .studio-heading .bc-kicker, .lab-heading .bc-kicker, .reader-heading .eyebrow {
+    color: #7fd2ff
+}
+.studio-page .desk-stats {
+    background: rgba(10, 27, 46, .9)
+}
+.studio-page .desk-stats strong {
+    color: #7fd2ff
+}
+.bc-foot::after {
+    background: rgba(18, 45, 74, .92)
+}
+.course-card-body::before, .learning-course-card::after {
+    color: #7fd2ff
+}
+.course-card:nth-child(3n + 3) .course-cover {
+    border-bottom-color: #5a86ad
+}
+.result-count {
+    border-bottom: 1px solid #21405f
+}
+.practice-page .exercise-glyph {
+    color: #7fd2ff
+}
+.lab-preview-heading {
+    border-bottom: 1px solid #21405f
+}
+.reader-sidebar, .lesson-sidebar {
+    border-right: 1px solid #21405f
+}
+.reader-contents li:has([aria-current='step']), .lesson-sidebar li:has([aria-current='step']) {
+    background: rgba(10, 27, 46, .9)
+}
+.reader-contents [aria-current='step'], .lesson-sidebar [aria-current='step'] {
+    color: #7fd2ff
+}
+.reader-pagination, .lesson-actions {
+    border-top: 1px solid #21405f
+}
+.training-windows .portal-card {
+    background: rgba(10, 27, 46, .9)
+}
+.form-page .expectation-list > div, .form-page .service-list > div {
+    border-top: 1px solid #21405f
+}
+.form-page .expectation-list > div:last-child, .form-page .service-list > div:last-child {
+    border-bottom: 1px solid #21405f
+}
+.policy-copy section {
+    border-top: 1px solid #21405f
+}
+.portal-card, .platform-panel, .desk-tools, .credits-grid article {
+    border-top: 2px solid #21405f
+}
+.resource-attribution {
+    border-top: 1px solid #21405f
+}
+@media (max-width: 900px) {
+    .reader-sidebar, .lesson-sidebar {
+        border-bottom: 1px solid #21405f
+    }
+}
+.atlas-construct-copy .hx-kicker {
+    color: #7fd2ff
+}
+.atlas-construct-copy h2 span {
+    color: #7fd2ff
+}
+.atlas-structure::before {
+    background: rgba(18, 45, 74, .92)
+}
+.atlas-structure li {
+    border: 1px solid #21405f
+}
+.atlas-structure li::before {
+    border: 1px solid #21405f
+}
+.atlas-key-hint {
+    color: #a9c0d6
+}
+.atlas-key-hint kbd {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9);
+    color: #e8f3fd
+}
+.atlas-result-bar {
+    border-bottom: 1px solid #21405f
+}
+.atlas-result-bar .result-count {
+    color: #e8f3fd
+}
+.atlas-chip {
+    background: rgba(10, 27, 46, .9);
+    color: #e8f3fd
+}
+.atlas-chip:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-filter-group {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-filter-label {
+    border-right: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9);
+    color: #a9c0d6
+}
+.atlas-filter {
+    border-right: 1px solid #21405f;
+    color: #e8f3fd
+}
+.atlas-filter:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-filter[aria-pressed='true'] {
+    background: rgba(10, 27, 46, .9);
+    color: #e8f3fd
+}
+.atlas-result-line {
+    color: #a9c0d6
+}
+.atlas-clear {
+    color: #7fd2ff
+}
+.atlas-shelf-format {
+    color: #7fd2ff
+}
+.atlas-build-rail ol {
+    border: 1px solid #21405f;
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-build-rail li + li {
+    border-left: 1px solid #21405f
+}
+.atlas-build-rail a {
+    color: #e8f3fd
+}
+.atlas-build-rail a:hover {
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-build-rail a[aria-current='step'] {
+    background: rgba(10, 27, 46, .9)
+}
+.atlas-build-no {
+    color: #7fd2ff
+}
+.atlas-build-state {
+    color: #a9c0d6
+}
+.atlas-build-rail li[data-state='completed'] .atlas-build-state {
+    color: #7fd2ff
+}
+@media (max-width: 720px) {
+    .atlas-build-rail li + li {
+        border-top: 1px solid #21405f
+    }
+    .atlas-filter-label {
+        border-bottom: 1px solid #21405f
+    }
+    .atlas-filter {
+        border-bottom: 1px solid #21405f
     }
 }

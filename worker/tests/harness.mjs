@@ -30,6 +30,10 @@ export async function migrate(db) {
   await db.batch(statements);
 }
 
+let adminAuth;
+// The staff sign-in bundle is built from source once per test process.
+const adminAuthBundle = () => adminAuth ||= import("../../scripts/build-admin-auth.mjs").then(module => module.bundleAdminAuth(false));
+
 export async function createHarness(bindings = {}, overrides = {}) {
   const { Miniflare, convertV4MiniflareOptions } = require(process.env.MINIFLARE_PATH || "miniflare");
   const { build } = require("esbuild");
@@ -41,7 +45,11 @@ export async function createHarness(bindings = {}, overrides = {}) {
     script: bundled.outputFiles[0].text,
     compatibilityDate: "2026-09-01",
     d1Databases: { DB: "local-backend-test" },
-    serviceBindings: { ASSETS: async request => new Response(new URL(request.url).pathname === "/admin.html" ? adminHTML : "<!doctype html><title>Test public assets</title>", { headers:{ "Content-Type":"text/html" } }) },
+    serviceBindings: { ASSETS: async request => {
+      const path = new URL(request.url).pathname;
+      if (path === "/admin-auth.js") return new Response(await adminAuthBundle(), { headers:{ "Content-Type":"text/javascript" } });
+      return new Response(path === "/admin.html" ? adminHTML : "<!doctype html><title>Test public assets</title>", { headers:{ "Content-Type":"text/html" } });
+    } },
     bindings: { SECURITY_SALT:SALT, ADMIN_TOKEN:ADMIN, ...bindings },
     ...overrides
   }] };

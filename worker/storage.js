@@ -138,7 +138,7 @@ export async function listSubmissions(db, params) {
   return { items: page.map(rowToSubmission), nextCursor };
 }
 
-export async function updateStatus(db, id, input) {
+export async function updateStatus(db, id, input, actor = "admin") {
   const existing = await db.prepare("SELECT status, version FROM submissions WHERE id = ?").bind(id).first();
   if (!existing) throw new HttpError(404, "Submission not found.");
   if (existing.version !== input.version) throw new HttpError(409, "This submission changed. Refresh before saving.");
@@ -146,6 +146,8 @@ export async function updateStatus(db, id, input) {
   const updated = await db.prepare("UPDATE submissions SET status = ?, updated_at = ?, version = version + 1 WHERE id = ? AND version = ? RETURNING status, version")
     .bind(input.status, new Date().toISOString(), id, input.version).first();
   if (!updated) throw new HttpError(409, "This submission changed. Refresh before saving.");
+  // The audit trigger records 'admin'; attribute changes made through an individual staff account.
+  if (actor !== "admin") await db.prepare("UPDATE submission_audit SET actor = ? WHERE submission_id = ? AND version = ?").bind(actor, id, updated.version).run();
   return { updated: true, id, ...updated };
 }
 

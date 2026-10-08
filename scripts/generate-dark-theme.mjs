@@ -4,7 +4,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import postcss from 'postcss';
 
-const SOURCES = ['styles', 'brand', 'learning', 'brand-blue', 'studio', 'platform'].map(name => `src/${name}.css`);
+const SOURCES = ['styles', 'brand', 'learning', 'brand-blue', 'studio', 'platform', 'design/system', 'design/atlas', 'design/atlas-routes'].map(name => `src/${name}.css`);
 // Homepage sections are designed directly in motion.css; shared pieces (kicker, brand) still get overrides.
 const SKIP = /\.bc-(hero|course|story|finale|section|support|try|foundations|experience|numbers|rail|start|actions|honest)|hero-|\.experience|\.finale|\.photo-|\.founder-real|\.first-win/;
 

@@ -36,7 +36,51 @@
     code { font:12px/1.5 monospace; overflow-wrap:anywhere; }
     details { border-top:1px solid var(--line); padding-top:14px; margin-top:16px; }
     [hidden] { display:none!important; }
-    @media(max-width:550px) { main { padding:24px 14px 50px; } .panel,article { padding:18px; } .row button { width:100%; } }
+    textarea { font:inherit; width:100%; min-height:130px; border:1px solid var(--line); border-radius:3px; padding:10px 12px; margin:6px 0 16px; background:#fff; color:var(--ink); }
+    .tabs { display:flex; gap:10px; flex-wrap:wrap; align-items:center; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:8px; }
+    .tabs button[aria-pressed="false"] { background:transparent; color:var(--ink); }
+    .tabs .spacer { flex:1; }
+    .chip { display:inline-block; font:700 11px/1.4 monospace; text-transform:uppercase; letter-spacing:.1em; border:1px solid var(--line); padding:3px 8px; border-radius:99px; background:#fff; }
+    .chip.live { background:#dcefe2; border-color:var(--accent); }
+    .chip.warn { background:#fbeedd; border-color:#c06825; }
+    .choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:8px 0 18px; }
+    .choice { border:1px solid var(--line); padding:14px; background:#fff; font-weight:normal; cursor:pointer; }
+    .choice:has(input:checked) { border-color:var(--accent); box-shadow:inset 0 0 0 2px var(--accent); }
+    .choice input { width:auto; margin:0 8px 0 0; }
+    .choice strong { display:inline; }
+    .choice span { display:block; font-size:14px; color:#52605a; margin-top:4px; }
+    .check { display:flex; gap:10px; align-items:flex-start; font-weight:normal; margin:8px 0 16px; }
+    .check input { width:auto; margin:4px 0 0; }
+    .steps { display:flex; gap:8px; flex-wrap:wrap; list-style:none; padding:0; margin:14px 0; }
+    .steps li { font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.08em; padding:6px 10px; border:1px solid var(--line); background:#fff; }
+    .steps li.done { background:#dcefe2; border-color:var(--accent); }
+    .lesson { display:flex; gap:12px; align-items:center; flex-wrap:wrap; border-top:1px solid var(--line); padding:12px 0; }
+    .lesson .grow { flex:1; min-width:180px; }
+    .lesson button { padding:6px 10px; font-size:14px; }
+    .section-title { font:700 13px/1.4 monospace; text-transform:uppercase; letter-spacing:.12em; margin:22px 0 4px; }
+    .course-list button.link { background:none; border:0; color:var(--accent); padding:0; text-decoration:underline; font-weight:bold; text-align:left; }
+    progress { width:100%; height:14px; }
+    .hint { display:block; font-weight:normal; }
+    h3, .grow, .choice span { overflow-wrap:anywhere; }
+    .grow-title { flex:1; margin:0; }
+    .course-top { margin-top:18px; }
+    .course-title { font-size:26px; }
+    video { width:100%; max-height:420px; background:#000; margin-top:12px; }
+    .suggestion { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:8px 0; border-top:1px dashed var(--line); }
+    .suggestion .grow { flex:1; min-width:180px; }
+    .suggestion.done { opacity:.6; }
+    .signin { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+    .signin .panel { margin:0; }
+    .or { text-align:center; font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.12em; color:#52605a; margin:14px 0; }
+    .wide { width:100%; }
+    .who { font-size:14px; overflow-wrap:anywhere; }
+    .member { display:flex; gap:12px; align-items:end; flex-wrap:wrap; border-top:1px solid var(--line); padding:14px 0; }
+    .member .grow { flex:1; min-width:200px; }
+    .member select { display:block; margin-top:6px; }
+    ol.onboard { padding-left:22px; overflow-wrap:anywhere; }
+    label > select { display:block; margin:6px 0 12px; }
+    input, select, textarea { font-weight:normal; }
+    @media(max-width:550px) { main { padding:24px 14px 50px; } .panel,article { padding:18px; } .row button { width:100%; } .tabs button { flex:1; } }
   </style>
 </head>
 <body>
@@ -44,20 +88,55 @@
   <header>
     <div class="eyebrow">Billion Codes / Private operations</div>
     <h1>Review the next step.</h1>
-    <p>Training applications and project enquiries. Access is limited to authorised operators.</p>
+    <p>Training applications, project enquiries, the course studio and team access. Access is limited to staff the owner has added.</p>
   </header>
-  <section id="login-panel" class="panel" aria-labelledby="access-heading">
-    <h2 id="access-heading">Operator access</h2>
-    <p>The access token stays in this page's memory only. It is cleared when you lock, leave, reload, or after 15 minutes without interaction. Do not use a shared computer.</p>
-    <form id="login-form">
-      <label for="token">Private access token</label>
-      <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" required>
-      <button id="unlock" type="submit">Unlock review</button>
-    </form>
-  </section>
+  <div id="login-panel" class="signin">
+    <section class="panel" aria-labelledby="staff-heading">
+      <h2 id="staff-heading">Staff sign-in</h2>
+      <p>Use a verified account the owner added to the team. The original owner can sign in with their verified Academy email without the old token. Your sign-in ends when you lock, leave, reload, or after 15 minutes without interaction.</p>
+      <button id="google-signin" class="wide" type="button">Continue with Google</button>
+      <p class="or">or</p>
+      <form id="staff-form">
+        <label for="staff-email">Email</label>
+        <input id="staff-email" type="email" autocomplete="username" maxlength="254" required>
+        <label for="staff-password">Password</label>
+        <input id="staff-password" type="password" autocomplete="current-password" maxlength="256" required>
+        <button id="staff-signin" type="submit">Sign in with email</button>
+      </form>
+      <button id="reset-password" class="secondary" type="button">Reset my email password</button>
+      <p class="muted">Use Google if that is how you registered. If you use email/password, create or sign in to your verified <a href="/#/account">Academy account</a> with your granted email.</p>
+      <button id="send-verification" class="secondary" type="button" hidden>Send verification email again</button>
+    </section>
+    <section class="panel" aria-labelledby="access-heading">
+      <h2 id="access-heading">Owner access token</h2>
+      <p>Legacy emergency access only. The original owner can use verified account sign-in without a token. Never share a token or use a shared computer.</p>
+      <form id="login-form">
+        <label for="token">Private access token</label>
+        <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" required>
+        <button id="unlock" type="submit">Unlock with token</button>
+      </form>
+    </section>
+  </div>
+  <nav id="tabs" class="tabs" hidden aria-label="Console sections">
+    <button type="button" id="tab-inbox" aria-pressed="true">Enquiries</button>
+    <button type="button" id="tab-studio" aria-pressed="false">Course studio</button>
+    <button type="button" id="tab-team" aria-pressed="false">Team</button>
+    <span class="spacer"></span>
+    <span id="who" class="who"></span>
+    <button class="secondary" id="lock" type="button">Lock and clear</button>
+  </nav>
   <p id="message" class="notice" role="status" aria-live="polite"></p>
+  <section id="studio-panel" hidden aria-labelledby="studio-heading">
+    <h2 id="studio-heading">Course studio</h2>
+    <p class="muted">Create a course in three steps: describe it, add video, reading or PDF lessons, then publish. Only upload material you made or have written permission to publish. Drafts are private until you publish.</p>
+    <div id="studio-root"></div>
+  </section>
+  <section id="team-panel" hidden aria-labelledby="team-heading">
+    <h2 id="team-heading">Team access</h2>
+    <div id="team-root"></div>
+  </section>
   <section id="review-panel" hidden aria-labelledby="review-heading">
-    <div class="row"><h2 id="review-heading">Submission inbox</h2><button class="secondary" id="lock" type="button">Lock and clear</button></div>
+    <div class="row"><h2 id="review-heading">Submission inbox</h2></div>
     <p class="muted">These are enquiries, not confirmed bookings or contracts. Do not copy personal details into public channels. Mark contacted only after actual contact. Closing does not delete a record.</p>
     <form id="filters" class="row">
       <label>Type<select id="kind"><option value="">All enquiries</option><option value="applications">Training applications</option><option value="project-requests">Project requests</option></select></label>
@@ -68,14 +147,18 @@
     <button id="more" class="secondary" type="button" hidden>Load more</button>
   </section>
 </main>
+<script nonce="__CSP_NONCE__" src="/admin-auth.js" defer></script>
 <script nonce="__CSP_NONCE__">
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
   let token = "";
+  let mode = ""; // "token" (shared owner bootstrap) or "account" (individual Firebase staff sign-in)
+  let session = null;
   let cursor = null;
   let idleTimer;
   let generation = 0;
+  let studio = { courses:[], detail:null, outlines:{} };
   let listLoading = false;
   const requests = new Set();
   const labels = { name:"Name", email:"Email", phone:"Phone", track:"Learning interest", format:"Preferred format", experience:"Experience", goals:"Goals", category:"Project category", summary:"Summary", details:"Details", targetDate:"Preferred target date", consent:"Consent to review and respond" };
@@ -83,31 +166,49 @@
   function lock(message = "Console locked. Private data cleared from this page.") {
     generation++;
     token = "";
+    mode = "";
+    session = null;
+    if (window.billionStaffAuth) window.billionStaffAuth.signOut().catch(() => {});
     cursor = null;
     clearTimeout(idleTimer);
     for (const controller of requests) controller.abort();
     requests.clear();
     $("token").value = "";
+    $("staff-password").value = "";
+    $("send-verification").hidden = true;
+    $("who").textContent = "";
+    $("team-panel").hidden = true;
+    $("team-root").replaceChildren();
     $("records").replaceChildren();
     $("review-panel").hidden = true;
+    $("studio-panel").hidden = true;
+    $("studio-root").replaceChildren();
+    $("tabs").hidden = true;
+    studio = { courses:[], detail:null, outlines:{} };
     $("login-panel").hidden = false;
     $("more").hidden = true;
     say(message);
   }
   function touch() {
     clearTimeout(idleTimer);
-    if (token) idleTimer = setTimeout(() => lock("Session locked after 15 minutes without interaction."), 15 * 60 * 1000);
+    if (mode) idleTimer = setTimeout(() => lock("Session locked after 15 minutes without interaction."), 15 * 60 * 1000);
   }
   async function api(path, options = {}) {
-    if (!token) throw new Error("Unlock the console first.");
+    if (!mode) throw new Error("Unlock the console first.");
     const current = generation;
+    const bearer = mode === "token" ? token : await staffAuth().token();
+    if (current !== generation) throw new DOMException("Console locked", "AbortError");
     const controller = new AbortController();
     requests.add(controller);
     try {
-      const response = await fetch(path, { ...options, cache:"no-store", credentials:"omit", redirect:"error", signal:controller.signal, headers:{ "Authorization":"Bearer " + token, ...(options.body ? { "Content-Type":"application/json" } : {}) } });
+      const { headers = {}, ...rest } = options;
+      const response = await fetch(path, { ...rest, cache:"no-store", credentials:"omit", redirect:"error", signal:controller.signal, headers:{ "Authorization":"Bearer " + bearer, ...(typeof options.body === "string" ? { "Content-Type":"application/json" } : {}), ...headers } });
       const data = await response.json();
       if (current !== generation) throw new DOMException("Console locked", "AbortError");
-      if (response.status === 401 || response.status === 403) { lock("Access was rejected. Check your token and approved website origin."); throw new Error("Access rejected."); }
+      if (response.status === 401 || response.status === 403) {
+        const message = mode === "token" ? "That access token was not accepted, or this website address is not approved." : (data.error || "Your staff access was not accepted.");
+        lock(message); throw new Error(message);
+      }
       if (!response.ok) throw new Error(data.error || "Request failed. Try again.");
       return data;
     } finally { requests.delete(controller); }
@@ -191,18 +292,456 @@
       for (const item of data.items) $("records").append(render(item));
       cursor = data.nextCursor;
       $("more").hidden = !cursor;
-      $("review-panel").hidden = false;
-      $("login-panel").hidden = true;
       say(data.items.length ? "Loaded " + data.items.length + " private enquiries." : "No enquiries match these filters.");
     } finally { listLoading = false; $("refresh").disabled = false; $("more").disabled = false; }
   }
+
+  // ---- Course studio -------------------------------------------------------------------------
+  // Everything is rendered with createElement/textContent. Course text is never parsed as HTML.
+  const h = (tag, props = {}, ...children) => {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props)) {
+      if (value === undefined || value === null || value === false) continue;
+      if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+      else if (key === "class") node.className = value;
+      else if (key === "list") node.setAttribute("list", value);
+      else if (key in node && !key.includes("-")) node[key] = value;
+      else node.setAttribute(key, value === true ? "" : String(value));
+    }
+    for (const child of children.flat()) if (child !== null && child !== undefined && child !== false) node.append(child instanceof Node ? child : String(child));
+    return node;
+  };
+  const field = (label, control, hint) => h("label", {}, label, hint ? h("span", { class:"muted hint" }, hint) : null, control);
+  const money = minor => minor === 0 ? "Free" : new Intl.NumberFormat("en-NG", { style:"currency", currency:"NGN" }).format(minor / 100);
+  const bytes = value => value >= 1e9 ? (value / 1e9).toFixed(2) + " GB" : value >= 1e6 ? (value / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(value / 1e3)) + " KB";
+  const slugify = text => text.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).replace(/-+$/, "");
+  const kindLabel = { video:"Video", text:"Reading", pdf:"PDF" };
+  const scaffold = {
+    text:"Write the lesson here in plain sentences.\n\nLeave an empty line between paragraphs. Explain one idea at a time, then give the learner something small to try.",
+  };
+  const templates = {
+    video:{ label:"Video course", hint:"Short recorded lessons with notes, like Udemy or Code with Mosh. Best for most courses.", outline:[
+      ["Getting started", "Welcome: what you will build", "video"], ["Getting started", "Set up your tools", "video"], ["Getting started", "Course notes and downloads", "pdf"],
+      ["Core lessons", "Your first core lesson", "video"], ["Core lessons", "Practice exercise", "text"], ["Wrap-up", "Summary and next steps", "text"] ] },
+    reading:{ label:"Reading course", hint:"Written lessons learners read at their own pace. Quick to make, no recording needed.", outline:[
+      ["Introduction", "Welcome and how this course works", "text"], ["Lessons", "First idea", "text"], ["Lessons", "Second idea", "text"], ["Wrap-up", "Recap and next steps", "text"] ] },
+    workshop:{ label:"Workshop replay", hint:"Publish recordings and slides from a live class or webinar.", outline:[
+      ["Recordings", "Session 1 recording", "video"], ["Recordings", "Slides and handouts", "pdf"], ["Recordings", "Key takeaways", "text"] ] },
+    blank:{ label:"Start from scratch", hint:"An empty course. Add any lessons you like.", outline:[] }
+  };
+  const root = () => $("studio-root");
+  const report = error => { if (error.name !== "AbortError") say(error.message); };
+
+  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"] };
+  function show(name) {
+    for (const [key, [tab, panel]] of Object.entries(panels)) { $(tab).setAttribute("aria-pressed", String(key === name)); $(panel).hidden = key !== name; }
+  }
+  async function openStudio() { show("studio"); await showCourses(); }
+  function openInbox() { show("inbox"); }
+  async function openTeam() { show("team"); await showTeam(); }
+
+  // ---- Sign-in and roles -------------------------------------------------------------------
+  // The server decides the role on every request; the UI only hides areas the role cannot use.
+  const roleName = { owner:"Owner", editor:"Editor", reviewer:"Reviewer" };
+  const roleHelp = { owner:"Everything, including adding and removing team members.", editor:"Course studio only: create, edit, upload and publish courses.", reviewer:"Enquiries inbox and training applications. No course editing or team changes." };
+  const staffAuth = () => { if (!window.billionStaffAuth) throw new Error("Staff sign-in could not load. Refresh the page and try again."); return window.billionStaffAuth; };
+  async function start() {
+    session = (await api("/api/v1/admin/me")).staff;
+    $("tab-inbox").hidden = !session.permissions.inbox;
+    $("tab-studio").hidden = !session.permissions.studio;
+    $("tab-team").hidden = !session.permissions.team;
+    $("who").textContent = roleName[session.role] + " | " + (session.method === "token" ? "owner access token" : session.email);
+    $("login-panel").hidden = true; $("tabs").hidden = false;
+    if (session.permissions.inbox) { openInbox(); await load(); }
+    else if (session.permissions.studio) await openStudio();
+    else await openTeam();
+  }
+  async function firebaseConfig() {
+    const response = await fetch("/api/v2/platform", { cache:"no-store", credentials:"omit", redirect:"error" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.firebase) throw new Error("Staff sign-in is not available yet. The owner can use the access token.");
+    return data.firebase;
+  }
+  async function accountSignIn(action) {
+    const buttons = [$("google-signin"), $("staff-signin")];
+    buttons.forEach(button => { button.disabled = true; });
+    $("send-verification").hidden = true;
+    try {
+      const user = await action(await firebaseConfig());
+      $("staff-password").value = "";
+      if (!user.verified) { $("send-verification").hidden = false; say("Verify " + user.email + " from your inbox first, then sign in again."); return; }
+      mode = "account";
+      touch();
+      await start();
+      say("Signed in as " + roleName[session.role] + ".");
+    } catch (error) { if (error.name !== "AbortError") { if (mode) lock(error.message); else say(error.message); } }
+    finally { buttons.forEach(button => { button.disabled = false; }); }
+  }
+
+  // ---- Team access (owners) ------------------------------------------------------------------
+  const actorName = actor => actor === "admin" ? "Owner token" : actor.replace(/^staff:/, "");
+  const actionName = { grant:"gave access to", role:"changed the role of", revoke:"removed access for" };
+  const when = value => value ? new Date(value).toLocaleString() : "";
+  async function showTeam() {
+    const data = await api("/api/v1/admin/staff");
+    const roleSelect = (value, props = {}) => h("select", props, data.roles.map(role => h("option", { value:role, selected:role === value }, roleName[role])));
+    const email = h("input", { id:"member-email", type:"email", required:true, maxLength:254, autocomplete:"off", placeholder:"name@example.com" });
+    const name = h("input", { id:"member-name", maxLength:100, autocomplete:"off", placeholder:"Optional" });
+    const role = roleSelect("editor", { id:"member-role" });
+    const help = h("p", { class:"muted" }, roleHelp.editor);
+    role.addEventListener("change", () => { help.textContent = roleHelp[role.value]; });
+    const form = h("form", { class:"panel", id:"grant-form" }, h("h3", {}, "Add a team member"),
+      h("ol", { class:"onboard" },
+        h("li", {}, "Enter the email address they will sign in with and choose a role."),
+        h("li", {}, "Privately send them this console address: " + location.origin + "/admin"),
+        h("li", {}, "They choose Continue with Google, or sign in with a verified email and password, using that same address.")),
+      field("Email address", email), field("Name", name, "Helps you recognise them in this list."), field("Role", role), help,
+      h("button", { type:"submit", id:"grant-access" }, "Give access"));
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = form.querySelector("button[type=submit]"); button.disabled = true;
+      try {
+        const payload = { email:email.value.trim(), role:role.value };
+        if (name.value.trim()) payload.name = name.value.trim();
+        const result = await api("/api/v1/admin/staff", { method:"POST", body:JSON.stringify(payload) });
+        await showTeam();
+        say("Access given to " + result.member.email + " as " + roleName[result.member.role] + ". Send them " + location.origin + "/admin privately.");
+      } catch (error) { report(error); } finally { button.disabled = false; }
+    });
+    const list = h("section", { class:"panel", "aria-labelledby":"members-heading" }, h("h3", { id:"members-heading" }, "Team members (" + data.members.filter(item => item.status === "active").length + " with access)"));
+    if (!data.members.length) list.append(h("p", {}, "Nobody has been added yet. Add yourself first as an Owner so you can stop using the shared token."));
+    for (const member of data.members) {
+      const self = session && session.email === member.email;
+      const status = member.status === "revoked" ? "Access removed" : member.linked ? "Signed in" + (member.lastSeenAt ? ", last active " + when(member.lastSeenAt) : "") : "Has not signed in yet";
+      const row = h("div", { class:"member" }, h("span", { class:"grow" }, h("strong", {}, member.email), h("span", { class:"muted hint" }, (member.name ? member.name + " | " : "") + roleName[member.role] + " | " + status)));
+      if (self) row.append(h("span", { class:"chip live" }, "You"));
+      else if (member.status === "active") {
+        const select = roleSelect(member.role, { "aria-label":"Role for " + member.email });
+        row.append(select,
+          h("button", { type:"button", class:"secondary", "aria-label":"Save role for " + member.email, onclick:() => teamAction(() => api("/api/v1/admin/staff/" + encodeURIComponent(member.id), { method:"PATCH", body:JSON.stringify({ role:select.value, version:member.version }) }), member.email + " is now " + roleName[select.value] + ".") }, "Save role"),
+          h("button", { type:"button", class:"secondary", "aria-label":"Remove access for " + member.email, onclick:() => { if (confirm("Remove staff access for " + member.email + "? It stops working on their next action.")) teamAction(() => api("/api/v1/admin/staff/" + encodeURIComponent(member.id) + "/revoke", { method:"POST", body:JSON.stringify({ version:member.version }) }), "Access removed for " + member.email + "."); } }, "Remove access"));
+      } else row.append(h("span", { class:"chip warn" }, "Removed"),
+        h("button", { type:"button", class:"secondary", "aria-label":"Give access again to " + member.email, onclick:() => teamAction(() => api("/api/v1/admin/staff", { method:"POST", body:JSON.stringify({ email:member.email, role:member.role }) }), "Access restored for " + member.email + ".") }, "Give access again"));
+      list.append(row);
+    }
+    const audit = h("details", {}, h("summary", {}, "Recent access changes"),
+      data.audit.length ? h("ul", {}, data.audit.map(item => h("li", {}, when(item.createdAt) + ": " + actorName(item.actor) + " " + actionName[item.action] + " " + item.email + " (" + roleName[item.role] + ")"))) : h("p", {}, "No changes yet."));
+    list.append(audit);
+    $("team-root").replaceChildren(form, list);
+  }
+  async function teamAction(fn, success) {
+    try { await fn(); await showTeam(); say(success); } catch (error) { report(error); }
+  }
+
+  async function showCourses() {
+    const data = await api("/api/v2/staff/courses");
+    studio.courses = data.courses; studio.detail = null;
+    const list = h("div", { class:"course-list" });
+    for (const course of data.courses) {
+      list.append(h("article", {},
+        h("div", { class:"row" }, h("h3", { class:"grow-title" }, course.title), h("span", { class:"chip" + (course.status === "published" ? " live" : "") }, course.builtin ? "Built-in" : course.status)),
+        h("p", { class:"muted" }, (course.lessonCount || 0) + " lessons | " + money(course.priceMinor) + " | " + course.level),
+        course.builtin ? h("p", { class:"muted" }, "Built-in introduction. It is edited in the website code, not here.")
+          : h("button", { type:"button", onclick:() => showCourse(course.id).catch(report) }, course.status === "draft" ? "Continue editing" : "Open course")));
+    }
+    root().replaceChildren(
+      h("div", { class:"row" }, h("h3", { class:"grow-title" }, "Your courses"), h("button", { type:"button", id:"new-course", onclick:showNewCourse }, "Create a new course")),
+      list);
+    say(data.courses.length + " courses loaded.");
+  }
+
+  function showNewCourse() {
+    const title = h("input", { id:"course-title", required:true, minLength:5, maxLength:140, placeholder:"e.g. Python for complete beginners" });
+    const slug = h("input", { id:"course-slug", required:true, maxLength:80, pattern:"[a-z0-9]+(-[a-z0-9]+)*" });
+    let slugEdited = false;
+    title.addEventListener("input", () => { if (!slugEdited) slug.value = slugify(title.value); });
+    slug.addEventListener("input", () => { slugEdited = true; });
+    const summary = h("textarea", { id:"course-summary", required:true, minLength:20, maxLength:1500, placeholder:"What will learners be able to do when they finish? Who is it for?" });
+    const level = h("select", { id:"course-level" }, ["Beginner", "Intermediate", "Advanced", "All levels"].map(value => h("option", { value }, value)));
+    const price = h("input", { id:"course-price", type:"number", min:0, max:1000000, step:"0.01", value:"0" });
+    const choices = h("div", { class:"choices", role:"radiogroup", "aria-label":"Course template" }, Object.entries(templates).map(([key, value], index) =>
+      h("label", { class:"choice" }, h("input", { type:"radio", name:"template", value:key, checked:index === 0 }), h("strong", {}, value.label), h("span", {}, value.hint))));
+    const form = h("form", { class:"panel", id:"new-course-form" },
+      h("h3", {}, "Step 1 of 3: Describe your course"),
+      h("p", { class:"muted" }, "Pick a starting template. It suggests a lesson plan you can follow, change or ignore. Nothing is published yet."),
+      choices,
+      field("Course title", title),
+      field("What learners will achieve", summary, "At least 20 characters. Shown on the course page."),
+      h("div", { class:"row" }, field("Level", level), field("Price in naira", price, "0 means free. Online payment is not switched on yet, so learners cannot join paid courses.")),
+      field("Course web address", slug, "Lowercase words joined by dashes. It cannot be changed after creating the course."),
+      h("div", { class:"row" }, h("button", { type:"submit" }, "Create draft course"), h("button", { type:"button", class:"secondary", onclick:() => showCourses().catch(report) }, "Cancel")));
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = form.querySelector("button[type=submit]"); button.disabled = true;
+      try {
+        const priceMinor = Math.round(Number(price.value || 0) * 100);
+        const data = await api("/api/v2/staff/courses", { method:"POST", body:JSON.stringify({ id:slug.value.trim(), title:title.value.trim(), summary:summary.value.trim(), level:level.value, priceMinor }) });
+        studio.outlines[data.course.id] = templates[form.querySelector("input[name=template]:checked").value].outline;
+        await showCourse(data.course.id);
+        say("Draft created. Next, add your lessons.");
+      } catch (error) { report(error); } finally { button.disabled = false; }
+    });
+    root().replaceChildren(form);
+    title.focus();
+  }
+
+  async function showCourse(id) {
+    studio.detail = await api("/api/v2/staff/courses/" + encodeURIComponent(id));
+    renderCourse();
+  }
+  async function act(fn, success) {
+    try { const data = await fn(); if (data && data.course && studio.detail) studio.detail.course = data.course; await showCourse(studio.detail.course.id); if (success) say(success); }
+    catch (error) { report(error); }
+  }
+
+  function renderCourse() {
+    const { course, resources, enrolments, storage } = studio.detail;
+    const draft = course.status === "draft";
+    const base = "/api/v2/staff/courses/" + encodeURIComponent(course.id);
+    const ready = resources.filter(item => item.status === "ready");
+    const sections = [...new Set(course.lessons.map(item => item.section).filter(Boolean))];
+    const sectionList = h("datalist", { id:"section-options" }, sections.map(value => h("option", { value })));
+    const outline = studio.outlines[course.id] || [];
+    const hasLesson = title => course.lessons.some(item => item.title.toLowerCase() === title.toLowerCase());
+    const steps = h("ol", { class:"steps", "aria-label":"Progress" },
+      h("li", { class:"done" }, "1 Describe"), h("li", { class:course.lessons.length ? "done" : "" }, "2 Add lessons"), h("li", { class:draft ? "" : "done" }, "3 Publish"));
+
+    const parts = [
+      h("button", { type:"button", class:"secondary", onclick:() => showCourses().catch(report) }, "Back to all courses"),
+      h("div", { class:"row course-top" }, h("h3", { class:"grow-title course-title", id:"course-heading" }, course.title), h("span", { class:"chip" + (draft ? "" : " live") }, course.status)),
+      h("p", { class:"muted" }, money(course.priceMinor) + " | " + course.level + " | /#/course/" + course.id + " | " + (enrolments || 0) + " learners joined"),
+      steps,
+      sectionList
+    ];
+    if (draft) parts.push(detailsForm(course, base));
+    if (draft && outline.length) {
+      parts.push(h("section", { class:"panel", "aria-labelledby":"plan-heading" }, h("h3", { id:"plan-heading" }, "Suggested lesson plan"),
+        h("p", { class:"muted" }, "From the template you chose. Use a suggestion to pre-fill the lesson form, then rename it to suit your course."),
+        outline.map(([section, title, kind]) => h("div", { class:"suggestion" + (hasLesson(title) ? " done" : "") },
+          h("span", { class:"grow" }, (hasLesson(title) ? "Done: " : "") + section + " / " + title), h("span", { class:"chip" }, kindLabel[kind]),
+          hasLesson(title) ? null : h("button", { type:"button", class:"secondary", onclick:() => fillLesson({ section, title, kind }) }, "Use this")))));
+    }
+    parts.push(lessonList(course, base, draft, ready));
+    if (draft) parts.push(lessonForm(course, base, ready));
+    parts.push(filesPanel(resources, draft, storage));
+    parts.push(publishPanel(course, base, draft, enrolments, resources));
+    root().replaceChildren(...parts);
+  }
+
+  function detailsForm(course, base) {
+    const title = h("input", { value:course.title, required:true, minLength:5, maxLength:140 });
+    const summary = h("textarea", { value:course.summary, required:true, minLength:20, maxLength:1500 });
+    const level = h("input", { value:course.level, required:true, minLength:3, maxLength:40 });
+    const price = h("input", { type:"number", min:0, step:"0.01", value:String(course.priceMinor / 100) });
+    const form = h("form", { class:"panel" }, h("details", {}, h("summary", {}, "Edit course details"),
+      field("Course title", title), field("What learners will achieve", summary), h("div", { class:"row" }, field("Level", level), field("Price in naira", price)),
+      h("button", { type:"submit" }, "Save details")));
+    form.addEventListener("submit", event => { event.preventDefault(); act(() => api(base, { method:"PATCH", body:JSON.stringify({ title:title.value, summary:summary.value, level:level.value, priceMinor:Math.round(Number(price.value || 0) * 100), version:course.version }) }), "Course details saved."); });
+    return form;
+  }
+
+  function lessonList(course, base, draft, ready) {
+    const box = h("section", { class:"panel", "aria-labelledby":"lessons-heading" }, h("h3", { id:"lessons-heading" }, "Lessons (" + course.lessons.length + ")"));
+    if (!course.lessons.length) box.append(h("p", {}, "No lessons yet. Add your first lesson below."));
+    let current = null;
+    course.lessons.forEach((lesson, index) => {
+      if ((lesson.section || "") !== current) { current = lesson.section || ""; box.append(h("p", { class:"section-title" }, current || "No section")); }
+      const lessonPath = base + "/lessons/" + encodeURIComponent(lesson.id);
+      const file = ready.find(item => item.id === lesson.resourceId);
+      const row = h("div", { class:"lesson" },
+        h("span", { class:"chip" }, String(index + 1).padStart(2, "0")),
+        h("span", { class:"grow" }, h("strong", {}, lesson.title), h("span", { class:"muted hint" }, kindLabel[lesson.kind] + (file ? " / " + file.filename : ""))));
+      if (draft) row.append(
+        h("button", { type:"button", class:"secondary", disabled:index === 0, "aria-label":"Move " + lesson.title + " up", onclick:() => act(() => api(lessonPath + "/move", { method:"POST", body:JSON.stringify({ direction:"up" }) }), "Lesson moved.") }, "Up"),
+        h("button", { type:"button", class:"secondary", disabled:index === course.lessons.length - 1, "aria-label":"Move " + lesson.title + " down", onclick:() => act(() => api(lessonPath + "/move", { method:"POST", body:JSON.stringify({ direction:"down" }) }), "Lesson moved.") }, "Down"),
+        h("button", { type:"button", class:"secondary", "aria-label":"Edit " + lesson.title, onclick:() => row.after(editLesson(lesson, lessonPath, ready)) }, "Edit"),
+        h("button", { type:"button", class:"secondary", "aria-label":"Remove " + lesson.title, onclick:() => { if (confirm("Remove the lesson \"" + lesson.title + "\"? Its uploaded file is kept.")) act(() => api(lessonPath, { method:"DELETE" }), "Lesson removed."); } }, "Remove"));
+      box.append(row);
+    });
+    return box;
+  }
+
+  function editLesson(lesson, lessonPath, ready) {
+    const title = h("input", { value:lesson.title, required:true, minLength:3, maxLength:160 });
+    const section = h("input", { value:lesson.section || "", maxLength:80, list:"section-options" });
+    const body = h("textarea", { value:(lesson.body || []).join("\n\n") });
+    const files = ready.filter(item => item.kind === lesson.kind);
+    const resource = h("select", {}, files.map(item => h("option", { value:item.id, selected:item.id === lesson.resourceId }, item.filename)));
+    const form = h("form", { class:"panel" }, h("h3", {}, "Edit lesson"), field("Lesson title", title), field("Section", section, "Optional. Lessons with the same section are grouped together."),
+      lesson.kind === "text" ? null : field(kindLabel[lesson.kind] + " file", resource),
+      field(lesson.kind === "text" ? "Lesson text" : "Notes under the " + kindLabel[lesson.kind].toLowerCase() + " (optional)", body),
+      h("div", { class:"row" }, h("button", { type:"submit" }, "Save lesson"), h("button", { type:"button", class:"secondary", onclick:() => form.remove() }, "Cancel")));
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const payload = { title:title.value, section:section.value, body:body.value };
+      if (lesson.kind !== "text") payload.resourceId = resource.value;
+      act(() => api(lessonPath, { method:"PATCH", body:JSON.stringify(payload) }), "Lesson saved.");
+    });
+    return form;
+  }
+
+  let fillLesson = () => {};
+  function lessonForm(course, base, ready) {
+    const kindChoices = h("div", { class:"choices", role:"radiogroup", "aria-label":"Lesson type" }, [["video", "Video", "Upload an MP4 or WebM recording (up to 1 GB)."], ["text", "Reading", "Type or paste a written lesson."], ["pdf", "PDF", "Upload slides, notes or a worksheet (up to 20 MB)."]].map(([value, label, hint], index) =>
+      h("label", { class:"choice" }, h("input", { type:"radio", name:"lesson-kind", value, checked:index === 0 }), h("strong", {}, label), h("span", {}, hint))));
+    const title = h("input", { id:"lesson-title", required:true, minLength:3, maxLength:160 });
+    const section = h("input", { id:"lesson-section", maxLength:80, list:"section-options", placeholder:"e.g. Getting started" });
+    const body = h("textarea", { id:"lesson-body" });
+    const file = h("input", { id:"lesson-file", type:"file" });
+    const existing = h("select", { id:"lesson-existing" });
+    const rights = h("input", { id:"lesson-rights", type:"checkbox" });
+    const progress = h("progress", { max:100, value:0, hidden:true });
+    const status = h("p", { class:"notice", role:"status" });
+    const submit = h("button", { type:"submit", id:"add-lesson" }, "Add lesson");
+    const fileRow = field("File", file); const existingRow = field("Or use a file you already uploaded", existing); const rightsRow = h("label", { class:"check" }, rights, "I made this material or have written permission to publish it to learners.");
+    const bodyLabel = h("span", {});
+    const bodyRow = h("label", {}, bodyLabel, body);
+    const kind = () => form.querySelector("input[name=lesson-kind]:checked").value;
+    function sync() {
+      const value = kind();
+      file.accept = value === "video" ? "video/mp4,video/webm,.mp4,.m4v,.webm" : "application/pdf,.pdf";
+      const choices = ready.filter(item => item.kind === value);
+      existing.replaceChildren(h("option", { value:"" }, choices.length ? "Upload a new file instead" : "No uploaded files yet"), choices.map(item => h("option", { value:item.id }, item.filename)));
+      fileRow.hidden = value === "text"; existingRow.hidden = value === "text" || !choices.length; rightsRow.hidden = value === "text";
+      bodyLabel.textContent = value === "text" ? "Lesson text (at least 40 characters)" : "Notes shown under the " + kindLabel[value].toLowerCase() + " (optional)";
+      body.required = value === "text"; body.minLength = value === "text" ? 40 : 0;
+      submit.textContent = value === "text" ? "Add lesson" : "Upload and add lesson";
+    }
+    const form = h("form", { class:"panel", id:"lesson-form" }, h("h3", { id:"add-lesson-heading" }, "Step 2 of 3: Add a lesson"), kindChoices, field("Lesson title", title), field("Section", section, "Optional. Lessons in the same section are grouped, like chapters."),
+      fileRow, existingRow, bodyRow, rightsRow, progress, status, submit);
+    form.addEventListener("change", event => { if (event.target.name === "lesson-kind") sync(); });
+    fillLesson = suggestion => {
+      form.querySelector("input[name=lesson-kind][value=" + suggestion.kind + "]").checked = true; sync();
+      title.value = suggestion.title; section.value = suggestion.section;
+      if (suggestion.kind === "text" && !body.value) body.value = scaffold.text;
+      form.scrollIntoView({ block:"start" }); title.focus();
+    };
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const value = kind();
+      submit.disabled = true; status.textContent = "";
+      try {
+        let resourceId = value === "text" ? undefined : existing.value;
+        if (value !== "text" && !resourceId) {
+          const chosen = file.files[0];
+          if (!chosen) throw new Error("Choose a " + kindLabel[value] + " file to upload.");
+          if (!rights.checked) throw new Error("Confirm you have permission to publish this file.");
+          progress.hidden = false; progress.value = 0;
+          const resource = value === "video" ? await uploadVideo(base, chosen, (done, total) => { progress.value = Math.round(done / total * 100); status.textContent = "Uploading " + bytes(done) + " of " + bytes(total) + ". Keep this tab open."; })
+            : await uploadPdf(base, chosen);
+          progress.value = 100;
+          resourceId = resource.id;
+        }
+        const payload = { title:title.value, kind:value, section:section.value };
+        if (resourceId) payload.resourceId = resourceId;
+        if (body.value.trim()) payload.body = body.value;
+        await api(base + "/lessons", { method:"POST", body:JSON.stringify(payload) });
+        await showCourse(course.id);
+        say("Lesson \"" + payload.title + "\" added.");
+      } catch (error) { if (error.name !== "AbortError") status.textContent = error.message + (value === "video" ? " Finished parts are kept; you can resume from the files list." : ""); }
+      finally { submit.disabled = false; }
+    });
+    sync();
+    return form;
+  }
+
+  const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+  async function sendParts(resource, file, partSize, done, onProgress) {
+    if (file.size !== resource.sizeBytes) throw new Error("Choose the same file you started uploading (" + resource.filename + ", " + bytes(resource.sizeBytes) + ").");
+    const finished = new Set(done);
+    for (let number = 1; number <= resource.partCount; number++) {
+      if (finished.has(number)) continue;
+      const chunk = file.slice((number - 1) * partSize, Math.min(number * partSize, file.size));
+      for (let attempt = 1; ; attempt++) {
+        try { await api("/api/v2/staff/resources/" + encodeURIComponent(resource.id) + "/parts/" + number, { method:"PUT", body:chunk, headers:{ "Content-Type":"application/octet-stream" } }); break; }
+        catch (error) { if (error.name === "AbortError" || attempt === 3 || !mode) throw error; await pause(attempt * 2000); }
+      }
+      finished.add(number);
+      touch(); // An active upload counts as activity for the idle lock.
+      onProgress(Math.min(finished.size * partSize, file.size), file.size);
+    }
+    return (await api("/api/v2/staff/resources/" + encodeURIComponent(resource.id) + "/complete", { method:"POST", body:"{}" })).resource;
+  }
+  async function uploadVideo(base, file, onProgress) {
+    const start = await api(base + "/video-uploads", { method:"POST", body:JSON.stringify({ filename:file.name, sizeBytes:file.size, rightsConfirmed:true }) });
+    onProgress(0, file.size);
+    return { ...await sendParts(start.resource, file, start.partSize, [], onProgress), id:start.resource.id };
+  }
+  async function uploadPdf(base, file) {
+    if (file.size > 20 * 1024 * 1024) throw new Error("PDF files must be 20 MB or smaller.");
+    let name = file.name.replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9._ -]+/g, "-").replace(/^[^a-zA-Z0-9]+/, "").slice(0, 90);
+    if (name.length < 1) name = "lesson-notes";
+    const data = await api(base + "/pdf", { method:"POST", body:file, headers:{ "Content-Type":"application/pdf", "X-File-Name":name + ".pdf", "X-Content-Rights":"confirmed" } });
+    return data.resource;
+  }
+
+  function filesPanel(resources, draft, storage) {
+    const box = h("section", { class:"panel", "aria-labelledby":"files-heading" }, h("h3", { id:"files-heading" }, "Uploaded files"),
+      h("p", { class:"muted" }, "Private course storage: " + bytes(storage.usedBytes) + " of " + bytes(storage.limitBytes) + " used across all courses. Files are only available to learners who joined the course."));
+    if (!resources.length) box.append(h("p", {}, "No files uploaded yet."));
+    for (const item of resources) {
+      const row = h("div", { class:"lesson" }, h("span", { class:"grow" }, h("strong", {}, item.filename), h("span", { class:"muted hint" },
+        kindLabel[item.kind] + " / " + bytes(item.sizeBytes) + " / " + (item.status === "uploading" ? "unfinished upload (" + item.uploadedParts + " of " + item.partCount + " parts)" : item.status) + (item.usedBy ? " / used by " + item.usedBy + " lesson" + (item.usedBy === 1 ? "" : "s") : " / not used yet"))));
+      const player = h("div", {});
+      if (item.kind === "video" && item.status === "ready" && item.contentType) row.append(h("button", { type:"button", class:"secondary", onclick:async () => {
+        try { const data = await api("/api/v2/staff/resources/" + encodeURIComponent(item.id) + "/preview", { method:"POST", body:"{}" }); if (!/^\/api\/v2\/media\/[a-z0-9-]+\/s\/\d+\/[a-f0-9]{64}$/.test(data.url)) throw new Error("Invalid preview address."); player.replaceChildren(h("video", { controls:true, preload:"metadata", src:data.url })); }
+        catch (error) { report(error); } } }, "Preview"));
+      if (draft && item.status === "uploading") {
+        const picker = h("input", { type:"file", accept:"video/mp4,video/webm,.mp4,.m4v,.webm", "aria-label":"Choose " + item.filename + " again to resume" });
+        const note = h("p", { class:"notice", role:"status" });
+        picker.addEventListener("change", async () => {
+          if (!picker.files[0]) return;
+          try { await sendParts(item, picker.files[0], item.partSize, item.uploadedPartNumbers, (done, total) => { note.textContent = "Resuming: " + bytes(done) + " of " + bytes(total) + "."; }); await showCourse(studio.detail.course.id); say("Upload finished. Add it to a lesson using \"Or use a file you already uploaded\"."); }
+          catch (error) { if (error.name !== "AbortError") note.textContent = error.message; }
+        });
+        player.append(h("label", {}, "Resume: choose the same file again", picker), note);
+      }
+      if (draft && !item.usedBy) row.append(h("button", { type:"button", class:"secondary", onclick:() => { if (confirm("Remove " + item.filename + "? This deletes the stored file.")) act(() => api("/api/v2/staff/resources/" + encodeURIComponent(item.id), { method:"DELETE" }), "File removed."); } }, item.status === "uploading" ? "Cancel upload" : "Remove"));
+      box.append(row, player);
+    }
+    return box;
+  }
+
+  function publishPanel(course, base, draft, enrolments, resources) {
+    const unfinished = resources.filter(item => item.status === "uploading").length;
+    const checks = [[course.lessons.length > 0, "At least one lesson"], [course.summary.length >= 20, "Course description written"], [!unfinished, unfinished ? unfinished + " unfinished upload(s) - resume or cancel them" : "No unfinished uploads"], [course.priceMinor === 0, course.priceMinor === 0 ? "Free course: learners can join straight away" : "Paid price set: learners cannot join until payments are switched on"]];
+    const box = h("section", { class:"panel", "aria-labelledby":"publish-heading" }, h("h3", { id:"publish-heading" }, draft ? "Step 3 of 3: Publish" : "Published"),
+      h("ul", {}, checks.map(([okay, text]) => h("li", {}, (okay ? "Ready: " : "Check: ") + text))));
+    if (draft) {
+      box.append(h("p", { class:"muted" }, "Publishing makes the course visible in the course library. To change it later, return it to draft before anyone joins."),
+        h("button", { type:"button", id:"publish-course", disabled:!course.lessons.length, onclick:() => { if (confirm("Publish \"" + course.title + "\" to the course library?")) act(() => api(base + "/publish", { method:"POST", body:JSON.stringify({ version:course.version }) }), "Published. Learners can now find this course."); } }, "Publish course"));
+    } else {
+      box.append(h("p", {}, h("a", { href:"/#/course/" + encodeURIComponent(course.id), target:"_blank", rel:"noopener" }, "Open the learner page")));
+      box.append(enrolments ? h("p", { class:"muted" }, enrolments + " learner(s) joined, so this course is locked to protect their progress.")
+        : h("button", { type:"button", class:"secondary", onclick:() => { if (confirm("Hide this course and return it to draft for editing?")) act(() => api(base + "/draft", { method:"POST", body:JSON.stringify({ version:course.version }) }), "Returned to draft. It is hidden until you publish again."); } }, "Return to draft to edit"));
+    }
+    return box;
+  }
+
+  $("tab-studio").addEventListener("click", () => openStudio().catch(report));
+  $("tab-inbox").addEventListener("click", openInbox);
+  $("tab-team").addEventListener("click", () => openTeam().catch(report));
+  $("google-signin").addEventListener("click", () => accountSignIn(config => staffAuth().google(config)));
+  $("staff-form").addEventListener("submit", event => { event.preventDefault(); accountSignIn(config => staffAuth().email(config, $("staff-email").value, $("staff-password").value)); });
+  $("reset-password").addEventListener("click", async () => {
+    try {
+      const platform = await (await fetch("/api/v2/platform", { cache:"no-store", credentials:"omit" })).json();
+      if (!platform.accountsReady || !platform.firebase) throw new Error("Account sign-in is not available yet.");
+      await staffAuth().resetPassword(platform.firebase, $("staff-email").value);
+      say("If that email has a password account, a reset link is on its way. Check your inbox.");
+    } catch (error) { say(error.message); }
+  });
+  $("send-verification").addEventListener("click", async () => {
+    try { await staffAuth().sendVerification(); say("Verification email sent. Open the link, then sign in again."); } catch (error) { say(error.message); }
+  });
   $("login-form").addEventListener("submit", async event => {
     event.preventDefault();
     token = $("token").value.trim();
     $("token").value = "";
     $("unlock").disabled = true;
+    mode = "token";
     touch();
-    try { await load(); }
+    try { await start(); }
     catch (error) { if (error.name !== "AbortError") lock(error.message); }
     finally { $("unlock").disabled = false; }
   });
