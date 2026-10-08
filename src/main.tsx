@@ -33,9 +33,10 @@ import './brand.css';
 import './learning.css';
 import './brand-blue.css';
 import './studio.css';
+import './motion/dark.css';
 import './motion/motion.css';
 import { LivingBackground } from './motion/LivingBackground';
-import { MotionToggle, ScrollProgress, SmoothScroll, scrollToTop, useAutoReveal, useSpotlightTilt } from './motion/primitives';
+import { Cursor, MotionToggle, RouteCurtain, ScrollProgress, SmoothScroll, scrollToTop, useAutoReveal, useSpotlightTilt } from './motion/primitives';
 import { motion } from 'motion/react';
 import { useMotionEnabled } from './motion/prefs';
 
@@ -189,7 +190,7 @@ function App() {
   useSpotlightTilt(route);
   useAutoReveal(route);
   const motionOn = useMotionEnabled();
-  return <><SmoothScroll /><LivingBackground route={route} />{motionOn && <ScrollProgress />}<Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>
+  return <><SmoothScroll /><LivingBackground route={route} /><Cursor /><RouteCurtain route={route} />{motionOn && <ScrollProgress />}<Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>
     {motionOn ? <motion.div key={route} className="route-view" initial={{ y: 28 }} animate={{ y: 0, transitionEnd: { transform: 'none' } }} transition={{ duration: .6, ease: [.16, 1, .3, 1] }}>{page}</motion.div> : <div className="route-view">{page}</div>}
     <SaveStatus /></main><Footer /></>;
 }

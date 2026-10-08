@@ -169,3 +169,72 @@ export function useAutoReveal(route: string) {
     return () => { cancelAnimationFrame(frame); mutations.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); };
   }, [route, enabled]);
 }
+
+// Decodes text from random glyphs when it scrolls into view. Screen readers
+// get the real text immediately; the scrambling layer is hidden from them.
+const GLYPHS = '<>/{}[]=+*#$%01ABCDEFXYZ';
+export function Scramble({ text, className, dot = false }: { text: string; className?: string; dot?: boolean }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const enabled = useMotionEnabled();
+  const [shown, setShown] = useState(text);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !enabled) { setShown(text); return; }
+    let frame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      const start = performance.now();
+      const tick = (now: number) => {
+        const k = Math.min(1, (now - start) / 900), done = Math.floor(k * text.length);
+        setShown(text.slice(0, done) + [...text.slice(done)].map(ch => ch === ' ' ? ' ' : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]).join(''));
+        if (k < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    });
+    observer.observe(el);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
+  }, [text, enabled]);
+  return <p className={className} ref={ref}>{dot && <span />}<b className="sr-only">{text}</b><b className="scramble" aria-hidden="true">{shown}</b></p>;
+}
+
+// A glowing cursor: a precise dot plus a lagging ring that swells over anything clickable.
+export function Cursor() {
+  const dot = useRef<HTMLDivElement>(null), ring = useRef<HTMLDivElement>(null);
+  const enabled = useMotionEnabled();
+  useEffect(() => {
+    if (!enabled || !window.matchMedia('(pointer: fine)').matches) return;
+    document.documentElement.classList.add('has-cursor');
+    let x = -100, y = -100, rx = -100, ry = -100, frame = 0;
+    const move = (event: PointerEvent) => {
+      x = event.clientX; y = event.clientY;
+      const target = event.target as HTMLElement | null;
+      ring.current?.classList.toggle('is-hover', Boolean(target?.closest?.('a, button, input, select, textarea, label, [data-tilt]')));
+      ring.current?.classList.toggle('is-game', Boolean(target?.closest?.('.hero-mode-playing')));
+    };
+    const down = () => ring.current?.classList.add('is-down');
+    const up = () => ring.current?.classList.remove('is-down');
+    const tick = () => {
+      rx += (x - rx) * .18; ry += (y - ry) * .18;
+      dot.current?.style.setProperty('transform', `translate(${x}px, ${y}px)`);
+      ring.current?.style.setProperty('transform', `translate(${rx}px, ${ry}px)`);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up);
+    return () => { cancelAnimationFrame(frame); document.documentElement.classList.remove('has-cursor'); window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', down); window.removeEventListener('pointerup', up); };
+  }, [enabled]);
+  if (!enabled) return null;
+  return <><div className="cursor-ring" ref={ring} aria-hidden="true"><span /></div><div className="cursor-dot" ref={dot} aria-hidden="true" /></>;
+}
+
+// A blue panel sweeps across the screen whenever the route changes.
+export function RouteCurtain({ route }: { route: string }) {
+  const enabled = useMotionEnabled();
+  const first = useRef(true);
+  const [run, setRun] = useState(0);
+  useEffect(() => { if (first.current) { first.current = false; return; } setRun(value => value + 1); }, [route]);
+  if (!enabled || !run) return null;
+  return <div className="route-curtain" key={run} aria-hidden="true"><span className="curtain-mark">&lt;/&gt;</span></div>;
+}

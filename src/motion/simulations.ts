@@ -5,9 +5,9 @@ export type Pointer = { x: number; y: number; active: boolean; burst: { x: numbe
 export type Simulation = { step: (ctx: CanvasRenderingContext2D, dt: number, time: number) => void; resize: (w: number, h: number) => void };
 export type Variant = 'constellation' | 'tags' | 'orbits' | 'flow' | 'boids' | 'grid';
 
-const BLUE = '17, 106, 164';
-const SKY = '65, 151, 194';
-const ICE = '124, 192, 234';
+const BLUE = '92, 200, 255';
+const SKY = '47, 143, 224';
+const ICE = '200, 236, 255';
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 function density(w: number, h: number, per: number, cap: number) { return Math.min(cap, Math.max(18, Math.round((w * h) / per))); }
