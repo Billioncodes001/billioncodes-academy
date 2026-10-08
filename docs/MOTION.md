@@ -16,6 +16,14 @@ Every page moves. All motion lives in `src/motion/`, so new pages get it without
 | Night theme | `dark.css` (generated), `motion.css` | `scripts/generate-dark-theme.mjs` reads the original stylesheets. It emits overrides for every light surface, dark text colour and border, resolving brand tokens, so every page goes dark without hand edits. Rerun it after changing those stylesheets. Homepage sections are styled directly in `motion.css`. |
 | Cursor and curtain | `primitives.tsx` | A glowing cursor (dot plus lagging ring; it turns into a crosshair during the game) on fine pointers. A blue wipe sweeps across on every route change. `Scramble` decodes kicker labels when they scroll into view. |
 
+## Learning surfaces
+
+Motion on learning pages must teach, not decorate. The site is education-first; the game is an optional break.
+
+- **Practice lab** (`PracticeLab.tsx`): the brief grades the draft on every change (pure, under 1 ms) and ticks goals live. It shows a meter, warns about forbidden content, and pulses "Check my build" once everything passes. Live ticks never record a completion; only "Check my build" does. A passing check shows the next build.
+- **Lessons** (`CodeWalkthrough.tsx`): the first lesson's example is a step-through walkthrough. Each step highlights a code line and outlines the matching part of a React-rendered preview, with no injected HTML. `withCodeChips` shows tags in lesson prose as code, in both the built-in reader and the Course Studio reader.
+- **Feedback moments**: right answers pop, wrong ones shake gently, and completed lessons get a ✓ note.
+
 ## Route → background
 
 | Routes | Simulation |

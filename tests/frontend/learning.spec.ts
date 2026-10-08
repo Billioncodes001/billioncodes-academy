@@ -186,3 +186,42 @@ test('large escaped drafts survive reload and independent tabs do not overwrite 
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('billioncodes:workspace:v1') || '{}').drafts['profile-card'])).toBe(solution);
   await second.close();
 });
+
+test('the practice brief ticks goals live as the learner types, and a passing build offers the next one', async ({ page }) => {
+  await page.goto('/#/practice/profile-card');
+  const count = page.locator('.lab-live-count');
+  // The starter already has its main landmark.
+  await expect(count).toHaveText('1 of 3 goals met as you type');
+  await expect(page.locator('.lab-preview-empty')).toBeVisible();
+  await page.getByLabel('Your HTML').fill('<main>\n  <h1>Hi, I am Ada</h1>\n</main>');
+  await expect(count).toHaveText('2 of 3 goals met as you type');
+  await expect(page.locator('.lab-goals li.goal-met')).toHaveCount(2);
+  await expect(page.locator('.lab-preview-empty')).toHaveCount(0);
+  await page.getByLabel('Your HTML').fill('<main>\n  <h1>Hi, I am Ada</h1>\n  <p>I want to build a website for my bakery.</p>\n</main>');
+  await expect(count).toHaveText('3 of 3 goals met as you type');
+  await expect(page.getByText('All goals met. Choose “Check my build” to save your result.')).toBeVisible();
+  // Live ticks never record a completion on their own.
+  await page.goto('/#/practice');
+  await expect(page.getByText('0 of 4 builds completed')).toBeVisible();
+  await page.goto('/#/practice/profile-card');
+  await page.getByRole('button', { name: 'Check my build' }).click();
+  await expect(page.getByRole('heading', { name: 'You made it work.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Next build: Build a reading list/ })).toHaveAttribute('href', '#/practice/reading-list');
+  await page.getByLabel('Your HTML').fill('<main><h1>x</h1><script>alert(1)</script></main>');
+  await expect(page.getByText('Scripts, embeds and non-HTTPS links are not allowed in these exercises.')).toBeVisible();
+});
+
+test('the first lesson walks through its example line by line and shows tags as code', async ({ page }) => {
+  await page.goto('/#/learn/first-web-page');
+  const walkthrough = page.locator('.walkthrough');
+  await expect(walkthrough.getByRole('heading', { name: 'main holds the page' })).toBeVisible();
+  await expect(walkthrough.locator('.wt-line.is-on')).toHaveCount(2);
+  await walkthrough.getByRole('button', { name: 'Step 4: a takes you somewhere' }).click();
+  await expect(walkthrough.getByRole('heading', { name: 'a takes you somewhere' })).toBeVisible();
+  await expect(walkthrough.locator('.wt-line.is-on')).toContainText('<a href="/reading-list">');
+  await expect(walkthrough.locator('.wt-target.is-on > .wt-label')).toHaveText('a');
+  await walkthrough.getByRole('button', { name: 'Start again' }).click();
+  await expect(walkthrough.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.lesson-body code.inline-tag').first()).toBeVisible();
+  expect(await page.locator('.lesson-body').evaluate(element => element.querySelectorAll('script, img').length)).toBe(0);
+});

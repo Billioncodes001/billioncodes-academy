@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { withCodeChips } from './CodeWalkthrough';
 import { accountHeaders, request } from './api';
 import { jsonBody, message } from './Account';
 
@@ -109,7 +110,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
           : <p>Press play to load this lesson video.</p>}
         <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => playVideo(lesson.resourceId!))}>{player?.resource === lesson.resourceId ? 'Reload video' : 'Play lesson video'}</button>
       </div>}
-      {lesson.body?.map((text, index) => <p key={index}>{text}</p>)}
+      {lesson.body?.map((text, index) => <p key={index}>{withCodeChips(text)}</p>)}
       {lesson.kind === 'pdf' && lesson.resourceId && <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => downloadPdf(lesson.resourceId!))}>Download lesson PDF</button>}
       {lesson.kind !== 'text' && !lesson.resourceId && <p className="platform-notice">The {lesson.kind.toUpperCase()} resource is not available yet.</p>}
       <section className="reader-completion" aria-label="Lesson progress">
