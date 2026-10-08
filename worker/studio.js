@@ -1,6 +1,7 @@
 import { HttpError } from './validation.js';
 import { configuredSecret, hmacHex } from './security.js';
 import { exactFields, textValue, quota } from './identity.js';
+import { validateWalkthrough } from '@billioncodes/learning';
 import { getCourse, audit, identifier, sectionValue } from './learning.js';
 
 // Course Studio: draft editing, chunked private R2 video uploads and signed range playback.
@@ -70,10 +71,18 @@ async function draftLesson(db, id, lessonId) {
   return { course, lesson };
 }
 
+// Walkthroughs are validated by the same rules the learner's browser uses.
+function walkthroughValue(value) {
+  if (value === undefined || value === null) return null;
+  try { return validateWalkthrough(value); } catch (error) { throw new HttpError(400, error.message); }
+}
+
 export async function updateLesson(db, id, lessonId, input) {
-  exactFields(input, ['title', 'body', 'resourceId', 'section']);
+  exactFields(input, ['title', 'body', 'resourceId', 'section', 'walkthrough']);
   const { lesson } = await draftLesson(db, id, lessonId);
   const title = textValue(input.title, 3, 160, 'Lesson title'), section = sectionValue(input.section);
+  const walkthrough = walkthroughValue(input.walkthrough);
+  if (walkthrough && lesson.kind !== 'text') throw new HttpError(400, 'Walkthroughs can be added to reading lessons only.');
   let body = [], resourceId = null;
   if (lesson.kind === 'text') body = textValue(input.body, 40, 10000, 'Lesson text').split(/\n\s*\n/);
   else {
@@ -91,6 +100,8 @@ export async function updateLesson(db, id, lessonId, input) {
   await db.batch([
     db.prepare('DELETE FROM learning_lesson_sections WHERE lesson_id=?').bind(lesson.id),
     ...(section ? [db.prepare('INSERT INTO learning_lesson_sections(lesson_id,section) VALUES (?,?)').bind(lesson.id, section)] : []),
+    db.prepare('DELETE FROM learning_lesson_walkthroughs WHERE lesson_id=?').bind(lesson.id),
+    ...(walkthrough ? [db.prepare('INSERT INTO learning_lesson_walkthroughs(lesson_id,walkthrough_json) VALUES (?,?)').bind(lesson.id, JSON.stringify(walkthrough))] : []),
   ]);
   await audit(db, 'course', id, 'lesson-updated');
   return { course: await getCourse(db, id) };

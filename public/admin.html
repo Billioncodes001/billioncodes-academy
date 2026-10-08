@@ -71,6 +71,11 @@
     .suggestion.done { opacity:.6; }
     .signin { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
     .signin .panel { margin:0; }
+    .code-input { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85rem; white-space:pre; }
+    .wt-steps { padding-left:20px; display:grid; gap:12px; }
+    .wt-step-row { padding:10px; border:1px solid #d7e5ef; border-radius:8px; }
+    .wt-step-row input[type=number] { width:4.5em; }
+    .wt-editor summary { font-weight:600; cursor:pointer; }
     .or { text-align:center; font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.12em; color:#52605a; margin:14px 0; }
     .wide { width:100%; }
     .who { font-size:14px; overflow-wrap:anywhere; }
@@ -591,20 +596,54 @@
     return box;
   }
 
+  // Optional step-through walkthrough for reading lessons: example code plus steps that point at
+  // line numbers. Learners see each step light up its lines and what they produce.
+  function walkthroughEditor(existing) {
+    const code = h("textarea", { class:"code-input", rows:8, spellcheck:false, "aria-describedby":"wt-code-help", placeholder:"<main>\n  <h1>My first page</h1>\n</main>" });
+    code.value = existing ? existing.code : "";
+    const lines = h("span", { class:"muted hint", id:"wt-code-help" });
+    const countLines = () => { lines.textContent = (code.value ? code.value.split("\n").length : 0) + " lines. Up to 40 lines and 2,000 characters. Steps point at these line numbers."; };
+    code.addEventListener("input", countLines); countLines();
+    const list = h("ol", { class:"wt-steps" });
+    const addStep = step => {
+      const from = h("input", { type:"number", min:1, max:40, value:step ? step.from : 1, "aria-label":"From line" });
+      const to = h("input", { type:"number", min:1, max:40, value:step ? step.to : 1, "aria-label":"To line" });
+      const title = h("input", { maxLength:80, value:step ? step.title : "", placeholder:"What this part does", "aria-label":"Step title" });
+      const text = h("textarea", { rows:2, maxLength:400, placeholder:"Explain it in plain language (10-400 characters)", "aria-label":"Step explanation" });
+      text.value = step ? step.text : "";
+      const row = h("li", { class:"wt-step-row" }, h("div", { class:"row" }, field("Lines", h("span", { class:"row" }, from, " to ", to)), field("Title", title)), field("Explanation", text),
+        h("button", { type:"button", class:"secondary", onclick:() => { row.remove(); more.disabled = false; } }, "Remove step"));
+      row.read = () => ({ from:Number(from.value), to:Number(to.value), title:title.value, text:text.value });
+      list.append(row);
+      more.disabled = list.children.length >= 8;
+    };
+    const more = h("button", { type:"button", class:"secondary", onclick:() => addStep() }, "Add step");
+    (existing ? existing.steps : []).forEach(addStep);
+    const clear = h("button", { type:"button", class:"secondary", onclick:() => { code.value = ""; list.replaceChildren(); more.disabled = false; countLines(); } }, "Remove walkthrough");
+    const element = h("details", { class:"panel wt-editor", open:!!existing }, h("summary", {}, "Code walkthrough (optional)"),
+      h("p", { class:"muted" }, "Show example HTML and explain it step by step. Learners click through the steps; each one highlights its lines and the part of the page they create."),
+      field("Example code", code), lines, h("h4", {}, "Steps"), list, h("div", { class:"row" }, more, clear));
+    // An empty code box means no walkthrough. The server checks everything else and explains any problem.
+    return { element, value:() => code.value.trim() ? { code:code.value, steps:[...list.children].map(row => row.read()) } : null };
+  }
+
   function editLesson(lesson, lessonPath, ready) {
     const title = h("input", { value:lesson.title, required:true, minLength:3, maxLength:160 });
     const section = h("input", { value:lesson.section || "", maxLength:80, list:"section-options" });
     const body = h("textarea", { value:(lesson.body || []).join("\n\n") });
     const files = ready.filter(item => item.kind === lesson.kind);
     const resource = h("select", {}, files.map(item => h("option", { value:item.id, selected:item.id === lesson.resourceId }, item.filename)));
+    const walkthrough = lesson.kind === "text" ? walkthroughEditor(lesson.walkthrough) : null;
     const form = h("form", { class:"panel" }, h("h3", {}, "Edit lesson"), field("Lesson title", title), field("Section", section, "Optional. Lessons with the same section are grouped together."),
       lesson.kind === "text" ? null : field(kindLabel[lesson.kind] + " file", resource),
       field(lesson.kind === "text" ? "Lesson text" : "Notes under the " + kindLabel[lesson.kind].toLowerCase() + " (optional)", body),
+      walkthrough ? walkthrough.element : null,
       h("div", { class:"row" }, h("button", { type:"submit" }, "Save lesson"), h("button", { type:"button", class:"secondary", onclick:() => form.remove() }, "Cancel")));
     form.addEventListener("submit", event => {
       event.preventDefault();
       const payload = { title:title.value, section:section.value, body:body.value };
       if (lesson.kind !== "text") payload.resourceId = resource.value;
+      if (walkthrough) payload.walkthrough = walkthrough.value();
       act(() => api(lessonPath, { method:"PATCH", body:JSON.stringify(payload) }), "Lesson saved.");
     });
     return form;

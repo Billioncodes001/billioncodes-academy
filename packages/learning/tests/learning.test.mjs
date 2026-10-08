@@ -77,3 +77,35 @@ test('catalogue parser accepts authored lessons and strips unexpected fields', (
   assert.equal(parseCatalog({ ...value, courses: [{ ...primer, id: '__proto__' }] }), null);
   assert.equal(parseCatalog({ ...value, courses: [{ ...primer, lessons: [{ id: 'one', title: 'One', body: ['x'.repeat(10001)] }] }] }), null);
 });
+
+test('walkthroughs validate strictly and every built-in walkthrough is valid', async () => {
+  const { validateWalkthrough, primer, challenges, WALKTHROUGH_LIMITS } = await import('../index.js');
+  for (const lesson of primer.lessons) assert.deepEqual(validateWalkthrough(lesson.walkthrough), lesson.walkthrough);
+  for (const challenge of challenges) assert.ok(validateWalkthrough(challenge.example).steps.length >= 1);
+  const ok = { code: '<p>a</p>\r\n<p>b</p>  ', steps: [{ from: 1, title: 'First', text: 'The first paragraph.' }] };
+  assert.deepEqual(validateWalkthrough(ok), { code: '<p>a</p>\n<p>b</p>', steps: [{ from: 1, to: 1, title: 'First', text: 'The first paragraph.' }] });
+  const bad = [
+    null, [], { code: '', steps: [] }, { code: '<p>a</p>', steps: [] }, { code: '<p>a</p>', steps: [{ from: 2, title: 'Too far', text: 'Points past the code.' }] },
+    { code: '<p>a</p>', steps: [{ from: 1, to: 0, title: 'Backwards', text: 'Ends before it starts.' }] },
+    { code: '<p>a</p>', steps: [{ from: 1, title: 'x', text: 'Title too short.' }] },
+    { code: '<p>a</p>', steps: [{ from: 1, title: 'Short', text: 'tiny' }] },
+    { code: '<p>a</p>', steps: [{ from: 1, title: 'Extra', text: 'Unexpected field below.', html: '<b>' }] },
+    { code: '<p>a</p>', steps: [{ from: 1, title: 'Fine', text: 'A valid explanation.' }], extra: true },
+    { code: 'x'.repeat(WALKTHROUGH_LIMITS.code + 1), steps: [{ from: 1, title: 'Long', text: 'Code is far too long.' }] },
+    { code: Array(WALKTHROUGH_LIMITS.lines + 1).fill('<p>a</p>').join('\n'), steps: [{ from: 1, title: 'Lines', text: 'Too many lines here.' }] },
+    { code: '<p>a\u0007</p>', steps: [{ from: 1, title: 'Bell', text: 'Control characters.' }] },
+  ];
+  for (const input of bad) assert.throws(() => validateWalkthrough(input));
+});
+
+test('walkthrough trees map elements to source lines and never carry markup', async () => {
+  const { walkthroughTree } = await import('../index.js');
+  const tree = walkthroughTree('<main>\n  <h1>Hi</h1>\n  <p>Text <a href="https://x.example">go</a></p>\n  <script>alert(1)</script>\n  <img src="x" onerror="alert(1)" alt="A cat">\n</main>');
+  assert.equal(tree[0].tag, 'main'); assert.deepEqual([tree[0].from, tree[0].to], [1, 6]);
+  const h1 = tree[0].children.find(node => node.tag === 'h1');
+  assert.deepEqual([h1.from, h1.to, h1.children[0].text], [2, 2, 'Hi']);
+  const json = JSON.stringify(tree);
+  assert.ok(!json.includes('script') && !json.includes('onerror') && !json.includes('href'), 'scripts, handlers and URLs are dropped');
+  assert.ok(json.includes('"alt":"A cat"'));
+  assert.deepEqual(walkthroughTree(42), []);
+});

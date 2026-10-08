@@ -25,22 +25,22 @@ export const challenges = Object.freeze([
     brief: 'Create a small personal introduction with meaningful HTML. Use a main element, one heading and a paragraph about something you want to build.',
     starter: '<main>\n  <!-- Add a heading and a paragraph. -->\n</main>',
     hint: 'Put one <h1> and one <p> inside <main>. Give each some meaningful text.',
-    goals: ['Use one main landmark', 'Give the page one clear h1 heading', 'Add a descriptive paragraph inside main'] },
+    example: {"code": "<main>\n  <h1>Tobi's corner of the web</h1>\n  <p>I am learning HTML so I can build a booking page for my barbershop.</p>\n</main>", "steps": [{"from": 1, "to": 4, "title": "One main for the main content", "text": "main wraps the content that matters on this page. There is only one."}, {"from": 2, "to": 2, "title": "One heading names it", "text": "The h1 says whose page this is, in plain words."}, {"from": 3, "to": 3, "title": "A paragraph says something real", "text": "A sentence about a real goal is more useful than placeholder text."}]}, goals: ['Use one main landmark', 'Give the page one clear h1 heading', 'Add a descriptive paragraph inside main'] },
   { id: 'reading-list', title: 'Build a reading list', minutes: 10,
     brief: 'Make a reading list with a heading and three items. Add a descriptive HTTPS link to an item. You choose the subjects.',
     starter: '<main>\n  <h1>My reading list</h1>\n  <ul>\n    <!-- Add three useful items. -->\n  </ul>\n</main>',
     hint: 'Use <li> for each list item. A link looks like <a href="https://example.com">Read the guide</a>.',
-    goals: ['Add a clear h1 heading', 'Use a list with at least three meaningful items', 'Include a descriptive HTTPS link inside a list item'] },
+    example: {"code": "<main>\n  <h1>Recipes to try</h1>\n  <ul>\n    <li>Jollof rice</li>\n    <li>Puff-puff</li>\n    <li><a href=\"https://example.com/moi-moi\">Moi moi, step by step</a></li>\n  </ul>\n</main>", "steps": [{"from": 3, "to": 7, "title": "ul groups the list", "text": "ul means an unordered list: the order does not matter. Use ol when it does, like steps in a method."}, {"from": 4, "to": 5, "title": "Each li is one item", "text": "Every item gets its own li. Screen readers announce how many items the list has."}, {"from": 6, "to": 6, "title": "A link inside an item", "text": "The link starts with https:// and its text says where it goes: \"Moi moi, step by step\", not \"click here\"."}]}, goals: ['Add a clear h1 heading', 'Use a list with at least three meaningful items', 'Include a descriptive HTTPS link inside a list item'] },
   { id: 'contact-form', title: 'Make a form understandable', minutes: 12,
     brief: 'Practice an accessible email form. This is a non-submitting exercise, not a real contact form. Associate a visible label with an email input and add a submit button.',
     starter: '<form>\n  <label>Email address</label>\n  <input type="email">\n  <button>Send message</button>\n</form>',
     hint: 'Use matching for and id values on the label/input. Give the input a name and required attribute. Write type="submit" on the button.',
-    goals: ['Use one form', 'Associate a visible label with a unique email input ID', 'Give the email field a name and make it required', 'Add a descriptive submit button'] },
+    example: {"code": "<form>\n  <label for=\"phone\">Phone number</label>\n  <input id=\"phone\" type=\"tel\" name=\"phone\" required>\n  <button type=\"submit\">Call me back</button>\n</form>", "steps": [{"from": 2, "to": 3, "title": "for and id connect them", "text": "The label's for and the input's id are the same word, so the label belongs to that one input."}, {"from": 3, "to": 3, "title": "Name it and require it", "text": "name labels the value when it is sent; required means the form cannot be sent empty. type=\"tel\" opens the number keyboard."}, {"from": 4, "to": 4, "title": "A button that says what happens", "text": "type=\"submit\" sends the form. \"Call me back\" tells people exactly what pressing it does."}]}, goals: ['Use one form', 'Associate a visible label with a unique email input ID', 'Give the email field a name and make it required', 'Add a descriptive submit button'] },
   { id: 'semantic-repair', title: 'Repair a page structure', minutes: 10,
     brief: 'Replace the generic elements with meaningful HTML: main content, a top-level heading, a section with its own heading, and a real navigation link.',
     starter: '<div>\n  <div>Campus reading club</div>\n  <div>\n    <div>This week</div>\n    <p>One chapter. One conversation.</p>\n  </div>\n  <div>Read the club guide</div>\n</div>',
     hint: 'Use <main>, <h1>, <section>, <h2> and <a href="https://example.com/guide">. Do not make a div act like a link.',
-    goals: ['Use one main containing an h1', 'Give a section an h2 and a paragraph', 'Use a descriptive HTTPS anchor instead of a fake clickable element'] },
+    example: {"code": "<main>\n  <h1>Saturday football</h1>\n  <section>\n    <h2>This week</h2>\n    <p>Kick-off at 10 am on the school field.</p>\n  </section>\n  <a href=\"https://example.com/fixtures\">See all fixtures</a>\n</main>", "steps": [{"from": 1, "to": 2, "title": "main and h1 instead of divs", "text": "main marks the page content and h1 names it. A div means nothing on its own."}, {"from": 3, "to": 6, "title": "A section with its own heading", "text": "section groups related content, and its h2 says what the group is about."}, {"from": 7, "to": 7, "title": "A real link, not a clickable div", "text": "An a with an href works with keyboards, screen readers and \"open in new tab\". A div styled to look like a link does not."}]}, goals: ['Use one main containing an h1', 'Give a section an h2 and a paragraph', 'Use a descriptive HTTPS anchor instead of a fake clickable element'] },
 ]);
 
 export function gradeChallenge(id, code) {
@@ -100,6 +100,53 @@ export function previewHTML(code) {
     catch { /* Keep the bounded fallback rather than crashing the learner's screen. */ }
   }
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; form-action \'none\'; base-uri \'none\'"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inert HTML practice preview</title></head><body>' + body + '</body></html>';
+}
+
+// ---- Code walkthroughs -------------------------------------------------------------------
+// A walkthrough is plain data: example HTML plus steps that point at 1-based line ranges.
+// It is validated identically on the server (Course Studio) and in the browser.
+export const WALKTHROUGH_LIMITS = { code: 2000, lines: 40, steps: 8, title: 80, text: 400 };
+const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
+
+export function validateWalkthrough(input) {
+  const fail = message => { throw new Error(message); };
+  if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(key => !['code', 'steps'].includes(key))) fail('A walkthrough needs example code and steps.');
+  if (typeof input.code !== 'string' || !input.code.trim() || input.code.length > WALKTHROUGH_LIMITS.code || CONTROL.test(input.code)) fail(`Walkthrough code must be 1-${WALKTHROUGH_LIMITS.code} characters.`);
+  const code = input.code.replace(/\r\n?/g, '\n').replace(/\s+$/, '');
+  const lineCount = code.split('\n').length;
+  if (lineCount > WALKTHROUGH_LIMITS.lines) fail(`Keep walkthrough code to ${WALKTHROUGH_LIMITS.lines} lines or fewer.`);
+  if (!Array.isArray(input.steps) || input.steps.length < 1 || input.steps.length > WALKTHROUGH_LIMITS.steps) fail(`Add 1-${WALKTHROUGH_LIMITS.steps} walkthrough steps.`);
+  const steps = input.steps.map((step, index) => {
+    const label = `Step ${index + 1}`;
+    if (!step || typeof step !== 'object' || Array.isArray(step) || Object.keys(step).some(key => !['from', 'to', 'title', 'text'].includes(key))) fail(`${label} has unexpected fields.`);
+    const title = typeof step.title === 'string' ? step.title.trim() : '', text = typeof step.text === 'string' ? step.text.trim() : '';
+    if (title.length < 2 || title.length > WALKTHROUGH_LIMITS.title || CONTROL.test(title)) fail(`${label} needs a title of 2-${WALKTHROUGH_LIMITS.title} characters.`);
+    if (text.length < 10 || text.length > WALKTHROUGH_LIMITS.text || CONTROL.test(text)) fail(`${label} needs an explanation of 10-${WALKTHROUGH_LIMITS.text} characters.`);
+    const from = step.from, to = step.to ?? step.from;
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < from || to > lineCount) fail(`${label} must point at lines between 1 and ${lineCount}.`);
+    return { from, to, title, text };
+  });
+  return { code, steps };
+}
+
+const walkTags = new Set([...displayTags, 'a', 'form', 'label', 'input', 'button', 'nav', 'img']);
+// A tiny, inert view of the example for the preview pane. Every element remembers which source
+// lines it spans, so a step can light up exactly what its lines produce. Never returns HTML.
+export function walkthroughTree(code) {
+  if (typeof code !== 'string' || code.length > WALKTHROUGH_LIMITS.code) return [];
+  let budget = 400;
+  const convert = (node, depth) => {
+    if (budget-- <= 0 || depth > 24) return null;
+    if (node.nodeName === '#text') return node.value.trim() ? { text: node.value.replace(/\s+/g, ' ') } : null;
+    if (!node.tagName) return null;
+    const children = (node.childNodes || []).map(child => convert(child, depth + 1)).filter(Boolean);
+    if (!walkTags.has(node.tagName)) return children.length ? { tag: 'div', from: 0, to: 0, children } : null;
+    const location = node.sourceCodeLocation || {};
+    const attr = name => (node.attrs || []).find(item => item.name === name)?.value || '';
+    return { tag: node.tagName, from: location.startLine || 0, to: location.endLine || location.startLine || 0, children, ...(node.tagName === 'input' ? { inputType: attr('type') || 'text' } : {}), ...(node.tagName === 'img' ? { alt: attr('alt') } : {}) };
+  };
+  try { return (parseFragment(code, { sourceCodeLocationInfo: true }).childNodes || []).map(node => convert(node, 0)).filter(Boolean); }
+  catch { return []; }
 }
 
 export function emptyProgress() { return { version: 1, read: {}, drafts: {}, solved: {}, lastLesson: null }; }
@@ -165,13 +212,13 @@ export const primer = {
       'Use one clear main heading for this simple page, paragraphs for explanations, and a main element around the primary content. Headings should describe their sections; do not choose a heading level just to make text larger. CSS is the separate language that controls appearance.',
       'An anchor, such as <a href="/lessons">Read a lesson</a>, takes someone to a destination. A button performs an action, such as checking an answer or opening a menu. These elements have built-in keyboard behaviour. A clickable div does not provide the same meaning or behaviour on its own.',
       'Read the example from the outside in: main contains the page content, h1 names it, p explains it, and a provides a next step. In the practice lab, you can write your own version and check its structure. Learner JavaScript is never executed.'
-    ] },
+    ], walkthrough: {"code": "<main>\n  <h1>My first project</h1>\n  <p>A reading list for curious people.</p>\n  <a href=\"/reading-list\">Open the reading list</a>\n</main>", "steps": [{"from": 1, "to": 5, "title": "main holds the page", "text": "Everything important sits inside main. Screen readers can jump straight to it, so visitors skip menus and get to the point."}, {"from": 2, "to": 2, "title": "h1 names the page", "text": "One clear main heading tells everyone what this page is about. Pick it for meaning, not for size: CSS handles size."}, {"from": 3, "to": 3, "title": "p explains", "text": "A paragraph carries the explanation. Short, plain sentences help every reader."}, {"from": 4, "to": 4, "title": "a takes you somewhere", "text": "An anchor with an href is a link to a destination. Keyboards and screen readers already know how to use it."}]} },
     { id: 'make-a-page-usable', title: 'Make a page usable', body: [
       'A page is not finished when it looks right on your own screen. Someone may use a small phone, zoom in, navigate with a keyboard, or listen with a screen reader. Clear structure is the starting point, not the entire accessibility check.',
       'Write links that explain their destination. Read the HTML introduction gives more information than Click here. Give every form input a visible label. Placeholder text disappears when someone types and is not a replacement for a label.',
       'Use flexible layouts instead of assuming a fixed screen width. Long text should wrap, controls should be easy to tap, and important information should not depend only on colour. When testing a page, navigate it with Tab and activate links with Enter.',
       'A useful first project is a one-page reading list: a main heading, a short explanation, and three descriptive links. First sketch the content. Then write the HTML. Only after the structure is clear should you add styles.',
       'Explain your choices: which content is a heading, which is a paragraph, and which elements lead to another destination? Being able to explain a small working page is more valuable than copying a complicated one you do not understand.'
-    ] }
+    ], walkthrough: {"code": "<main>\n  <h1>Join the reading club</h1>\n  <p>We meet online every Thursday.</p>\n  <a href=\"https://example.com/club-guide\">Read the club guide</a>\n  <form>\n    <label for=\"email\">Email address</label>\n    <input id=\"email\" type=\"email\" name=\"email\" required>\n    <button type=\"submit\">Join the club</button>\n  </form>\n</main>", "steps": [{"from": 4, "to": 4, "title": "Links say where they go", "text": "\"Read the club guide\" makes sense on its own. \"Click here\" tells someone using a screen reader nothing about the destination."}, {"from": 6, "to": 7, "title": "Every input has a visible label", "text": "The label's for matches the input's id. Clicking the words focuses the field, and screen readers announce \"Email address\". Placeholder text is not a label."}, {"from": 7, "to": 7, "title": "Let the browser help", "text": "type=\"email\" brings up the right keyboard on phones, and required stops an empty form being sent. name is what the value is called when it is submitted."}, {"from": 8, "to": 8, "title": "Buttons do things", "text": "A button performs an action, here sending the form. Keyboard users reach it with Tab and press it with Enter or Space, with no extra code."}]} }
   ]
 };

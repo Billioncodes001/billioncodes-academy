@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { withCodeChips } from './CodeWalkthrough';
+import { CodeWalkthrough, withCodeChips } from './CodeWalkthrough';
+import type { Walkthrough } from '@billioncodes/learning';
 import { accountHeaders, request } from './api';
 import { jsonBody, message } from './Account';
 
-export type Lesson = { id: string; title: string; kind: 'text' | 'pdf' | 'video'; section?: string; body?: string[]; resourceId?: string };
+export type Lesson = { id: string; title: string; kind: 'text' | 'pdf' | 'video'; section?: string; body?: string[]; resourceId?: string; walkthrough?: Walkthrough };
 type Player = { resource: string; url: string; kind: 'file' | 'stream' };
 const SIGNED_MEDIA = /^\/api\/v2\/media\/[a-z0-9-]+\/l\/\d{10}\/[a-f0-9]{64}$/;
 const STREAM_PLAYER = /^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9._-]+$/;
@@ -111,6 +112,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
         <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => playVideo(lesson.resourceId!))}>{player?.resource === lesson.resourceId ? 'Reload video' : 'Play lesson video'}</button>
       </div>}
       {lesson.body?.map((text, index) => <p key={index}>{withCodeChips(text)}</p>)}
+      {lesson.walkthrough && <CodeWalkthrough key={lesson.id} walkthrough={lesson.walkthrough} />}
       {lesson.kind === 'pdf' && lesson.resourceId && <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => downloadPdf(lesson.resourceId!))}>Download lesson PDF</button>}
       {lesson.kind !== 'text' && !lesson.resourceId && <p className="platform-notice">The {lesson.kind.toUpperCase()} resource is not available yet.</p>}
       <section className="reader-completion" aria-label="Lesson progress">

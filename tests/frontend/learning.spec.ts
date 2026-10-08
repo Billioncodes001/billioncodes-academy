@@ -215,11 +215,11 @@ test('the first lesson walks through its example line by line and shows tags as 
   await page.goto('/#/learn/first-web-page');
   const walkthrough = page.locator('.walkthrough');
   await expect(walkthrough.getByRole('heading', { name: 'main holds the page' })).toBeVisible();
-  await expect(walkthrough.locator('.wt-line.is-on')).toHaveCount(2);
+  await expect(walkthrough.locator('.wt-line.is-on')).toHaveCount(5);
   await walkthrough.getByRole('button', { name: 'Step 4: a takes you somewhere' }).click();
   await expect(walkthrough.getByRole('heading', { name: 'a takes you somewhere' })).toBeVisible();
   await expect(walkthrough.locator('.wt-line.is-on')).toContainText('<a href="/reading-list">');
-  await expect(walkthrough.locator('.wt-target.is-on > .wt-label')).toHaveText('a');
+  await expect(walkthrough.locator('.wt-node.is-on > .wt-tag')).toHaveText('a');
   await walkthrough.getByRole('button', { name: 'Start again' }).click();
   await expect(walkthrough.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.lesson-body code.inline-tag').first()).toBeVisible();

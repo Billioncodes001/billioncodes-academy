@@ -152,3 +152,29 @@ test('expired multipart cancellation releases its reservation and finished uploa
   assert.equal(done.resource.status, 'ready');
   assert.equal((await h.db.prepare('SELECT status FROM learning_resources WHERE id=?').bind(active.resource.id).first()).status, 'ready');
 });
+
+test('reading lessons can carry a validated code walkthrough that learners receive', async t => {
+  const h = await setup(t), ada = await h.register();
+  const id = 'html-walkthroughs';
+  await ok(h, ...staff('/api/v2/staff/courses', { ...course, id, title:'HTML with walkthroughs' }));
+  const text = 'A link takes someone to another page, and its words should say where it goes.';
+  const created = await ok(h, ...staff(`/api/v2/staff/courses/${id}/lessons`, { title:'Links', kind:'text', body:text }));
+  const lesson = created.course.lessons[0];
+  const walkthrough = { code:'<p>\n  <a href="https://example.com/guide">Read the guide</a>\n</p>', steps:[{ from:2, title:'A descriptive link', text:'The words say where the link goes.' }] };
+  const patch = body => h.fetch(...staff(`/api/v2/staff/courses/${id}/lessons/${lesson.id}`, body, 'PATCH'));
+
+  for (const bad of [{ code:'', steps:[] }, { code:'<p>x</p>', steps:[{ from:5, title:'Too far', text:'Past the end of the code.' }] }, { code:'<p>x</p>', steps:[{ from:1, title:'Ok', text:'Fine text.', html:'<b>' }] }]) {
+    const response = await patch({ title:'Links', body:text, walkthrough:bad });
+    assert.equal(response.status, 400, JSON.stringify(bad));
+    assert.ok((await response.json()).error, 'a readable reason is returned');
+  }
+  let saved = await ok(h, ...staff(`/api/v2/staff/courses/${id}/lessons/${lesson.id}`, { title:'Links', body:text, walkthrough }, 'PATCH'));
+  assert.deepEqual(saved.course.lessons[0].walkthrough, { code:walkthrough.code, steps:[{ from:2, to:2, title:'A descriptive link', text:'The words say where the link goes.' }] });
+
+  await ok(h, ...staff(`/api/v2/staff/courses/${id}/publish`, { version:1 }));
+  const learner = await (await h.fetch(`/api/v2/courses/${id}`, { headers:ada })).json();
+  assert.equal(learner.course.lessons[0].walkthrough, undefined, 'unenrolled visitors only see lesson titles');
+  await h.fetch(`/api/v2/courses/${id}/enrol`, { method:'POST', headers:{ ...ada, Origin:ORIGIN, 'Content-Type':'application/json' }, body:'{}' });
+  const enrolled = await (await h.fetch(`/api/v2/courses/${id}`, { headers:ada })).json();
+  assert.equal(enrolled.course.lessons[0].walkthrough.steps[0].title, 'A descriptive link');
+});

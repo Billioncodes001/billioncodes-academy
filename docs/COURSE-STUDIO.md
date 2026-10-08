@@ -43,3 +43,13 @@ The OpenClaw weekly Academy automation is scheduled for **Monday 09:00 Africa/La
 ## Release checks
 
 `npm run build`, `npm run test:backend`, `node --test worker/tests/admin-ui.test.mjs worker/tests/studio-ui.test.mjs worker/tests/staff-ui.test.mjs`, and `npm run test:frontend` are the release checks. Additive D1 migration `0004_staff_access.sql` is the canonical staff schema. The Worker can create those fixed tables itself on first health/staff request if a Git-connected deployment has not applied the migration; the migration remains safe to apply later. `0003_course_studio.sql` must already be present before deployment. After deploying, check that **Continue with Google** opens and completes on the live console; automated tests mock Google's sign-in endpoints and cannot exercise the real pop-up. Inspect the admin page on desktop and phone, test a real staff draft/upload/preview and a learner enrol/playback journey, and check the production catalogue before announcing a course. The automated browser test uses a local D1/R2 harness; it does not exercise the production operator token or a real owner video.
+
+## Code walkthroughs
+
+A reading lesson can carry an optional **code walkthrough**: example HTML (up to 40 lines and 2,000 characters) plus 1-8 steps. Each step points at a line range and has a short title and a plain-language explanation. Learners step through it. Each step highlights its lines and outlines the part of a live preview those lines produce. The preview is matched automatically from the source positions, so authors only enter line numbers.
+
+- **Authoring:** in the console, open a draft course, choose **Edit** on a reading lesson, then open **Code walkthrough (optional)**. Clear the example code (or press **Remove walkthrough**) to delete it.
+- **Validation:** `validateWalkthrough` in `packages/learning` is used by both the Worker and the browser. A bad step gets a specific message, for example "Step 1 must point at lines between 1 and 3."
+- **Storage:** `learning_lesson_walkthroughs` (migration `0006`), one row per lesson, deleted with the lesson. Only enrolled learners receive walkthroughs, like lesson text.
+- **Safety:** the example is shown as text and rendered as React elements from an inert parsed tree. Scripts, event handlers and URLs are dropped, and no HTML is injected.
+

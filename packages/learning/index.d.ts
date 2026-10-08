@@ -1,7 +1,10 @@
-export type Lesson = { id: string; title: string; body: string[] };
+export type WalkthroughStep = { from: number; to: number; title: string; text: string };
+export type Walkthrough = { code: string; steps: WalkthroughStep[] };
+export type WalkNode = { text: string } | { tag: string; from: number; to: number; children: WalkNode[]; inputType?: string; alt?: string };
+export type Lesson = { id: string; title: string; body: string[]; walkthrough?: Walkthrough };
 export type Course = { id: string; title: string; level: string; format: string; summary: string; lessons: Lesson[] };
 export type Catalog = { courses: Course[]; training: { status: string }; payments: { enabled: boolean } };
-export type Challenge = { id: string; title: string; brief: string; minutes: number; starter: string; hint: string; goals: string[] };
+export type Challenge = { id: string; title: string; brief: string; minutes: number; starter: string; hint: string; goals: string[]; example?: Walkthrough };
 export type Check = { label: string; passed: boolean };
 export type Feedback = { passed: boolean; checks: Check[]; error?: string };
 export type Progress = { version: 1; read: Record<string, string[]>; drafts: Record<string, string>; solved: Record<string, string>; lastLesson: { courseId: string; lessonId: string } | null };
@@ -20,3 +23,8 @@ export function recordRead(progress: Progress, courseId: string, lessonId: strin
 export function rememberLesson(progress: Progress, courseId: string, lessonId: string): Progress;
 export function parseCatalog(value: unknown): Catalog | null;
 export const primer: Course;
+export const WALKTHROUGH_LIMITS: { code: number; lines: number; steps: number; title: number; text: number };
+/** Throws an Error with a learner-facing message when the walkthrough is invalid. */
+export function validateWalkthrough(input: unknown): Walkthrough;
+/** An inert, source-mapped view of example HTML for previews. Never returns HTML. */
+export function walkthroughTree(code: string): WalkNode[];

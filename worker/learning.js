@@ -22,8 +22,8 @@ export async function getCourse(db, id) {
   if (base) return base;
   const row = await db.prepare('SELECT * FROM learning_courses WHERE id=?').bind(id).first();
   if (!row) throw new HttpError(404, 'Course not found.');
-  const { results } = await db.prepare('SELECT l.*,s.section FROM learning_lessons l LEFT JOIN learning_lesson_sections s ON s.lesson_id=l.id WHERE l.course_id=? ORDER BY l.position').bind(id).all();
-  return { ...rowCourse(row), lessons: results.map(lesson => ({ id: lesson.id, title: lesson.title, kind: lesson.kind, section: lesson.section || '', body: JSON.parse(lesson.body_json), resourceId: lesson.resource_id })) };
+  const { results } = await db.prepare('SELECT l.*,s.section,w.walkthrough_json FROM learning_lessons l LEFT JOIN learning_lesson_sections s ON s.lesson_id=l.id LEFT JOIN learning_lesson_walkthroughs w ON w.lesson_id=l.id WHERE l.course_id=? ORDER BY l.position').bind(id).all();
+  return { ...rowCourse(row), lessons: results.map(lesson => ({ id: lesson.id, title: lesson.title, kind: lesson.kind, section: lesson.section || '', body: JSON.parse(lesson.body_json), resourceId: lesson.resource_id, ...(lesson.walkthrough_json ? { walkthrough: JSON.parse(lesson.walkthrough_json) } : {}) })) };
 }
 export async function courseCatalogue(db, staff = false) {
   const { results } = await db.prepare(`SELECT c.*,(SELECT count(*) FROM learning_lessons WHERE course_id=c.id) AS lesson_count FROM learning_courses c ${staff ? '' : "WHERE status='published'"} ORDER BY created_at DESC LIMIT 100`).all();

@@ -63,6 +63,7 @@ async function api(request, env, url) {
           db.prepare('SELECT user_id FROM learner_profiles LIMIT 0'),
           db.prepare('SELECT id FROM learning_courses LIMIT 0'),
           db.prepare('SELECT lesson_id FROM learning_lesson_sections LIMIT 0'),
+          db.prepare('SELECT lesson_id FROM learning_lesson_walkthroughs LIMIT 0'),
           db.prepare('SELECT resource_id FROM learning_media_uploads LIMIT 0'),
           db.prepare('SELECT resource_id FROM learning_upload_parts LIMIT 0'),
           db.prepare('SELECT user_id FROM learning_enrolments LIMIT 0'),

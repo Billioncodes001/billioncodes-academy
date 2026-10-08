@@ -21,7 +21,7 @@ Every page moves. All motion lives in `src/motion/`, so new pages get it without
 Motion on learning pages must teach, not decorate. The site is education-first; the game is an optional break.
 
 - **Practice lab** (`PracticeLab.tsx`): the brief grades the draft on every change (pure, under 1 ms) and ticks goals live. It shows a meter, warns about forbidden content, and pulses "Check my build" once everything passes. Live ticks never record a completion; only "Check my build" does. A passing check shows the next build.
-- **Lessons** (`CodeWalkthrough.tsx`): the first lesson's example is a step-through walkthrough. Each step highlights a code line and outlines the matching part of a React-rendered preview, with no injected HTML. `withCodeChips` shows tags in lesson prose as code, in both the built-in reader and the Course Studio reader.
+- **Lessons** (`CodeWalkthrough.tsx`): walkthroughs are data (`{ code, steps: [{ from, to, title, text }] }`) on a lesson or a practice build. Built-in ones live in `packages/learning`, and Course Studio ones are added in the console (see `COURSE-STUDIO.md`). The preview is built from a source-mapped parse tree, so each step outlines exactly what its lines produce. Practice builds show theirs behind **See a worked example**, using a different subject from the task. `withCodeChips` shows tags in lesson prose as code.
 - **Feedback moments**: right answers pop, wrong ones shake gently, and completed lessons get a ✓ note.
 
 ## Route → background

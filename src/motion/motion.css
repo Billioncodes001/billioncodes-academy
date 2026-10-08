@@ -408,13 +408,30 @@ code { color: #bfe6ff; }
 .wt-line.is-on { color: white; background: #5cc8ff17; border-left-color: #5cc8ff; }
 .wt-no { display: inline-block; width: 2ch; margin-right: 14px; color: #4f6d88; text-align: right; }
 .wt-preview { padding: 18px; background: #f6fbff; display: grid; align-content: center; }
-.wt-target { position: relative; padding: 8px 10px; border: 1.5px dashed transparent; border-radius: 8px; color: #092f46; transition: border-color .35s, background .35s, box-shadow .35s; }
-.wt-target .wt-target { margin-top: 6px; }
-.wt-target strong { font: 700 1.25rem var(--heading); color: #092f46; }
-.wt-target u { color: #0d5d93; }
-.wt-target.is-on { border-color: #1f8fd6; background: #1f8fd614; box-shadow: 0 0 0 4px #1f8fd61f; }
-.wt-label { position: absolute; top: -9px; right: 8px; font: 600 .62rem var(--mono); color: white; background: #1f8fd6; padding: 1px 6px; border-radius: 4px; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s; }
-.wt-target.is-on > .wt-label { opacity: 1; transform: none; }
+/* Generic preview: a calm, page-like rendering of the walkthrough tree. */
+.wt-preview { color: #092f46; font: .95rem/1.5 var(--body); align-content: start !important; }
+.wt-node { position: relative; border: 1.5px dashed transparent; border-radius: 8px; transition: border-color .35s, background .35s, box-shadow .35s; }
+div.wt-node, ul.wt-node, ol.wt-node, li.wt-node { display: block; padding: 4px 8px; margin: 2px 0; }
+span.wt-node { display: inline-block; padding: 0 3px; }
+ul.wt-node, ol.wt-node { padding-left: 26px; list-style: revert; }
+li.wt-node { display: list-item; }
+.wt-h1 { display: block !important; font: 700 1.3rem/1.2 var(--heading); padding: 4px 6px !important; }
+.wt-h2, .wt-h3 { display: block !important; font: 700 1.05rem var(--heading); padding: 4px 6px !important; }
+.wt-p { display: block !important; padding: 4px 6px !important; }
+.wt-a { color: #0d5d93; text-decoration: underline; }
+.wt-strong { font-weight: 700; }
+.wt-em { font-style: italic; }
+.wt-label { font-weight: 600; font-size: .85rem; }
+.wt-button { margin-top: 4px; padding: 4px 12px !important; border-radius: 8px; background: #116aa4; color: white; font-weight: 600; font-size: .85rem; }
+.wt-input .wt-input { display: inline-block; min-width: 160px; padding: 4px 8px; border: 1px solid #93aec1; border-radius: 6px; background: white; color: #6b8296; font: .75rem var(--mono); }
+.wt-img .wt-img { display: inline-block; padding: 14px; border: 1px dashed #93aec1; border-radius: 6px; font-size: .8rem; color: #36536e; }
+.wt-node.is-on { border-color: #1f8fd6; background: #1f8fd614; box-shadow: 0 0 0 4px #1f8fd61f; }
+.wt-tag { position: absolute; top: -10px; right: 6px; z-index: 1; font: 600 .62rem var(--mono); color: white; background: #1f8fd6; padding: 1px 6px; border-radius: 4px; animation: tag-in .3s var(--ease-out); }
+@keyframes tag-in { from { opacity: 0; transform: translateY(4px); } }
+.lab-example .walkthrough { margin-top: 12px; }
+.wt-button.is-on { background: #116aa4; box-shadow: 0 0 0 4px #1f8fd659; border-color: #8fd3ff; }
+.lab-example .wt-grid { grid-template-columns: 1fr; }
+.lab-example .wt-code { border-right: 0; border-bottom: 1px solid #5cc8ff1f; }
 .wt-explain { padding: 16px 18px 6px; border-top: 1px solid #5cc8ff1f; }
 .wt-step { font: .66rem var(--mono); letter-spacing: .14em; color: #8fd3ff; margin: 0 0 4px; }
 .wt-explain h3 { font: 700 1.2rem var(--heading); color: white; }
