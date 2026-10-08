@@ -16,7 +16,7 @@ test('Firebase registration verifies signed identity, consent, and rejects arbit
   assert.deepEqual((await account.json()).user,{id:'ada',name:'ada Learner',email:'ada@example.com'});
   await h.register();
   assert.equal((await h.db.prepare('SELECT count(*) AS count FROM learner_users').first()).count,1);
-  assert.equal((await h.fetch('/api/v2/staff/courses',{headers:header})).status,401);
+  assert.equal((await h.fetch('/api/v2/staff/courses',{headers:header})).status,403); // signed in, but no staff grant
   const evil = post({name:'Ada Learner',consent:true},undefined,{...header,Origin:'https://evil.example'});
   assert.equal((await h.fetch('/api/auth/register',evil)).status,403);
   assert.equal((await h.fetch('/api/auth/email-otp/send-verification-otp',post({}))).status,404);

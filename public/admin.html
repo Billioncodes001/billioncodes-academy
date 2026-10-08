@@ -69,6 +69,17 @@
     .suggestion { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:8px 0; border-top:1px dashed var(--line); }
     .suggestion .grow { flex:1; min-width:180px; }
     .suggestion.done { opacity:.6; }
+    .signin { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+    .signin .panel { margin:0; }
+    .or { text-align:center; font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.12em; color:#52605a; margin:14px 0; }
+    .wide { width:100%; }
+    .who { font-size:14px; overflow-wrap:anywhere; }
+    .member { display:flex; gap:12px; align-items:end; flex-wrap:wrap; border-top:1px solid var(--line); padding:14px 0; }
+    .member .grow { flex:1; min-width:200px; }
+    .member select { display:block; margin-top:6px; }
+    ol.onboard { padding-left:22px; overflow-wrap:anywhere; }
+    label > select { display:block; margin:6px 0 12px; }
+    input, select, textarea { font-weight:normal; }
     @media(max-width:550px) { main { padding:24px 14px 50px; } .panel,article { padding:18px; } .row button { width:100%; } .tabs button { flex:1; } }
   </style>
 </head>
@@ -77,21 +88,41 @@
   <header>
     <div class="eyebrow">Billion Codes / Private operations</div>
     <h1>Review the next step.</h1>
-    <p>Training applications, project enquiries and the course studio. Access is limited to authorised operators.</p>
+    <p>Training applications, project enquiries, the course studio and team access. Access is limited to staff the owner has added.</p>
   </header>
-  <section id="login-panel" class="panel" aria-labelledby="access-heading">
-    <h2 id="access-heading">Operator access</h2>
-    <p>The access token stays in this page's memory only. It is cleared when you lock, leave, reload, or after 15 minutes without interaction. Do not use a shared computer.</p>
-    <form id="login-form">
-      <label for="token">Private access token</label>
-      <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" required>
-      <button id="unlock" type="submit">Unlock review</button>
-    </form>
-  </section>
+  <div id="login-panel" class="signin">
+    <section class="panel" aria-labelledby="staff-heading">
+      <h2 id="staff-heading">Staff sign-in</h2>
+      <p>Use a verified account the owner added to the team. The original owner can sign in with their verified Academy email without the old token. Your sign-in ends when you lock, leave, reload, or after 15 minutes without interaction.</p>
+      <button id="google-signin" class="wide" type="button">Continue with Google</button>
+      <p class="or">or</p>
+      <form id="staff-form">
+        <label for="staff-email">Email</label>
+        <input id="staff-email" type="email" autocomplete="username" maxlength="254" required>
+        <label for="staff-password">Password</label>
+        <input id="staff-password" type="password" autocomplete="current-password" maxlength="256" required>
+        <button id="staff-signin" type="submit">Sign in with email</button>
+      </form>
+      <button id="reset-password" class="secondary" type="button">Reset my email password</button>
+      <p class="muted">Use Google if that is how you registered. If you use email/password, create or sign in to your verified <a href="/#/account">Academy account</a> with your granted email.</p>
+      <button id="send-verification" class="secondary" type="button" hidden>Send verification email again</button>
+    </section>
+    <section class="panel" aria-labelledby="access-heading">
+      <h2 id="access-heading">Owner access token</h2>
+      <p>For the owner's first setup or emergencies. Add yourself in <strong>Team</strong>, then use staff sign-in day to day. Never share this token. Do not use a shared computer.</p>
+      <form id="login-form">
+        <label for="token">Private access token</label>
+        <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" required>
+        <button id="unlock" type="submit">Unlock with token</button>
+      </form>
+    </section>
+  </div>
   <nav id="tabs" class="tabs" hidden aria-label="Console sections">
     <button type="button" id="tab-inbox" aria-pressed="true">Enquiries</button>
     <button type="button" id="tab-studio" aria-pressed="false">Course studio</button>
+    <button type="button" id="tab-team" aria-pressed="false">Team</button>
     <span class="spacer"></span>
+    <span id="who" class="who"></span>
     <button class="secondary" id="lock" type="button">Lock and clear</button>
   </nav>
   <p id="message" class="notice" role="status" aria-live="polite"></p>
@@ -99,6 +130,10 @@
     <h2 id="studio-heading">Course studio</h2>
     <p class="muted">Create a course in three steps: describe it, add video, reading or PDF lessons, then publish. Only upload material you made or have written permission to publish. Drafts are private until you publish.</p>
     <div id="studio-root"></div>
+  </section>
+  <section id="team-panel" hidden aria-labelledby="team-heading">
+    <h2 id="team-heading">Team access</h2>
+    <div id="team-root"></div>
   </section>
   <section id="review-panel" hidden aria-labelledby="review-heading">
     <div class="row"><h2 id="review-heading">Submission inbox</h2></div>
@@ -112,11 +147,14 @@
     <button id="more" class="secondary" type="button" hidden>Load more</button>
   </section>
 </main>
+<script nonce="__CSP_NONCE__" src="/admin-auth.js" defer></script>
 <script nonce="__CSP_NONCE__">
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
   let token = "";
+  let mode = ""; // "token" (shared owner bootstrap) or "account" (individual Firebase staff sign-in)
+  let session = null;
   let cursor = null;
   let idleTimer;
   let generation = 0;
@@ -128,11 +166,19 @@
   function lock(message = "Console locked. Private data cleared from this page.") {
     generation++;
     token = "";
+    mode = "";
+    session = null;
+    if (window.billionStaffAuth) window.billionStaffAuth.signOut().catch(() => {});
     cursor = null;
     clearTimeout(idleTimer);
     for (const controller of requests) controller.abort();
     requests.clear();
     $("token").value = "";
+    $("staff-password").value = "";
+    $("send-verification").hidden = true;
+    $("who").textContent = "";
+    $("team-panel").hidden = true;
+    $("team-root").replaceChildren();
     $("records").replaceChildren();
     $("review-panel").hidden = true;
     $("studio-panel").hidden = true;
@@ -145,19 +191,24 @@
   }
   function touch() {
     clearTimeout(idleTimer);
-    if (token) idleTimer = setTimeout(() => lock("Session locked after 15 minutes without interaction."), 15 * 60 * 1000);
+    if (mode) idleTimer = setTimeout(() => lock("Session locked after 15 minutes without interaction."), 15 * 60 * 1000);
   }
   async function api(path, options = {}) {
-    if (!token) throw new Error("Unlock the console first.");
+    if (!mode) throw new Error("Unlock the console first.");
     const current = generation;
+    const bearer = mode === "token" ? token : await staffAuth().token();
+    if (current !== generation) throw new DOMException("Console locked", "AbortError");
     const controller = new AbortController();
     requests.add(controller);
     try {
       const { headers = {}, ...rest } = options;
-      const response = await fetch(path, { ...rest, cache:"no-store", credentials:"omit", redirect:"error", signal:controller.signal, headers:{ "Authorization":"Bearer " + token, ...(typeof options.body === "string" ? { "Content-Type":"application/json" } : {}), ...headers } });
+      const response = await fetch(path, { ...rest, cache:"no-store", credentials:"omit", redirect:"error", signal:controller.signal, headers:{ "Authorization":"Bearer " + bearer, ...(typeof options.body === "string" ? { "Content-Type":"application/json" } : {}), ...headers } });
       const data = await response.json();
       if (current !== generation) throw new DOMException("Console locked", "AbortError");
-      if (response.status === 401 || response.status === 403) { lock("Access was rejected. Check your token and approved website origin."); throw new Error("Access rejected."); }
+      if (response.status === 401 || response.status === 403) {
+        const message = mode === "token" ? "That access token was not accepted, or this website address is not approved." : (data.error || "Your staff access was not accepted.");
+        lock(message); throw new Error(message);
+      }
       if (!response.ok) throw new Error(data.error || "Request failed. Try again.");
       return data;
     } finally { requests.delete(controller); }
@@ -241,8 +292,6 @@
       for (const item of data.items) $("records").append(render(item));
       cursor = data.nextCursor;
       $("more").hidden = !cursor;
-      if ($("tabs").hidden) { $("review-panel").hidden = false; $("tabs").hidden = false; }
-      $("login-panel").hidden = true;
       say(data.items.length ? "Loaded " + data.items.length + " private enquiries." : "No enquiries match these filters.");
     } finally { listLoading = false; $("refresh").disabled = false; $("more").disabled = false; }
   }
@@ -283,14 +332,105 @@
   const root = () => $("studio-root");
   const report = error => { if (error.name !== "AbortError") say(error.message); };
 
-  async function openStudio() {
-    $("tab-inbox").setAttribute("aria-pressed", "false"); $("tab-studio").setAttribute("aria-pressed", "true");
-    $("review-panel").hidden = true; $("studio-panel").hidden = false;
-    await showCourses();
+  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"] };
+  function show(name) {
+    for (const [key, [tab, panel]] of Object.entries(panels)) { $(tab).setAttribute("aria-pressed", String(key === name)); $(panel).hidden = key !== name; }
   }
-  function openInbox() {
-    $("tab-inbox").setAttribute("aria-pressed", "true"); $("tab-studio").setAttribute("aria-pressed", "false");
-    $("studio-panel").hidden = true; $("review-panel").hidden = false;
+  async function openStudio() { show("studio"); await showCourses(); }
+  function openInbox() { show("inbox"); }
+  async function openTeam() { show("team"); await showTeam(); }
+
+  // ---- Sign-in and roles -------------------------------------------------------------------
+  // The server decides the role on every request; the UI only hides areas the role cannot use.
+  const roleName = { owner:"Owner", editor:"Editor", reviewer:"Reviewer" };
+  const roleHelp = { owner:"Everything, including adding and removing team members.", editor:"Course studio only: create, edit, upload and publish courses.", reviewer:"Enquiries inbox and training applications. No course editing or team changes." };
+  const staffAuth = () => { if (!window.billionStaffAuth) throw new Error("Staff sign-in could not load. Refresh the page and try again."); return window.billionStaffAuth; };
+  async function start() {
+    session = (await api("/api/v1/admin/me")).staff;
+    $("tab-inbox").hidden = !session.permissions.inbox;
+    $("tab-studio").hidden = !session.permissions.studio;
+    $("tab-team").hidden = !session.permissions.team;
+    $("who").textContent = roleName[session.role] + " | " + (session.method === "token" ? "owner access token" : session.email);
+    $("login-panel").hidden = true; $("tabs").hidden = false;
+    if (session.permissions.inbox) { openInbox(); await load(); }
+    else if (session.permissions.studio) await openStudio();
+    else await openTeam();
+  }
+  async function firebaseConfig() {
+    const response = await fetch("/api/v2/platform", { cache:"no-store", credentials:"omit", redirect:"error" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.firebase) throw new Error("Staff sign-in is not available yet. The owner can use the access token.");
+    return data.firebase;
+  }
+  async function accountSignIn(action) {
+    const buttons = [$("google-signin"), $("staff-signin")];
+    buttons.forEach(button => { button.disabled = true; });
+    $("send-verification").hidden = true;
+    try {
+      const user = await action(await firebaseConfig());
+      $("staff-password").value = "";
+      if (!user.verified) { $("send-verification").hidden = false; say("Verify " + user.email + " from your inbox first, then sign in again."); return; }
+      mode = "account";
+      touch();
+      await start();
+      say("Signed in as " + roleName[session.role] + ".");
+    } catch (error) { if (error.name !== "AbortError") { if (mode) lock(error.message); else say(error.message); } }
+    finally { buttons.forEach(button => { button.disabled = false; }); }
+  }
+
+  // ---- Team access (owners) ------------------------------------------------------------------
+  const actorName = actor => actor === "admin" ? "Owner token" : actor.replace(/^staff:/, "");
+  const actionName = { grant:"gave access to", role:"changed the role of", revoke:"removed access for" };
+  const when = value => value ? new Date(value).toLocaleString() : "";
+  async function showTeam() {
+    const data = await api("/api/v1/admin/staff");
+    const roleSelect = (value, props = {}) => h("select", props, data.roles.map(role => h("option", { value:role, selected:role === value }, roleName[role])));
+    const email = h("input", { id:"member-email", type:"email", required:true, maxLength:254, autocomplete:"off", placeholder:"name@example.com" });
+    const name = h("input", { id:"member-name", maxLength:100, autocomplete:"off", placeholder:"Optional" });
+    const role = roleSelect("editor", { id:"member-role" });
+    const help = h("p", { class:"muted" }, roleHelp.editor);
+    role.addEventListener("change", () => { help.textContent = roleHelp[role.value]; });
+    const form = h("form", { class:"panel", id:"grant-form" }, h("h3", {}, "Add a team member"),
+      h("ol", { class:"onboard" },
+        h("li", {}, "Enter the email address they will sign in with and choose a role."),
+        h("li", {}, "Privately send them this console address: " + location.origin + "/admin"),
+        h("li", {}, "They choose Continue with Google, or sign in with a verified email and password, using that same address.")),
+      field("Email address", email), field("Name", name, "Helps you recognise them in this list."), field("Role", role), help,
+      h("button", { type:"submit", id:"grant-access" }, "Give access"));
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = form.querySelector("button[type=submit]"); button.disabled = true;
+      try {
+        const payload = { email:email.value.trim(), role:role.value };
+        if (name.value.trim()) payload.name = name.value.trim();
+        const result = await api("/api/v1/admin/staff", { method:"POST", body:JSON.stringify(payload) });
+        await showTeam();
+        say("Access given to " + result.member.email + " as " + roleName[result.member.role] + ". Send them " + location.origin + "/admin privately.");
+      } catch (error) { report(error); } finally { button.disabled = false; }
+    });
+    const list = h("section", { class:"panel", "aria-labelledby":"members-heading" }, h("h3", { id:"members-heading" }, "Team members (" + data.members.filter(item => item.status === "active").length + " with access)"));
+    if (!data.members.length) list.append(h("p", {}, "Nobody has been added yet. Add yourself first as an Owner so you can stop using the shared token."));
+    for (const member of data.members) {
+      const self = session && session.email === member.email;
+      const status = member.status === "revoked" ? "Access removed" : member.linked ? "Signed in" + (member.lastSeenAt ? ", last active " + when(member.lastSeenAt) : "") : "Has not signed in yet";
+      const row = h("div", { class:"member" }, h("span", { class:"grow" }, h("strong", {}, member.email), h("span", { class:"muted hint" }, (member.name ? member.name + " | " : "") + roleName[member.role] + " | " + status)));
+      if (self) row.append(h("span", { class:"chip live" }, "You"));
+      else if (member.status === "active") {
+        const select = roleSelect(member.role, { "aria-label":"Role for " + member.email });
+        row.append(select,
+          h("button", { type:"button", class:"secondary", "aria-label":"Save role for " + member.email, onclick:() => teamAction(() => api("/api/v1/admin/staff/" + encodeURIComponent(member.id), { method:"PATCH", body:JSON.stringify({ role:select.value, version:member.version }) }), member.email + " is now " + roleName[select.value] + ".") }, "Save role"),
+          h("button", { type:"button", class:"secondary", "aria-label":"Remove access for " + member.email, onclick:() => { if (confirm("Remove staff access for " + member.email + "? It stops working on their next action.")) teamAction(() => api("/api/v1/admin/staff/" + encodeURIComponent(member.id) + "/revoke", { method:"POST", body:JSON.stringify({ version:member.version }) }), "Access removed for " + member.email + "."); } }, "Remove access"));
+      } else row.append(h("span", { class:"chip warn" }, "Removed"),
+        h("button", { type:"button", class:"secondary", "aria-label":"Give access again to " + member.email, onclick:() => teamAction(() => api("/api/v1/admin/staff", { method:"POST", body:JSON.stringify({ email:member.email, role:member.role }) }), "Access restored for " + member.email + ".") }, "Give access again"));
+      list.append(row);
+    }
+    const audit = h("details", {}, h("summary", {}, "Recent access changes"),
+      data.audit.length ? h("ul", {}, data.audit.map(item => h("li", {}, when(item.createdAt) + ": " + actorName(item.actor) + " " + actionName[item.action] + " " + item.email + " (" + roleName[item.role] + ")"))) : h("p", {}, "No changes yet."));
+    list.append(audit);
+    $("team-root").replaceChildren(form, list);
+  }
+  async function teamAction(fn, success) {
+    try { await fn(); await showTeam(); say(success); } catch (error) { report(error); }
   }
 
   async function showCourses() {
@@ -514,7 +654,7 @@
       const chunk = file.slice((number - 1) * partSize, Math.min(number * partSize, file.size));
       for (let attempt = 1; ; attempt++) {
         try { await api("/api/v2/staff/resources/" + encodeURIComponent(resource.id) + "/parts/" + number, { method:"PUT", body:chunk, headers:{ "Content-Type":"application/octet-stream" } }); break; }
-        catch (error) { if (error.name === "AbortError" || attempt === 3 || !token) throw error; await pause(attempt * 2000); }
+        catch (error) { if (error.name === "AbortError" || attempt === 3 || !mode) throw error; await pause(attempt * 2000); }
       }
       finished.add(number);
       touch(); // An active upload counts as activity for the idle lock.
@@ -580,13 +720,28 @@
 
   $("tab-studio").addEventListener("click", () => openStudio().catch(report));
   $("tab-inbox").addEventListener("click", openInbox);
+  $("tab-team").addEventListener("click", () => openTeam().catch(report));
+  $("google-signin").addEventListener("click", () => accountSignIn(config => staffAuth().google(config)));
+  $("staff-form").addEventListener("submit", event => { event.preventDefault(); accountSignIn(config => staffAuth().email(config, $("staff-email").value, $("staff-password").value)); });
+  $("reset-password").addEventListener("click", async () => {
+    try {
+      const platform = await (await fetch("/api/v2/platform", { cache:"no-store", credentials:"omit" })).json();
+      if (!platform.accountsReady || !platform.firebase) throw new Error("Account sign-in is not available yet.");
+      await staffAuth().resetPassword(platform.firebase, $("staff-email").value);
+      say("If that email has a password account, a reset link is on its way. Check your inbox.");
+    } catch (error) { say(error.message); }
+  });
+  $("send-verification").addEventListener("click", async () => {
+    try { await staffAuth().sendVerification(); say("Verification email sent. Open the link, then sign in again."); } catch (error) { say(error.message); }
+  });
   $("login-form").addEventListener("submit", async event => {
     event.preventDefault();
     token = $("token").value.trim();
     $("token").value = "";
     $("unlock").disabled = true;
+    mode = "token";
     touch();
-    try { await load(); }
+    try { await start(); }
     catch (error) { if (error.name !== "AbortError") lock(error.message); }
     finally { $("unlock").disabled = false; }
   });

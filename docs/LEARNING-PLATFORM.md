@@ -32,7 +32,7 @@ The email portal provides sign-up with name, email, password confirmation and co
 
 The frontend keeps Firebase authentication in memory. Reloading or closing the page ends local sign-in. Account-backed learning persists in D1. Device-only practice drafts remain separate and are never imported without consent. API responses and protected file downloads use `no-store`; public service-worker caches exclude APIs.
 
-An Academy profile is created only after the privacy checkbox and confirmed name. UID, not email supplied by a browser, owns enrolments/applications. No learner can assign themselves staff rights. Staff endpoints retain the existing secret `ADMIN_TOKEN` gate. Firebase disable/delete/revoke and Academy's `learner_users.disabled` block protected access. Account deletion/export currently requires operator assistance, including removal from Firebase and D1; R2 content is shared course material, not user-owned data.
+An Academy profile is created only after the privacy checkbox and confirmed name. UID, not email supplied by a browser, owns enrolments/applications. No learner can assign themselves staff rights. Staff endpoints accept the secret `ADMIN_TOKEN` (owner bootstrap) or the Firebase ID token of a verified email an owner granted a role (`staff_members`, migration 0004). Firebase disable/delete/revoke and Academy's `learner_users.disabled` block protected access. Account deletion/export currently requires operator assistance, including removal from Firebase and D1; R2 content is shared course material, not user-owned data.
 
 ## Storage and costs
 
@@ -48,7 +48,7 @@ The email/password follow-up enables Firebase's built-in email workflow without 
 
 ## Publishing API
 
-All writes use an allowed Origin. Staff routes additionally require `Authorization: Bearer <ADMIN_TOKEN>`. Never paste that value into chat, source control, URLs or public dashboards. The existing admin page still manages legacy launch enquiries; the new publishing and cohort operations are API-only in this foundation.
+All writes use an allowed Origin. Staff routes additionally require `Authorization: Bearer <ADMIN_TOKEN>` or a staff Firebase ID token: course and resource routes need the editor (or owner) role; cohort and application routes need reviewer (or owner). Never paste that value into chat, source control, URLs or public dashboards. The existing admin page still manages legacy launch enquiries; the new publishing and cohort operations are API-only in this foundation.
 
 - `GET/POST /api/v2/staff/courses`: list courses or create a draft (`id`, `title`, `summary`, `level`, integer `priceMinor` in kobo).
 - `GET /api/v2/staff/courses/:id`: inspect lessons/resources and version.

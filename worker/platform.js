@@ -1,5 +1,6 @@
 import { HttpError, readJSON } from './validation.js';
-import { authenticateAdmin, checkOrigin } from './security.js';
+import { checkOrigin } from './security.js';
+import { requireStaff } from './staff.js';
 import { database } from './storage.js';
 import { identityReady, platformEnabled, firebaseConfig, identitySession, requireLearner, publicUser, quota, exactFields } from './identity.js';
 import { courseCatalogue, courseForLearner, enrol, library, saveProgress, createCourse, addLesson, publishCourse, uploadPDF, resourceForLearner, downloadPDF, registerVideo, videoPlayback, identifier } from './learning.js';
@@ -25,8 +26,9 @@ export async function platformRoute(request, env, url) {
     return serveMedia(request, env, db, media.slice(1));
   }
   if (path.startsWith('/api/v2/staff/')) {
-    await authenticateAdmin(request, env);
     const tail = path.slice('/api/v2/staff/'.length).split('/');
+    // Editors run the course studio; reviewers handle training cohorts and applications.
+    await requireStaff(request, env, ['cohorts','applications'].includes(tail[0]) ? 'training' : 'studio');
     // Video parts have their own hourly budget so one long upload does not lock the rest of the studio.
     if (!(tail[0] === 'resources' && tail[2] === 'parts')) await quota(db,'staff',500,3600);
     if (tail[0] === 'courses' && tail.length === 1) {

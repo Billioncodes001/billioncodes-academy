@@ -30,6 +30,7 @@
     "FIREBASE_PROJECT_ID": "billion-codes-academy",
     "FIREBASE_API_KEY": "AIzaSyBraribhYJA3-MtoqVFQcABKRBc752QnB8",
     "FIREBASE_APP_ID": "1:913791673533:web:651214ff64b6f9ab6f43d4",
+    "ACADEMY_OWNER_EMAIL": "jhardeyemor@gmail.com",
     "ALLOWED_ORIGINS": "https://learnatbillioncodes.com,https://www.learnatbillioncodes.com",
     "DAILY_SUBMISSION_CAP": "500",
     "DAILY_ATTEMPT_CAP": "6000",

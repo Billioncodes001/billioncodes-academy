@@ -4,11 +4,11 @@ import { createHarness, post } from './harness.mjs';
 
 // Shared learning-platform harness: local Miniflare D1/R2 with mocked Google identity endpoints only.
 const projectId = 'billion-codes-academy';
-export async function setup(t) {
+export async function setup(t, envOverrides = {}) {
   const pair = await generateKeyPair('RS256'), jwk = await exportJWK(pair.publicKey);
   jwk.kid = 'local-test-key'; jwk.alg = 'RS256'; jwk.use = 'sig';
   const state = { disabled: false, revoked: false, outage: false };
-  const h = await createHarness({ LEARNING_PLATFORM:'enabled', FIREBASE_PROJECT_ID:projectId, FIREBASE_API_KEY:'local-test-public-api-key-not-a-secret', FIREBASE_APP_ID:'local-app' }, {
+  const h = await createHarness({ LEARNING_PLATFORM:'enabled', FIREBASE_PROJECT_ID:projectId, FIREBASE_API_KEY:'local-test-public-api-key-not-a-secret', FIREBASE_APP_ID:'local-app', ...envOverrides }, {
     r2Buckets:{COURSE_FILES:'test-course-files'},
     outboundService: async request => {
       const url = new URL(request.url);

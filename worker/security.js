@@ -43,19 +43,17 @@ export async function sha256(value) {
   return [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function authenticateAdmin(request, env) {
-  if (!configuredSecret(env.ADMIN_TOKEN)) throw new HttpError(503, "Private operations are not configured.");
-  const authorization = request.headers.get("authorization") || "";
-  const match = /^Bearer ([\x21-\x7e]{32,256})$/i.exec(authorization);
-  if (!match) throw new HttpError(401, "Administrator authentication required.", undefined, { "WWW-Authenticate": "Bearer" });
+// True only for the shared owner bootstrap token.
+export async function adminTokenMatches(request, env) {
+  if (!configuredSecret(env.ADMIN_TOKEN)) return false;
+  const match = /^Bearer ([\x21-\x7e]{32,256})$/i.exec(request.headers.get("authorization") || "");
+  if (!match) return false;
   // Native HMAC verification compares the authentication tag, not a JS string.
   const challenge = encoder.encode("billioncodes-academy-admin-auth-v1");
   const expectedKey = await hmacKey(env.ADMIN_TOKEN, ["sign"]);
   const candidateKey = await hmacKey(match[1], ["verify"]);
   const tag = await crypto.subtle.sign("HMAC", expectedKey, challenge);
-  if (!await crypto.subtle.verify("HMAC", candidateKey, tag, challenge)) {
-    throw new HttpError(401, "Administrator authentication required.", undefined, { "WWW-Authenticate": "Bearer" });
-  }
+  return crypto.subtle.verify("HMAC", candidateKey, tag, challenge);
 }
 
 export function secureHeaders(response, request, env, { api = false, admin = false, nonce } = {}) {
@@ -77,7 +75,11 @@ export function secureHeaders(response, request, env, { api = false, admin = fal
     headers.set("Access-Control-Expose-Headers", "Retry-After");
   }
   if (admin && nonce) {
-    headers.set("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
+    // Staff sign-in uses the same Firebase/Google hosts as the public learner site. Without a
+    // valid Firebase project the console stays token-only and same-origin.
+    const project = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(env.FIREBASE_PROJECT_ID || "") ? `https://${env.FIREBASE_PROJECT_ID}.firebaseapp.com` : "";
+    const firebase = project ? { script:" https://apis.google.com", connect:` https://identitytoolkit.googleapis.com https://securetoken.googleapis.com ${project}`, frame:`; frame-src ${project}` } : { script:"", connect:"", frame:"" };
+    headers.set("Content-Security-Policy", `default-src 'none'; script-src 'nonce-${nonce}'${firebase.script}; style-src 'nonce-${nonce}'; connect-src 'self'${firebase.connect}; img-src 'self'; media-src 'self'${firebase.frame}; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`);
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

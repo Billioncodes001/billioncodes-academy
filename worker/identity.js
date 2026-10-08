@@ -25,7 +25,9 @@ export async function quota(db, key, limit, seconds) {
     .bind(`learning:${key}:${window}`,expiry+3600,limit).first();
   if (!row) throw new HttpError(429,'Too many requests. Please wait before trying again.',undefined,{'Retry-After':String(expiry-now)});
 }
-async function verifiedIdentity(request, env) {
+// Staff consoles make many authenticated requests (for example 8 MiB video parts), so they use
+// a separate, larger per-IP budget; learner sign-ins keep the original budget.
+export async function verifiedIdentity(request, env, scope = 'identity', ipLimit = 180) {
   if (!identityReady(env)) throw new HttpError(503,'Account sign-in is not available yet.');
   const authorization = request.headers.get('authorization');
   if (!authorization) return null;
@@ -35,7 +37,7 @@ async function verifiedIdentity(request, env) {
   await quota(db,'identity-global',10000,86400);
   await db.prepare('DELETE FROM rate_buckets WHERE bucket_key IN (SELECT bucket_key FROM rate_buckets WHERE expires_at < ? LIMIT 100)').bind(Math.floor(Date.now()/1000)).run();
   const ip = await hmacHex(env.SECURITY_SALT,`firebase:${Math.floor(Date.now()/86400000)}:${request.headers.get('cf-connecting-ip') || 'local'}`);
-  await quota(db,`identity:${ip}`,180,600);
+  await quota(db,`${scope}:${ip}`,ipLimit,600);
   let payload;
   try {
     ({payload} = await jwtVerify(match[1],keys,{ algorithms:['RS256'], audience:env.FIREBASE_PROJECT_ID,

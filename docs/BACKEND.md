@@ -6,16 +6,16 @@ Version: API v1 / contract 1.0.0. Scope: free introductory text lessons, trainin
 
 - Worker entry: `worker/index.js`, dependency-free ESM bundled by Wrangler 4.131.1.
 - Worker: `billioncodes-academy`; account: `40687c1a299192a1ba3add80961e429f`.
-- D1 binding: `DB`; database: `billioncodes-academy-db`. Parent operator must replace the all-zero database ID in `wrangler.jsonc` with the actual ID.
+- D1 binding: `DB`; database: `billioncodes-academy-db`. The checked-in `wrangler.jsonc` has the production database ID.
 - Static build: `dist`, binding `ASSETS`. Run the frontend-owned build before Wrangler. All requests run through the Worker so API paths cannot fall back to SPA HTML and the admin shell gets its security headers.
 - Production origins: `https://learnatbillioncodes.com` and `https://www.learnatbillioncodes.com`. Parent owns domain routes, DNS and whether to disable the workers.dev hostname after cutover. No wildcard or production localhost origin is included.
-- Required production secret `SECURITY_SALT`: independent cryptographically random value, 32-256 characters. Required private-review secret `ADMIN_TOKEN`: independent 256-bit random printable ASCII value, for example 64 hex characters. Do not reuse either secret.
+- Required production secret `SECURITY_SALT`: independent cryptographically random value, 32-256 characters. `ADMIN_TOKEN` is a legacy break-glass secret; verified individual staff identity is the normal admin access method. Never substitute a short public password such as `654321` for either secret.
 - Parent owns deployment, secrets, migrations against remote D1, git and package files. Backend work does not commit, push, deploy or create production records.
-- No cron, scheduled handler, notification automation or recurring work is configured.
+- A separate OpenClaw weekly editorial-draft automation is configured; it does not publish automatically. See `docs/COURSE-STUDIO.md`.
 
 ## Exact commands
 
-Run from `/private/tmp/billioncodes-webinar-20260911/academy`. Existing frontend-owned dependencies include Wrangler 4.131.1, Miniflare (transitive) and esbuild (transitive); the backend itself has no runtime npm dependencies.
+Run from this repository root. The frontend uses Wrangler, Miniflare and esbuild; the Worker also bundles `jose` for verified Firebase identity tokens.
 
 ```sh
 node --test worker/tests/backend.test.mjs
@@ -40,7 +40,7 @@ npx wrangler d1 migrations apply billioncodes-academy-db --local
 npx wrangler dev --port 8788 --var ALLOWED_ORIGINS:http://localhost:5174,http://localhost:8788,http://127.0.0.1:5174,http://127.0.0.1:8788
 ```
 
-In another terminal `npm run dev` serves the frontend on port 5174; its Vite proxy targets 8788. Alternatively use `http://localhost:8788` to exercise the built assets and API together. Provide `SECURITY_SALT` and `ADMIN_TOKEN` locally without adding them to source control. The integration test does not need a `.dev.vars` file or production credentials.
+In another terminal `npm run dev` serves the frontend on port 5174; its Vite proxy targets 8788. Alternatively use `http://localhost:8788` to exercise the built assets and API together. Provide `SECURITY_SALT` locally without adding it to source control; provide `ADMIN_TOKEN` only if testing the legacy break-glass path. The integration test does not need a `.dev.vars` file or production credentials.
 
 Parent-only release sequence: set the correct D1 ID, apply the additive remote migration, set both secrets through Cloudflare's secret mechanism, build, deploy and attach the custom domains. The relevant remote command is `npx wrangler d1 migrations apply billioncodes-academy-db --remote`. Do not deploy with the placeholder ID, and do not copy the test secrets into production.
 
@@ -90,11 +90,11 @@ Errors have `{error:string,fields?:object}`. Relevant codes: 400 malformed, 403 
 
 Public POSTs must supply an explicitly allowed `Origin`. `Origin: null`, missing origin, suffix-lookalike domains and cross-site Fetch Metadata are rejected. Preflight allows only declared methods and `Content-Type`, `Idempotency-Key`, `Authorization`. No wildcard CORS and no credentialed cross-origin cookies are enabled. A forged Origin is not authentication: public submissions are intentionally anonymous and abuse-controlled. Non-browser public-write clients must explicitly supply an allowed origin under this v1 contract.
 
-Admin API requests require `Authorization: Bearer ADMIN_TOKEN`. Supplied browser origins are checked; an authenticated operator CLI may omit Origin. Token checking uses native Web Crypto HMAC verification rather than early-return string comparison. Never put credentials in URL query strings, cookies, browser localStorage/sessionStorage, public build variables or logs. URL credential parameters are rejected, but reverse proxies can log URLs before the Worker sees them, so operators must not send such URLs in the first place.
+Admin API requests require a Firebase ID token for a verified email with an active staff grant, or the legacy `ADMIN_TOKEN` for break-glass access. The configured original owner email receives a one-time grant on its first verified sign-in, without the old token. Supplied browser origins are checked; an authenticated operator CLI may omit Origin. Token checking uses native Web Crypto HMAC verification rather than early-return string comparison. Never put credentials in URL query strings, cookies, browser localStorage/sessionStorage, public build variables or logs. URL credential parameters are rejected, but reverse proxies can log URLs before the Worker sees them, so operators must not send such URLs in the first place.
 
 ### Private operations
 
-Open `/admin` or `/admin.html` on the deployed site. The HTML shell is public, but contains no private records or secret. Unlocking fetches records from the authenticated API. The token and fetched records stay in page memory; locking, page navigation/reload and 15 minutes without interaction clear them. The console uses textContent/createElement, no innerHTML; no external scripts, analytics or fonts; a per-response nonce CSP; `no-store`, no-index, no-referrer and frame denial. A manual lock is still necessary before handing over a device.
+Open `/admin` or `/admin.html` on the deployed site. The HTML shell is public, but contains no private records or secret. Unlocking fetches records from the authenticated API. The token and fetched records stay in page memory; locking, page navigation/reload and 15 minutes without interaction clear them. The console uses textContent/createElement, no innerHTML; no analytics or external fonts; a per-response nonce CSP. When Firebase is configured the CSP additionally allows only the hosts staff sign-in needs (the same Google/Firebase hosts as the learner site): `apis.google.com` scripts, Identity Toolkit/Secure Token connections and the project `firebaseapp.com` frame. The same-origin `/admin-auth.js` bundle holds the Firebase client; `no-store`, no-index, no-referrer and frame denial. A manual lock is still necessary before handing over a device.
 
 | Endpoint | Details |
 | --- | --- |
@@ -102,7 +102,7 @@ Open `/admin` or `/admin.html` on the deployed site. The HTML shell is public, b
 | `PATCH /api/v1/admin/submissions/{id}` | JSON `{status,version}`. Status is `new`, `contacted` or `closed`; stale row versions return 409. |
 | `GET /api/v1/admin/submissions/{id}/audit` | Last 100 status changes, newest first. No enquiry body, raw IP or token in audit. |
 
-Each actual status change increments the version and writes an audit row using a SQLite trigger in the same statement/transaction. Concurrent edits cannot silently overwrite one another. Re-saving the current status is a no-op. Shared-token audit actor is `admin`, not an invented individual identity. Rotate the token through Cloudflare if exposed. MFA, individual operator accounts, session revocation and granular roles are not implemented; Cloudflare Access may later provide an additional operator gate, but is not required or configured by this backend.
+Each actual status change increments the version and writes an audit row using a SQLite trigger in the same statement/transaction. Concurrent edits cannot silently overwrite one another. Re-saving the current status is a no-op. Shared-token audit actor is `admin`, not an invented individual identity. Rotate the token through Cloudflare if exposed. Individual staff accounts with owner/editor/reviewer roles and revocation are described in `docs/COURSE-STUDIO.md` (*Team access*); changes made through a staff account are attributed as `staff:<email>`. MFA is not enforced by the Academy; Cloudflare Access may later provide an additional operator gate, but is not required or configured by this backend.
 
 ## Abuse controls and Free-plan limits
 
