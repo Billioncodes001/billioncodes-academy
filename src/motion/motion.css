@@ -194,6 +194,21 @@ html.lenis, html.lenis body { height: auto; }
 .score-rank strong { font-size: 1.6rem; color: #5cc8ff; text-shadow: 0 0 20px #5cc8ff88; }
 .game-over { overflow-y: auto; align-content: center; }
 
+/* ---------- Share card and challenges ---------- */
+.share-panel { width: min(640px, calc(100% - 24px)); }
+.share-card { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; margin-top: 14px; border-radius: 14px; border: 1px solid #5cc8ff33; background: #02070f; box-shadow: 0 20px 50px -20px #000; }
+.share-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.share-actions .button { min-height: 48px; padding: 10px 16px; }
+.share-networks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.share-networks a { font: 500 .74rem var(--mono); color: #dcecf9; text-decoration: none; padding: 8px 12px; border-radius: 99px; border: 1px solid #5cc8ff44; background: #ffffff08; }
+.share-networks a:hover { border-color: #5cc8ff; color: white; }
+.button-share { color: #ffe0c8; border: 1px solid #ff7a4588; background: linear-gradient(135deg, #ff7a4526, #ff3d6a1a); box-shadow: 0 0 30px -10px #ff7a45; }
+.button-share:hover { color: white; border-color: #ff7a45; box-shadow: 0 0 40px -6px #ff7a45; }
+.game-challenge { justify-self: end; max-width: 340px; padding: 10px 14px; border-radius: 14px; font-size: .86rem; color: #ffe0c8; background: #2a0f08cc; border: 1px solid #ff7a4566; text-align: right; }
+.game-challenge strong { color: white; }
+.challenge-result { font: 700 1.05rem var(--heading); color: #ffd7c2 !important; }
+.challenge-result.won { color: #8fd3ff !important; text-shadow: 0 0 20px #5cc8ff88; }
+
 /* ---------- Tickers ---------- */
 .bc-tickers { margin-top: 30px; display: grid; gap: 6px; transform: rotate(-1.4deg); }
 .marquee { overflow: hidden; padding-block: 16px; border-block: 1px solid #5cc8ff22; background: #02070fcc; mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent); }
@@ -377,13 +392,17 @@ code { color: #bfe6ff; }
   .site-header .bc-brand img { width: 44px; height: 44px; }
   .main-nav { top: calc(100% + 8px) !important; border-radius: 14px; background: #03101ff2 !important; border-color: #5cc8ff33 !important; }
   .main-nav .motion-toggle { align-self: flex-start; margin-block: 8px; }
-  .bc-hero-stage { min-height: 1080px; border-radius: 22px; margin-inline: 6px; }
+  /* Phones: words up top, then the Play area and copy in normal flow, so they never overlap. */
+  .bc-hero-stage { flex-direction: column; justify-content: flex-end; padding-top: 430px; min-height: 0; border-radius: 22px; margin-inline: 6px; }
   .bc-hero-copy { padding: 0 20px 34px; }
   .hero-vignette { background: linear-gradient(0deg, #02070f 0%, #02070fe6 38%, transparent 62%); }
-  .game-launch { left: 16px; right: 16px; top: 410px; bottom: auto; justify-items: stretch; }
+  .game-launch { position: relative; inset: auto; order: 1; margin: 0 16px 26px; justify-items: stretch; }
+  .bc-hero-copy { order: 2; }
   .game-play { animation: none; }
   .game-best { justify-self: center; }
   .game-meta { justify-content: center; }
+  .game-challenge { justify-self: stretch; max-width: none; text-align: center; }
+  .share-actions .button { flex: 1 1 100%; }
   .game-over { align-content: start; padding-top: 40px; }
   .score-form-row { flex-direction: column; }
   .board-list li { grid-template-columns: 34px 1fr auto; }

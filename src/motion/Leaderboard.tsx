@@ -54,7 +54,7 @@ export function BoardPanel({ onClose }: { onClose: () => void }) {
 }
 
 // Shown on the game-over screen: claim a spot, then see where you landed.
-export function ScoreSubmit({ runId, score, wave }: { runId: string | null; score: number; wave: number }) {
+export function ScoreSubmit({ runId, score, wave, onSubmitted }: { runId: string | null; score: number; wave: number; onSubmitted?: (entry: BoardEntry) => void }) {
   const [name, setName] = useState(savedName);
   const [state, setState] = useState<{ status: 'idle' | 'sending' | 'done' | 'error'; message?: string; entry?: BoardEntry; top?: BoardEntry[] }>({ status: 'idle' });
   if (score <= 0) return null;
@@ -73,6 +73,7 @@ export function ScoreSubmit({ runId, score, wave }: { runId: string | null; scor
       const result = await submitScore(runId, name, score, wave);
       saveName(result.entry.name);
       setState({ status: 'done', entry: result.entry, top: result.top });
+      onSubmitted?.(result.entry);
     } catch (error) {
       setState({ status: 'error', message: error instanceof ApiError ? error.fields.name || error.message : 'The score could not be sent. Try again.' });
     }

@@ -4,7 +4,7 @@ import { platformRoute } from './platform.js';
 import { HttpError, UUID, readJSON, validateSubmission, validateStatus } from "./validation.js";
 import { checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security.js";
 import { requireStaff, staffSession, staffProfile, listStaff, grantStaff, updateStaffRole, revokeStaff, ensureStaffSchema } from "./staff.js";
-import { arcadeRoute, arcadeAdmin } from "./arcade.js";
+import { arcadeRoute, arcadeAdmin, challengePage } from "./arcade.js";
 import { database, getExisting, createSubmission, limitPublicAttempt, listSubmissions, updateStatus, readAudit } from "./storage.js";
 
 function json(data, status = 200, headers = {}) {
@@ -20,7 +20,7 @@ function preflight(request, env, path) {
   const methods = path === "/api/v1/applications" || path === "/api/v1/project-requests" || path === "/api/v1/arcade/runs" || path === "/api/v1/arcade/scores" ? ["POST"]
     : /^\/api\/v1\/admin\/arcade\/[0-9a-f-]+$/i.test(path) ? ["PATCH", "DELETE"]
     : /^\/api\/v1\/admin\/submissions\/[0-9a-f-]+$/i.test(path) ? ["PATCH"]
-    : path === "/api/health" || path === "/api/v1/catalog" || path === "/api/v1/arcade/leaderboard" || path === "/api/v1/admin/arcade" || path === "/api/v1/admin/submissions" || /^\/api\/v1\/admin\/submissions\/[0-9a-f-]+\/audit$/i.test(path) ? ["GET"] : [];
+    : path === "/api/health" || path === "/api/v1/catalog" || path === "/api/v1/arcade/leaderboard" || /^\/api\/v1\/arcade\/entries\/[0-9a-f-]+$/i.test(path) || path === "/api/v1/admin/arcade" || path === "/api/v1/admin/submissions" || /^\/api\/v1\/admin\/submissions\/[0-9a-f-]+\/audit$/i.test(path) ? ["GET"] : [];
   if (!methods.length) throw new HttpError(404, "API endpoint not found.");
   const requested = request.headers.get("access-control-request-method");
   if (!methods.includes(requested)) throw new HttpError(405, "Preflight method not permitted.");
@@ -148,6 +148,8 @@ export default {
     try {
       if (isAPI) return secureHeaders(await api(request, env, url), request, env, { api: true });
       method(request, ["GET", "HEAD"]);
+      const challenge = /^\/c\/([^/]*)$/.exec(url.pathname);
+      if (challenge) return secureHeaders(await challengePage(request, env, challenge[1]), request, env);
       if (!env.ASSETS) throw new HttpError(503, "Website assets are not available.");
       if (isAdmin) {
         if (url.search) throw new HttpError(400, "Use the private console without URL parameters.");

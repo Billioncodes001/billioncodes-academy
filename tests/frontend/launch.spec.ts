@@ -284,17 +284,21 @@ test('home motion can be switched off and starts off under reduced motion', asyn
 
 test('Debug Defender leaderboard: idle challenge, panel, and score submission after a real game', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1440', 'One full game is enough; the layout is covered elsewhere.');
-  test.setTimeout(150000);
+  test.setTimeout(60000);
   const top = [{ rank: 1, id: '11111111-1111-4111-8111-111111111111', name: 'Grace', score: 2400, wave: 6, createdAt: '2026-10-08T10:00:00.000Z' }];
   let submitted: Record<string, unknown> | undefined;
   await page.route('**/api/v1/arcade/leaderboard?period=*', route => route.fulfill({ json: { entries: route.request().url().endsWith('week') ? [] : top } }));
+  await page.route('**/api/v1/arcade/entries/*', route => route.fulfill({ json: { entry: top[0] } }));
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.route('**/api/v1/arcade/runs', route => route.fulfill({ status: 201, json: { runId: '22222222-2222-4222-8222-222222222222' } }));
   await page.route('**/api/v1/arcade/scores', route => {
     submitted = route.request().postDataJSON();
     const entry = { rank: 2, id: '33333333-3333-4333-8333-333333333333', name: submitted!.name, score: submitted!.score, wave: submitted!.wave, createdAt: '2026-10-08T11:00:00.000Z' };
     return route.fulfill({ status: 201, json: { accepted: true, entry, top: [...top, entry] } });
   });
-  await page.goto('/');
+  // Arrive through a friend's challenge link.
+  await page.goto(`/?challenge=${top[0].id}`);
+  await expect(page.locator('.game-challenge')).toHaveText('Grace challenges you to beat 2,400');
   await expect(page.getByText('TOP SCORE · Grace · 2,400')).toBeVisible();
   await page.getByRole('button', { name: 'View leaderboard' }).click();
   const panel = page.getByRole('dialog', { name: 'Debug Defender leaderboard' });
@@ -312,7 +316,9 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
     await page.getByRole('button', { name: 'Zap nearest bug' }).click();
     return Number(await page.locator('.game-hud .hud-cell strong').first().innerText());
   }, { timeout: 15000 }).toBeGreaterThan(0);
-  await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible({ timeout: 130000 });
+  // Ending a scored run goes straight to game over, without waiting for the bugs to win.
+  await page.getByRole('button', { name: 'End game' }).click();
+  await expect(page.getByRole('dialog', { name: 'Game over' })).toBeVisible();
   const name = page.getByLabel('Put your score on the leaderboard');
   await name.fill('x');
   await expect(page.getByRole('button', { name: 'Submit score' })).toBeDisabled();
@@ -322,4 +328,22 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
   await expect(page.locator('.board-list li.is-you')).toContainText('Ada');
   expect(submitted).toMatchObject({ runId: '22222222-2222-4222-8222-222222222222', name: 'Ada' });
   expect(Number(submitted!.score)).toBeGreaterThan(0);
+  await expect(page.locator('.challenge-result')).toContainText('Grace');
+
+  // Share: the card is drawn from the real result, the link carries the entry.
+  await page.getByRole('button', { name: 'Share your score' }).click();
+  const share = page.getByRole('dialog', { name: 'Share your score' });
+  await expect(share.getByRole('button', { name: 'Close' })).toBeFocused();
+  await expect(share.getByRole('img', { name: /Score card: \d+ points, wave \d+, by Ada, number 2 on the leaderboard/ })).toBeVisible();
+  expect(await share.locator('canvas').evaluate(canvas => [(canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height])).toEqual([1200, 630]);
+  await share.getByRole('button', { name: 'Copy challenge link' }).click();
+  await expect(share.getByText('Challenge copied. Paste it to a friend.')).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/Can you beat me\? https:\/\/learnatbillioncodes\.com\/c\/33333333-3333-4333-8333-333333333333$/);
+  const download = page.waitForEvent('download');
+  await share.getByRole('button', { name: 'Download image' }).click();
+  expect((await download).suggestedFilename()).toBe('debug-defender-score.png');
+  await expect(share.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', /^https:\/\/wa\.me\/\?text=.*learnatbillioncodes\.com%2Fc%2F33333333/);
+  expect((await new AxeBuilder({ page }).include('.share-panel').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  await page.keyboard.press('Escape');
+  await expect(share).toHaveCount(0);
 });

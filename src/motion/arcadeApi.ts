@@ -9,6 +9,7 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Cont
 // The server opens and times each run; a score can only be submitted against one.
 export const startRun = () => request<{ runId: string }>('/api/v1/arcade/runs', { method: 'POST' }).then(data => data.runId);
 export const fetchBoard = (period: Period) => request<{ entries: BoardEntry[] }>(`/api/v1/arcade/leaderboard?period=${period}`).then(data => data.entries);
+export const fetchEntry = (id: string) => request<{ entry: BoardEntry }>(`/api/v1/arcade/entries/${encodeURIComponent(id)}`).then(data => data.entry);
 export const submitScore = (runId: string, name: string, score: number, wave: number) =>
   request<{ entry: BoardEntry; top: BoardEntry[] }>('/api/v1/arcade/scores', json({ runId, name, score, wave }));
 

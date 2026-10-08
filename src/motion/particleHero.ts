@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { drawBug } from './bugArt';
 
 // The homepage hero. Idle: thousands of glowing particles morph between the
 // headline words, flee the cursor and explode on click. Play: "Debug Defender",
@@ -42,18 +43,7 @@ function sampleText(lines: string[], w: number, h: number, centerY: number, maxW
 function bugTexture(boss: boolean) {
   const size = 128, canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d')!, c = size / 2;
-  const glow = ctx.createRadialGradient(c, c, 4, c, c, c);
-  glow.addColorStop(0, boss ? 'rgba(255,60,90,.9)' : 'rgba(255,120,60,.85)'); glow.addColorStop(.45, boss ? 'rgba(255,40,80,.25)' : 'rgba(255,110,50,.22)'); glow.addColorStop(1, 'rgba(255,90,40,0)');
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, size, size);
-  ctx.strokeStyle = boss ? '#ffd0d8' : '#ffe0c8'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  for (const side of [-1, 1]) for (const k of [-1, 0, 1]) { ctx.beginPath(); ctx.moveTo(c + side * 10, c + k * 11); ctx.lineTo(c + side * 30, c + k * 15 + 6 * k); ctx.stroke(); }
-  ctx.beginPath(); ctx.moveTo(c + 22, c - 7); ctx.lineTo(c + 36, c - 16); ctx.moveTo(c + 22, c + 7); ctx.lineTo(c + 36, c + 16); ctx.stroke();
-  ctx.fillStyle = boss ? '#ff3d6a' : '#ff7a45';
-  ctx.beginPath(); ctx.ellipse(c - 2, c, 20, 15, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = boss ? '#ffb3c4' : '#ffc7a3';
-  ctx.beginPath(); ctx.ellipse(c + 18, c, 9, 9, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(80,10,0,.55)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(c - 20, c); ctx.lineTo(c + 14, c); ctx.stroke();
+  drawBug(canvas.getContext('2d')!, size / 2, size / 2, size, 0, boss);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   // The camera's y axis points down (screen pixels), so canvas rows map straight across.
@@ -355,6 +345,8 @@ export function createParticleHero(canvas: HTMLCanvasElement, opts: Options): He
       startWave();
     },
     quit() {
+      // Ending a run that scored goes to game over, so the points can still be submitted and shared.
+      if (state.mode === 'playing' && state.score > 0) { gameOver(); return; }
       for (const bug of [...bugs]) removeBug(bug);
       if (state.score > state.best) { state.best = state.score; saveBest(state.best); }
       Object.assign(state, { mode: 'idle', banner: '', combo: 0 });

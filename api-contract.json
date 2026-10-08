@@ -445,6 +445,23 @@
         "id": "uuid"
       },
       "note": "Permanent."
+    },
+    "GET /api/v1/arcade/entries/{id}": {
+      "success": {
+        "entry": {
+          "rank": "integer",
+          "id": "uuid",
+          "name": "string",
+          "score": "integer",
+          "wave": "integer",
+          "createdAt": "ISO-8601"
+        }
+      },
+      "note": "One visible leaderboard entry with its all-time rank, used by challenge links. 404 when unknown, hidden or deleted."
+    },
+    "GET /c/{id}": {
+      "success": "text/html",
+      "note": "Challenge link. A minimal page with Open Graph and Twitter card tags (title with the player name and score, image /brand/debug-defender-share-v1.jpg) that immediately redirects to /?challenge={id}. Hidden, deleted or unknown entries get a generic preview without any name. No scripts; strict CSP."
     }
   },
   "errors": {

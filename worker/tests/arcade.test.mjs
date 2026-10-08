@@ -84,3 +84,38 @@ test("staff can hide, restore and delete entries; the public cannot", async t =>
   assert.equal((await h.fetch(`/api/v1/admin/arcade/${entry.id}`, { method: "DELETE", headers: admin() })).status, 404);
   assert.equal((await (await h.fetch("/api/v1/arcade/leaderboard")).json()).entries.length, 0);
 });
+
+test("challenge links show a rich preview for visible entries and fall back safely", async t => {
+  const h = await createHarness(); t.after(() => h.close());
+  const run = await start(h);
+  const { entry } = await (await submit(h, { runId: run, name: "Ada", score: 470, wave: 1 })).json();
+
+  const lookup = await (await h.fetch(`/api/v1/arcade/entries/${entry.id}`)).json();
+  assert.deepEqual([lookup.entry.name, lookup.entry.score, lookup.entry.rank], ["Ada", 470, 1]);
+  assert.equal((await h.fetch(`/api/v1/arcade/entries/${crypto.randomUUID()}`)).status, 404);
+  assert.equal((await h.fetch("/api/v1/arcade/entries/not-a-uuid")).status, 404);
+
+  const page = await h.fetch(`/c/${entry.id}`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get("content-type"), /text\/html/);
+  assert.match(page.headers.get("content-security-policy"), /default-src 'none'/);
+  const html = await page.text();
+  assert.match(html, /<meta property="og:title" content="Ada scored 470 in Debug Defender\. Can you beat it\?">/);
+  assert.match(html, /og:image" content="https:\/\/learnatbillioncodes\.com\/brand\/debug-defender-share-v1\.jpg"/);
+  assert.match(html, /twitter:card" content="summary_large_image"/);
+  assert.match(html, new RegExp(`url=/\\?challenge=${entry.id}`));
+  assert.doesNotMatch(html, /<script/i);
+
+  // Hostile text can only arrive by bypassing validation; it must still be escaped.
+  await h.db.prepare("UPDATE arcade_scores SET name = ? WHERE id = ?").bind('"><script>x', entry.id).run();
+  const escaped = await (await h.fetch(`/c/${entry.id}`)).text();
+  assert.doesNotMatch(escaped, /<script>x/);
+  assert.match(escaped, /&quot;&gt;&lt;script&gt;/);
+
+  await h.db.prepare("UPDATE arcade_scores SET hidden = 1 WHERE id = ?").bind(entry.id).run();
+  const hidden = await (await h.fetch(`/c/${entry.id}`)).text();
+  assert.match(hidden, /Debug Defender: can you stop the bugs\?/, "hidden names never appear in previews");
+  assert.doesNotMatch(hidden, /&lt;script|Ada/);
+  assert.equal((await h.fetch(`/api/v1/arcade/entries/${entry.id}`)).status, 404);
+  assert.equal((await h.fetch("/c/whatever")).status, 200);
+});

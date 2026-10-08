@@ -80,9 +80,56 @@ async function topScores(db, period, nowSeconds) {
   return results.map((row, index) => entry(row, index + 1));
 }
 
+// A visible entry with its all-time rank, or null when it is unknown, hidden or deleted.
+async function publicEntry(db, id) {
+  const row = await db.prepare("SELECT id, name, score, wave, created_at FROM arcade_scores WHERE id = ? AND hidden = 0").bind(id).first();
+  if (!row) return null;
+  const ahead = await db.prepare("SELECT COUNT(*) AS n FROM arcade_scores WHERE hidden = 0 AND (score > ? OR (score = ? AND created_at < ?))").bind(row.score, row.score, row.created_at).first();
+  return entry(row, ahead.n + 1);
+}
+
+const SITE = "https://learnatbillioncodes.com";
+const SHARE_IMAGE = `${SITE}/brand/debug-defender-share-v1.jpg`;
+const escapeHTML = value => String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
+// /c/{id}: a tiny page whose only job is a rich link preview on WhatsApp, X, LinkedIn
+// and friends, then an immediate hop to the homepage with the challenge attached.
+export async function challengePage(request, env, id) {
+  const found = UUID.test(id) && env.DB ? await publicEntry(database(env), id.toLowerCase()).catch(() => null) : null;
+  const target = found ? `/?challenge=${found.id}` : "/";
+  const title = found ? `${found.name} scored ${found.score.toLocaleString("en-US")} in Debug Defender. Can you beat it?` : "Debug Defender: can you stop the bugs?";
+  const description = found ? `${found.name} reached wave ${found.wave} and is #${found.rank} on the Billion Codes leaderboard. Zap the bugs before they corrupt your code.` : "A free arcade game from Billion Codes. Zap the bugs before they corrupt your code, then learn to fix real ones.";
+  const url = `${SITE}/c/${found ? found.id : ""}`;
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHTML(title)}</title>
+<meta name="description" content="${escapeHTML(description)}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Billion Codes">
+<meta property="og:title" content="${escapeHTML(title)}"><meta property="og:description" content="${escapeHTML(description)}">
+<meta property="og:url" content="${escapeHTML(url)}"><meta property="og:image" content="${SHARE_IMAGE}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Debug Defender by Billion Codes: glowing bugs swarming a code symbol">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHTML(title)}"><meta name="twitter:description" content="${escapeHTML(description)}"><meta name="twitter:image" content="${SHARE_IMAGE}">
+<meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=${escapeHTML(target)}">
+</head><body><p><a href="${escapeHTML(target)}">${found ? `Take on ${escapeHTML(found.name)}'s challenge` : "Play Debug Defender"}</a></p></body></html>`;
+  return new Response(request.method === "HEAD" ? null : html, { headers: {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=300",
+    "Content-Security-Policy": "default-src 'none'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  } });
+}
+
 export async function arcadeRoute(request, env, url) {
   const path = url.pathname;
   const nowSeconds = Math.floor(Date.now() / 1000);
+
+  const single = /^\/api\/v1\/arcade\/entries\/([^/]+)$/.exec(path);
+  if (single) {
+    checkOrigin(request, env);
+    if (request.method !== "GET") throw new HttpError(405, "Method not allowed.", undefined, { Allow: "GET" });
+    if (url.search || !UUID.test(single[1])) throw new HttpError(404, "This score is not on the leaderboard.");
+    const found = await publicEntry(database(env), single[1].toLowerCase());
+    if (!found) throw new HttpError(404, "This score is not on the leaderboard.");
+    return Response.json({ entry: found });
+  }
 
   if (path === "/api/v1/arcade/leaderboard") {
     checkOrigin(request, env);
