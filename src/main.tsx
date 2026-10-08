@@ -33,6 +33,11 @@ import './brand.css';
 import './learning.css';
 import './brand-blue.css';
 import './studio.css';
+import './motion/motion.css';
+import { LivingBackground } from './motion/LivingBackground';
+import { MotionToggle, ScrollProgress, SmoothScroll, scrollToTop, useAutoReveal, useSpotlightTilt } from './motion/primitives';
+import { motion } from 'motion/react';
+import { useMotionEnabled } from './motion/prefs';
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
@@ -61,6 +66,7 @@ function Header({ route }: { route: string }) {
       <nav id="main-nav" className={open ? 'main-nav open' : 'main-nav'} aria-label="Main navigation">
         {links.map(([path, label]) => <a key={path} href={`#${path}`} aria-current={(route === path || (path === '/practice' && route.startsWith('/practice/')) || (path === '/courses' && (route === '/course-library' || route.startsWith('/course/')))) ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}
         <AccountNav />
+        <MotionToggle />
         <a className="nav-apply" href="#/training" onClick={() => setOpen(false)}>Apply for training <Arrow /></a>
       </nav>
     </header>
@@ -81,7 +87,7 @@ function CatalogNotice({ data }: { data: CatalogState }) {
 }
 
 function CourseCard({ course, index }: { course: Course; index: number }) {
-  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card"><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><img src={index % 2 === 0 ? '/images/code-detail-generated-v1.webp' : '/brand/html-cover-blue-v1.svg'} alt="" loading="lazy" /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
+  return <a href={`#/learn/${encodeURIComponent(course.id)}`} className="course-card" data-tilt><div className={`course-cover cover-${index % 3}`} aria-hidden="true"><span className="index">FOUNDATIONS / {String(index + 1).padStart(2, '0')}</span><img src={index % 2 === 0 ? '/images/code-detail-generated-v1.webp' : '/brand/html-cover-blue-v1.svg'} alt="" loading="lazy" /><span>READ. THINK. BUILD.</span></div><div className="course-card-body"><div className="course-meta"><span>{course.level}</span><span>{course.format}</span></div><h3>{course.title}</h3><p>{course.summary}</p><div className="course-bottom"><span>{course.lessons.length} {course.lessons.length === 1 ? 'lesson' : 'lessons'} · Free introduction</span><Arrow /></div></div></a>;
 }
 
 function Courses({ data }: { data: CatalogState }) {
@@ -158,7 +164,7 @@ function App() {
     const titles: Record<string, string> = { '/': 'Learn to code. Build real projects.', '/courses': 'Free introductions', '/training': 'Apply for training', '/services': 'Software & mentorship enquiries', '/about': 'About & contact', '/policies': 'Privacy & launch terms', '/practice': 'The practice lab', '/workspace': 'Your learning desk', '/credits': 'About the imagery' };
     const platformTitles: Record<string, string> = { '/account':'Your account', '/library':'My learning', '/course-library':'Course library', '/training-dashboard':'Training dashboard', '/resources':'Open resources' };
     document.title = `Billion Codes | ${platformTitles[route] ?? titles[route] ?? (route.startsWith('/course/') ? 'Course learning' : route.startsWith('/apply/') ? 'Training application' : route.startsWith('/learn/') ? 'Free lesson' : route.startsWith('/practice/') ? 'HTML practice' : 'Page not found')}`;
-    window.scrollTo(0, 0);
+    scrollToTop();
     if (firstRoute.current) firstRoute.current = false; else mainRef.current?.focus({ preventScroll: true });
   }, [route]);
   let page;
@@ -180,7 +186,12 @@ function App() {
   else if (route === '/policies') page = account.config?.enabled ? <PlatformPolicies /> : <Policies />;
   else if (route.startsWith('/learn/')) { let id = ''; try { id = decodeURIComponent(route.slice(7)); } catch { /* Invalid encoded route is handled as not found. */ } page = <Learn id={id} data={data} />; }
   else page = <div className="wrap page-section empty-state"><p className="eyebrow">404 / A DIFFERENT PATH</p><h1>This page is not here.</h1><p>Head back to the learning desk to find your next step.</p><a className="button button-dark" href="#/courses">Explore the introductions <Arrow /></a></div>;
-  return <><Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>{page}<SaveStatus /></main><Footer /></>;
+  useSpotlightTilt(route);
+  useAutoReveal(route);
+  const motionOn = useMotionEnabled();
+  return <><SmoothScroll /><LivingBackground route={route} />{motionOn && <ScrollProgress />}<Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>
+    {motionOn ? <motion.div key={route} className="route-view" initial={{ y: 28 }} animate={{ y: 0, transitionEnd: { transform: 'none' } }} transition={{ duration: .6, ease: [.16, 1, .3, 1] }}>{page}</motion.div> : <div className="route-view">{page}</div>}
+    <SaveStatus /></main><Footer /></>;
 }
 
 createRoot(document.getElementById('root')!).render(<AccountProvider><App /></AccountProvider>);
