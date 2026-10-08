@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { track } from './metrics';
 import { walkthroughTree, type WalkNode, type Walkthrough } from '@billioncodes/learning';
 
 // Splits lesson text so HTML tags mentioned in prose read as code, e.g. "<h1>".
@@ -28,8 +29,10 @@ function PreviewNode({ node, range, lit }: { node: WalkNode; range: Range; lit: 
   return <span className={className}>{label}{kids}</span>;
 }
 
-export function CodeWalkthrough({ walkthrough, caption = 'Step through the example' }: { walkthrough: Walkthrough; caption?: string }) {
-  const [step, setStep] = useState(0);
+export function CodeWalkthrough({ walkthrough, caption = 'Step through the example', subject = '' }: { walkthrough: Walkthrough; caption?: string; subject?: string }) {
+  const [step, setState] = useState(0);
+  // Counts a walkthrough as used the first time the learner moves between steps.
+  const setStep = (next: number) => { if (next !== step) track('walkthrough_used', subject); setState(next); };
   const tree = useMemo(() => walkthroughTree(walkthrough.code), [walkthrough.code]);
   const lines = walkthrough.code.split('\n');
   const current = walkthrough.steps[Math.min(step, walkthrough.steps.length - 1)];

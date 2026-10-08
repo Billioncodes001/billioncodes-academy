@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { track } from './metrics';
 import { motion, useScroll, useTransform, type MotionValue } from 'motion/react';
 import { Brand } from './Brand';
 import { HeroStage } from './motion/HeroStage';
@@ -81,7 +82,7 @@ const startPaths = [
 function StartPaths() {
   return <nav className="start-paths" aria-label="Where to start">
     <p className="start-paths-title">Start here</p>
-    {startPaths.map(path => <a key={path.step} href={path.href} className="start-path" data-tilt="flat">
+    {startPaths.map(path => <a key={path.step} href={path.href} className="start-path" data-tilt="flat" onClick={() => track('start_path', path.href.split('/').pop())}>
       <span className="start-step" aria-hidden="true">{path.step}</span>
       <span className="start-copy"><span className="start-who">{path.who}</span><strong>{path.title}</strong><span className="start-meta">{path.meta}</span></span>
       <span className="go-chip" aria-hidden="true">→</span>
@@ -95,6 +96,7 @@ function FirstWin() {
 }
 
 export function HomePage() {
+  useEffect(() => track('home_view'), []);
   return <div className="bc-home">
     <HeroStage paths={<StartPaths />}>
       <Scramble className="bc-kicker" text="FOR THE NEXT GENERATION OF BUILDERS" dot />

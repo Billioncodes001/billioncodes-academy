@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { track } from '../metrics';
 import type { GameState, HeroEngine } from './particleHero';
 import { canUseWebGL, useMotionEnabled } from './prefs';
 import { fetchEntry, startRun, type BoardEntry } from './arcadeApi';
@@ -57,6 +58,7 @@ export function HeroStage({ children, paths }: { children: ReactNode; paths: Rea
     // The server times each run so the leaderboard can reject impossible scores.
     // If it cannot be reached, the game still plays and the score stays on this device.
     setRunId(null); setSubmitted(null); setShareOpen(false);
+    track('game_play');
     startRun().then(setRunId).catch(() => setRunId(null));
     // Bring the whole arena into view below the floating header.
     const stage = stageRef.current;

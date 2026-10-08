@@ -76,6 +76,14 @@
     .wt-step-row { padding:10px; border:1px solid #d7e5ef; border-radius:8px; }
     .wt-step-row input[type=number] { width:4.5em; }
     .wt-editor summary { font-weight:600; cursor:pointer; }
+    .funnel { list-style:none; padding:0; display:grid; gap:8px; }
+    .funnel li { display:grid; grid-template-columns:230px 1fr 52px 180px; align-items:center; gap:12px; }
+    .bar { display:block; height:12px; border-radius:6px; background:#e6eff6; overflow:hidden; }
+    .bar-fill { display:block; height:100%; background:#116aa4; }
+    .funnel-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    .funnel-table caption { text-align:left; font-weight:700; margin-bottom:8px; }
+    .funnel-table th, .funnel-table td { text-align:left; padding:6px 8px; border-bottom:1px solid #d7e5ef; }
+    @media (max-width:700px) { .funnel li { grid-template-columns:1fr auto; } .funnel .bar { grid-column:1 / -1; } .funnel-table { display:block; overflow-x:auto; } }
     .or { text-align:center; font:700 12px/1.4 monospace; text-transform:uppercase; letter-spacing:.12em; color:#52605a; margin:14px 0; }
     .wide { width:100%; }
     .who { font-size:14px; overflow-wrap:anywhere; }
@@ -126,6 +134,7 @@
     <button type="button" id="tab-inbox" aria-pressed="true">Enquiries</button>
     <button type="button" id="tab-studio" aria-pressed="false">Course studio</button>
     <button type="button" id="tab-team" aria-pressed="false">Team</button>
+    <button type="button" id="tab-funnel" aria-pressed="false">Learning funnel</button>
     <button type="button" id="tab-arcade" aria-pressed="false">Leaderboard</button>
     <span class="spacer"></span>
     <span id="who" class="who"></span>
@@ -140,6 +149,11 @@
   <section id="team-panel" hidden aria-labelledby="team-heading">
     <h2 id="team-heading">Team access</h2>
     <div id="team-root"></div>
+  </section>
+  <section id="funnel-panel" hidden aria-labelledby="funnel-heading">
+    <h2 id="funnel-heading">Learning funnel</h2>
+    <p class="muted">Visits (browser tabs) that reached each step. Counted without cookies, IDs or personal data; visitors using Do Not Track or Global Privacy Control are not counted, so treat these as a floor, not exact totals.</p>
+    <div id="funnel-root"></div>
   </section>
   <section id="arcade-panel" hidden aria-labelledby="arcade-heading">
     <h2 id="arcade-heading">Debug Defender leaderboard</h2>
@@ -191,6 +205,8 @@
     $("team-panel").hidden = true;
     $("team-root").replaceChildren();
     $("arcade-panel").hidden = true;
+    $("funnel-panel").hidden = true;
+    $("funnel-root").replaceChildren();
     $("arcade-root").replaceChildren();
     $("records").replaceChildren();
     $("review-panel").hidden = true;
@@ -345,14 +361,16 @@
   const root = () => $("studio-root");
   const report = error => { if (error.name !== "AbortError") say(error.message); };
 
-  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"], arcade:["tab-arcade", "arcade-panel"] };
+  const panels = { inbox:["tab-inbox", "review-panel"], studio:["tab-studio", "studio-panel"], team:["tab-team", "team-panel"], arcade:["tab-arcade", "arcade-panel"], funnel:["tab-funnel", "funnel-panel"] };
   function show(name) {
+    say("");
     for (const [key, [tab, panel]] of Object.entries(panels)) { $(tab).setAttribute("aria-pressed", String(key === name)); $(panel).hidden = key !== name; }
   }
   async function openStudio() { show("studio"); await showCourses(); }
   function openInbox() { show("inbox"); }
   async function openTeam() { show("team"); await showTeam(); }
   async function openArcade() { show("arcade"); await showArcade(); }
+  async function openFunnel() { show("funnel"); await showFunnel(30); }
 
   // ---- Sign-in and roles -------------------------------------------------------------------
   // The server decides the role on every request; the UI only hides areas the role cannot use.
@@ -365,6 +383,7 @@
     $("tab-studio").hidden = !session.permissions.studio;
     $("tab-team").hidden = !session.permissions.team;
     $("tab-arcade").hidden = !session.permissions.inbox;
+    $("tab-funnel").hidden = !session.permissions.inbox;
     $("who").textContent = roleName[session.role] + " | " + (session.method === "token" ? "owner access token" : session.email);
     $("login-panel").hidden = true; $("tabs").hidden = false;
     if (session.permissions.inbox) { openInbox(); await load(); }
@@ -446,6 +465,32 @@
   }
   async function teamAction(fn, success) {
     try { await fn(); await showTeam(); say(success); } catch (error) { report(error); }
+  }
+
+  // ---- Learning funnel (owners and reviewers) -----------------------------------------------
+  const pct = (part, whole) => whole ? Math.round(part / whole * 100) + "%" : "–";
+  const bar = (value, max) => { const fill = h("span", { class:"bar-fill" }); fill.style.setProperty("width", (max ? Math.max(2, value / max * 100) : 0) + "%"); return h("span", { class:"bar", "aria-hidden":"true" }, fill); };
+  function subjectTable(caption, rows, columns) {
+    if (!rows.length) return h("p", { class:"muted" }, caption + ": nothing recorded in this period yet.");
+    return h("table", { class:"funnel-table" }, h("caption", {}, caption),
+      h("thead", {}, h("tr", {}, columns.map(column => h("th", { scope:"col" }, column.label)))),
+      h("tbody", {}, rows.map(row => h("tr", {}, columns.map((column, index) => index === 0 ? h("th", { scope:"row" }, column.value(row)) : h("td", {}, column.value(row)))))));
+  }
+  async function showFunnel(days) {
+    const data = await api("/api/v1/admin/metrics?days=" + days);
+    const top = data.funnel[0].count, max = Math.max(1, ...data.funnel.map(step => step.count));
+    const periods = h("div", { class:"row", role:"group", "aria-label":"Period" }, [7, 30, 90].map(value => h("button", { type:"button", class:value === days ? "" : "secondary", "aria-pressed":String(value === days), onclick:() => showFunnel(value).catch(report) }, "Last " + value + " days")));
+    const steps = h("ol", { class:"funnel" }, data.funnel.map(step => h("li", {}, h("span", { class:"funnel-label" }, step.label), bar(step.count, max), h("strong", {}, step.count.toLocaleString()), h("span", { class:"muted hint" }, step.event === "home_view" ? "" : pct(step.count, top) + " of homepage visits"))));
+    const by = (event, key) => (data.subjects[event] || {})[key] || 0;
+    const keys = (...events) => [...new Set(events.flatMap(event => Object.keys(data.subjects[event] || {})))].sort();
+    const lessons = keys("lesson_view", "lesson_complete").map(key => ({ key, views:by("lesson_view", key), walks:by("walkthrough_used", key), done:by("lesson_complete", key) })).sort((a, b) => b.views - a.views);
+    const builds = keys("practice_view", "practice_check", "practice_pass").map(key => ({ key, views:by("practice_view", key), checks:by("practice_check", key), passes:by("practice_pass", key), examples:by("walkthrough_used", key) })).sort((a, b) => b.views - a.views);
+    const paths = keys("start_path").map(key => ({ key, count:by("start_path", key) }));
+    const extra = h("p", { class:"muted" }, "Outside the learning funnel: " + data.extra.map(item => item.label + " " + item.count.toLocaleString()).join(", ") + ".");
+    $("funnel-root").replaceChildren(periods, h("section", { class:"panel", "aria-label":"Funnel" }, h("h3", {}, "From " + data.since + " to today"), steps, extra),
+      h("section", { class:"panel" }, subjectTable("Starting points chosen on the homepage", paths, [{ label:"Path", value:row => row.key }, { label:"Visits", value:row => row.count.toLocaleString() }])),
+      h("section", { class:"panel" }, subjectTable("Lessons", lessons, [{ label:"Lesson", value:row => row.key.replace(":", " / ") }, { label:"Opened", value:row => row.views.toLocaleString() }, { label:"Used walkthrough", value:row => row.walks.toLocaleString() }, { label:"Completed", value:row => row.done.toLocaleString() }, { label:"Completion rate", value:row => pct(row.done, row.views) }])),
+      h("section", { class:"panel" }, subjectTable("Practice builds", builds, [{ label:"Build", value:row => row.key }, { label:"Opened", value:row => row.views.toLocaleString() }, { label:"Viewed example", value:row => row.examples.toLocaleString() }, { label:"Checked", value:row => row.checks.toLocaleString() }, { label:"Passed", value:row => row.passes.toLocaleString() }, { label:"Pass rate", value:row => pct(row.passes, row.views) }])));
   }
 
   // ---- Leaderboard moderation (owners and reviewers) ------------------------------------------
@@ -791,6 +836,7 @@
   $("tab-inbox").addEventListener("click", openInbox);
   $("tab-team").addEventListener("click", () => openTeam().catch(report));
   $("tab-arcade").addEventListener("click", () => openArcade().catch(report));
+  $("tab-funnel").addEventListener("click", () => openFunnel().catch(report));
   $("google-signin").addEventListener("click", () => accountSignIn(config => staffAuth().google(config)));
   $("staff-form").addEventListener("submit", event => { event.preventDefault(); accountSignIn(config => staffAuth().email(config, $("staff-email").value, $("staff-password").value)); });
   $("reset-password").addEventListener("click", async () => {

@@ -225,3 +225,46 @@ test('the first lesson walks through its example line by line and shows tags as 
   await expect(page.locator('.lesson-body code.inline-tag').first()).toBeVisible();
   expect(await page.locator('.lesson-body').evaluate(element => element.querySelectorAll('script, img').length)).toBe(0);
 });
+
+test('the learning funnel counts each step once per tab, carries no personal data, and honours privacy signals', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1440', 'Behaviour is identical on every viewport.');
+  // Automated browsers are never counted in production; switch that guard off for this test.
+  const unguard = () => Object.defineProperty(navigator, 'webdriver', { get: () => false });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.addInitScript(unguard);
+  const events: Record<string, string>[] = [];
+  await page.route('**/api/v1/metrics', route => { events.push(route.request().postDataJSON()); return route.fulfill({ status: 204 }); });
+  const base = testInfo.project.use.baseURL;
+  await page.goto(`${base}/`);
+  await page.getByRole('navigation', { name: 'Where to start' }).getByRole('link', { name: /The practice lab/ }).click();
+  await page.getByRole('heading', { name: 'Make it. Understand it.' }).waitFor();
+  await page.goto(`${base}/#/practice/profile-card`);
+  await page.getByLabel('Your HTML').fill('<main><h1>Hi, I am Ada</h1><p>I want to build a website for my bakery.</p></main>');
+  await page.getByRole('button', { name: 'Check my build' }).click();
+  await page.getByRole('button', { name: 'Check my build' }).click();
+  await page.goto(`${base}/#/learn/first-web-page`);
+  await page.locator('.walkthrough').getByRole('button', { name: /Step 2/ }).click();
+  await page.getByRole('button', { name: 'Mark as read on this device' }).click();
+  await page.goto(`${base}/`);
+  await expect.poll(() => events.length).toBeGreaterThanOrEqual(8);
+  const seen = events.map(event => `${event.event}${event.subject ? ':' + event.subject : ''}`);
+  for (const expected of ['home_view', 'start_path:practice', 'practice_view:profile-card', 'practice_check:profile-card', 'practice_pass:profile-card', 'lesson_view:first-web-page:structure-before-style', 'walkthrough_used:first-web-page:structure-before-style', 'lesson_complete:first-web-page:structure-before-style'])
+    expect(seen).toContain(expected);
+  expect(seen.filter(item => item === 'home_view')).toHaveLength(1);
+  expect(seen.filter(item => item === 'practice_check:profile-card')).toHaveLength(1);
+  expect(JSON.stringify(events)).not.toMatch(/Ada|bakery|<main>/);
+  for (const event of events) expect(Object.keys(event).every(key => ['event', 'subject'].includes(key))).toBe(true);
+  await context.close();
+
+  const gpc = await browser.newContext();
+  const quiet = await gpc.newPage();
+  await quiet.addInitScript(() => { Object.defineProperty(navigator, 'webdriver', { get: () => false }); Object.defineProperty(navigator, 'globalPrivacyControl', { get: () => true }); });
+  let sent = 0;
+  await quiet.route('**/api/v1/metrics', route => { sent++; return route.fulfill({ status: 204 }); });
+  await quiet.goto(`${base}/#/practice/profile-card`);
+  await quiet.goto(`${base}/`);
+  await quiet.waitForTimeout(500);
+  expect(sent).toBe(0);
+  await gpc.close();
+});

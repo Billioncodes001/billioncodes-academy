@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { track } from './metrics';
 import { ApiError, request } from './api';
 import { Arrow } from './Icon';
 
@@ -102,6 +103,7 @@ export function EnquiryForm({ kind }: { kind: Kind }) {
       });
       if (result.accepted !== true || typeof result.id !== 'string' || !result.id) throw new ApiError('The service did not confirm receipt. Please try again.');
       setSuccess(result.id);
+      if (kind === 'applications') track('application_submitted');
       drafts[kind] = { values: { ...empty } };
       setValues({ ...empty });
       requestAnimationFrame(() => noticeRef.current?.focus());

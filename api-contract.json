@@ -462,6 +462,51 @@
     "GET /c/{id}": {
       "success": "text/html",
       "note": "Challenge link. A minimal page with Open Graph and Twitter card tags (title with the player name and score, image /brand/debug-defender-share-v1.jpg) that immediately redirects to /?challenge={id}. Hidden, deleted or unknown entries get a generic preview without any name. No scripts; strict CSP."
+    },
+    "POST /api/v1/metrics": {
+      "required": [
+        "event"
+      ],
+      "optional": [
+        "subject"
+      ],
+      "success": "204 No Content",
+      "note": "Anonymous learning-funnel counter; see docs/LEARNING-FUNNEL.md. event must be a known funnel event; subject matches ^[a-z0-9-]{1,80}(:[a-z0-9-]{1,80})?$. Origin required. 150 events per connection per 10 minutes; over the limit returns 429 and is not counted. Stores daily aggregates only."
+    },
+    "GET /api/v1/admin/metrics": {
+      "auth": "Staff with inbox access (owner, reviewer)",
+      "query": {
+        "days": "7 | 30 | 90 (default 30)"
+      },
+      "success": {
+        "days": "integer",
+        "since": "YYYY-MM-DD",
+        "funnel": [
+          {
+            "event": "string",
+            "label": "string",
+            "count": "integer"
+          }
+        ],
+        "extra": [
+          {
+            "event": "string",
+            "label": "string",
+            "count": "integer"
+          }
+        ],
+        "subjects": {
+          "<event>": {
+            "<subject>": "integer"
+          }
+        },
+        "daily": [
+          {
+            "day": "YYYY-MM-DD",
+            "<event>": "integer"
+          }
+        ]
+      }
     }
   },
   "errors": {

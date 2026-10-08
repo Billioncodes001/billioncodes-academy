@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { track } from './metrics';
 import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 import { RemoteNotice, useRemote } from './LearningPortal';
@@ -80,7 +81,7 @@ function ApplicationEditor({ cohort, saved, reload }: { cohort: Cohort; saved?: 
   async function save(submit: boolean) {
     if (pending || !editable) return;
     setPending(true); setNotice('');
-    try { await request(`/api/v2/training/cohorts/${cohort.id}/application`, jsonBody({ data, version: saved?.version || 0, submit, consent }, 'PUT')); reload(); }
+    try { await request(`/api/v2/training/cohorts/${cohort.id}/application`, jsonBody({ data, version: saved?.version || 0, submit, consent }, 'PUT')); if (submit) track('application_submitted', cohort.id); reload(); }
     catch (error) { setNotice(message(error)); } finally { setPending(false); }
   }
   async function withdraw() {

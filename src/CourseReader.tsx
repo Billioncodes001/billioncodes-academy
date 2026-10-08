@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { track } from './metrics';
 import { CodeWalkthrough, withCodeChips } from './CodeWalkthrough';
 import type { Walkthrough } from '@billioncodes/learning';
 import { accountHeaders, request } from './api';
@@ -27,6 +28,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
   const [player, setPlayer] = useState<Player | null>(null);
   const heading = useRef<HTMLHeadingElement>(null), focusLesson = useRef(false);
   const lesson = lessons[selected], completeCount = lessons.filter(item => completed.has(item.id)).length;
+  useEffect(() => { if (lesson) track('lesson_view', `${courseId}:${lesson.id}`); }, [courseId, lesson?.id]);
 
   useEffect(() => {
     if (focusLesson.current) { heading.current?.focus(); focusLesson.current = false; }
@@ -50,6 +52,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
     const nextComplete = !completed.has(lesson.id);
     const result = await request<{ saved: boolean }>(`/api/v2/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lesson.id)}/progress`, jsonBody({ completed: nextComplete }, 'PUT'));
     if (!result.saved) throw new Error('Your progress was not confirmed. Please try again.');
+    if (nextComplete) track('lesson_complete', `${courseId}:${lesson.id}`);
     // Only reflect progress after the server confirms it; keep the reader mounted.
     setCompleted(current => {
       const next = new Set(current);
@@ -112,7 +115,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
         <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => playVideo(lesson.resourceId!))}>{player?.resource === lesson.resourceId ? 'Reload video' : 'Play lesson video'}</button>
       </div>}
       {lesson.body?.map((text, index) => <p key={index}>{withCodeChips(text)}</p>)}
-      {lesson.walkthrough && <CodeWalkthrough key={lesson.id} walkthrough={lesson.walkthrough} />}
+      {lesson.walkthrough && <CodeWalkthrough key={lesson.id} walkthrough={lesson.walkthrough} subject={`${courseId}:${lesson.id}`} />}
       {lesson.kind === 'pdf' && lesson.resourceId && <button className="button button-outline" aria-disabled={pending} onClick={() => action(() => downloadPdf(lesson.resourceId!))}>Download lesson PDF</button>}
       {lesson.kind !== 'text' && !lesson.resourceId && <p className="platform-notice">The {lesson.kind.toUpperCase()} resource is not available yet.</p>}
       <section className="reader-completion" aria-label="Lesson progress">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { track } from './metrics';
 import { request } from './api';
 import { AccountGate, PortalNav, jsonBody, message, useAccount } from './Account';
 
@@ -50,7 +51,7 @@ export function CoursePage({ id }: { id: string }) {
 
   async function enrol() {
     setPending(true); setError('');
-    try { await request(`/api/v2/courses/${encodeURIComponent(id)}/enrol`, jsonBody({})); state.reload(); }
+    try { await request(`/api/v2/courses/${encodeURIComponent(id)}/enrol`, jsonBody({})); track('course_enrol', id); state.reload(); }
     catch (error) { setError(message(error)); } finally { setPending(false); }
   }
 
