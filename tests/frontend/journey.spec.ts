@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { open } from './navigate';
 
 const config = { enabled: true, accountsReady: true, firebase: { apiKey: 'test-public-configuration', projectId: 'local-test', authDomain: 'local-test.firebaseapp.com', appId: 'test' }, checkoutEnabled: false, pdfStorageReady: false, videoReady: false };
 const lessons = [
@@ -21,7 +22,7 @@ async function signIn(page: Page) {
   await page.route('**/api/v2/account', route => route.fulfill({ json: { user: { id: 'test-learner', name: 'Test Learner', email: 'learner@example.com' } } }));
   await page.route('**/api/v2/library', route => route.fulfill({ json: { courses: [] } }));
   await page.route('**/api/v2/cohorts', route => route.fulfill({ json: { cohorts: [cohort] } }));
-  await page.goto('/#/account');
+  await open(page, '/#/account');
   await page.getByLabel('Email address', { exact: true }).fill('learner@example.com');
   await page.getByLabel('Password', { exact: true }).fill('local-test-passphrase');
   await page.getByRole('button', { name: 'Sign in with email', exact: true }).click();
@@ -33,7 +34,7 @@ test('reader resumes the first unfinished lesson and navigation never writes pro
   await page.route('**/api/v2/courses/test-course', route => route.fulfill({ json: { course, enrolled: true, completed: ['intro'] } }));
   await page.route('**/progress', route => { writes++; return route.fulfill({ json: { saved: true } }); });
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await expect(page.getByRole('heading', { name: lessons[1].title })).toBeVisible();
   await expect(page.getByRole('progressbar')).toHaveAttribute('value', '1');
   await page.getByRole('button', { name: 'Next lesson', exact: true }).click();
@@ -60,7 +61,7 @@ test('progress saves only after confirmation, without reloading or advancing the
     await route.fulfill({ json: { saved: true } });
   });
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   const lessonNode = await page.getByRole('heading', { name: lessons[1].title }).elementHandle();
   await page.getByRole('button', { name: 'Mark lesson complete', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Next lesson', exact: true })).toBeDisabled();
@@ -78,7 +79,7 @@ test('progress saves only after confirmation, without reloading or advancing the
   await expect(page.getByRole('progressbar')).toHaveAttribute('value', '2');
   await page.getByRole('link', { name: 'Back to my library', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your course library.' })).toBeVisible();
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await expect(page.getByRole('heading', { name: lessons[2].title })).toBeVisible();
 });
 
@@ -90,7 +91,7 @@ test('failed and unconfirmed saves retain reading state and allow retry', async 
     return route.fulfill({ status: attempts === 1 ? 503 : 200, json: attempts === 1 ? { error: 'Temporarily unavailable.' } : { saved: attempts > 2 } });
   });
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await page.getByRole('button', { name: 'Mark lesson complete', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Temporarily unavailable');
   await expect(page.getByRole('progressbar')).toHaveAttribute('value', '0');
@@ -107,13 +108,13 @@ test('empty and fully completed courses have honest, usable states', async ({ pa
   let empty = false;
   await page.route('**/api/v2/courses/test-course', route => route.fulfill({ json: { course: { ...course, lessons: empty ? [] : lessons }, enrolled: true, completed: lessons.map(lesson => lesson.id) } }));
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await expect(page.getByRole('heading', { name: lessons[0].title })).toBeVisible();
   await expect(page.getByText('Every lesson is marked complete.', { exact: false })).toBeVisible();
   await page.getByRole('link', { name: 'Back to my library', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your course library.' })).toBeVisible();
   empty = true;
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await expect(page.getByRole('heading', { name: 'No lessons published yet.' })).toBeVisible();
   await expect(page.getByRole('button', { name: /lesson complete/ })).toHaveCount(0);
 });
@@ -127,7 +128,7 @@ test('video access is explicit, rejects untrusted players and resets between les
   });
   await page.route('https://iframe.videodelivery.net/**', route => route.fulfill({ contentType: 'text/html', body: '<p>Local player fixture</p>' }));
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await expect(page.getByRole('heading', { name: 'Watch the walkthrough' })).toBeVisible();
   expect(plays).toBe(0);
   await expect(page.locator('.portal-reader iframe')).toHaveCount(0);
@@ -152,7 +153,7 @@ test('PDF failure can be retried without marking the lesson complete', async ({ 
     return downloads === 1 ? route.fulfill({ status: 503, contentType: 'text/plain', body: 'Unavailable' }) : route.fulfill({ contentType: 'application/pdf', headers: { 'Content-Disposition': 'attachment; filename="workbook.pdf"' }, body: '%PDF-1.4 local-download-fixture' });
   });
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   await page.getByRole('button', { name: 'Download lesson PDF', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Download is unavailable.');
   const download = page.waitForEvent('download');
@@ -166,7 +167,7 @@ test('training explains every actual status without inventing submission history
   const states = ['draft', 'submitted', 'under-review', 'offered', 'declined', 'withdrawn', 'unexpected'];
   await page.route('**/api/v2/training/applications', route => route.fulfill({ json: { applications: states.map(application) } }));
   await signIn(page);
-  await page.goto('/#/training-dashboard');
+  await open(page, '/#/training-dashboard');
   const cards = page.locator('.application-card');
   await expect(cards).toHaveCount(7);
   const labels = ['Draft', 'Submitted', 'Under review', 'Offer made', 'Not offered', 'Withdrawn', 'Status unavailable'];
@@ -175,7 +176,7 @@ test('training explains every actual status without inventing submission history
   await expect(cards.nth(1).locator('dt', { hasText: /^Submitted$/ })).toHaveCount(1);
   await expect(cards.nth(3)).toContainText('An offer, not yet a confirmed place.');
   await expect(cards.nth(3)).not.toContainText('Under review');
-  await expect(cards.nth(3).getByRole('link', { name: 'Contact the team' })).toHaveAttribute('href', '#/contact');
+  await expect(cards.nth(3).getByRole('link', { name: 'Contact the team' })).toHaveAttribute('href', '/contact');
   await expect(cards.nth(0).getByRole('link', { name: /Continue draft/ })).toHaveAttribute('aria-describedby', 'application-status-application-0');
 });
 
@@ -195,7 +196,7 @@ test('draft edits survive a failed save and stay locked during an in-flight requ
     await route.fulfill({ json: { saved: true } });
   });
   await signIn(page);
-  await page.goto('/#/apply/test-cohort');
+  await open(page, '/#/apply/test-cohort');
   const track = page.getByLabel('What would you like to learn?');
   await track.fill('Accessible frontend development');
   await page.getByRole('button', { name: 'Save draft', exact: true }).click();
@@ -220,7 +221,7 @@ test('closed intakes allow draft editing but not submission', async ({ page }) =
   await page.route('**/api/v2/training/applications', route => route.fulfill({ json: { applications: [application('withdrawn')] } }));
   await signIn(page);
   await page.route('**/api/v2/cohorts', route => route.fulfill({ json: { cohorts: [{ ...cohort, acceptingApplications: false, status: 'closed' }] } }));
-  await page.goto('/#/apply/test-cohort');
+  await open(page, '/#/apply/test-cohort');
   await expect(page.getByLabel('What would you like to learn?')).toBeEnabled();
   await page.getByRole('checkbox').check();
   await expect(page.getByRole('button', { name: 'Submit application', exact: true })).toBeDisabled();
@@ -237,7 +238,7 @@ test('signed-in reader, dashboard and application stay accessible at narrow widt
     ['/training-dashboard', 'Your next step, in view.', 'dashboard'],
     ['/apply/test-cohort', cohort.title, 'application'],
   ]) {
-    await page.goto(`/#${route}`);
+    await open(page, `/#${route}`);
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: testInfo.outputPath(`${file}.png`), fullPage: true });
@@ -263,7 +264,7 @@ test('reader groups lessons by section and plays Course Studio videos only from 
   await page.route('**/api/v2/resources/video-1/playback', route => route.fulfill({ json: { kind: 'file', url: playbackURL, expiresAt: 0 } }));
   await page.route('**/api/v2/media/**', route => route.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.alloc(64) }));
   await signIn(page);
-  await page.goto('/#/course/test-course');
+  await open(page, '/#/course/test-course');
   const contents = page.getByRole('navigation', { name: 'Course contents', exact: true });
   await expect(contents.getByRole('list', { name: 'Getting started' }).getByRole('listitem')).toHaveCount(2);
   await expect(contents.getByRole('list', { name: 'Wrap-up' }).getByRole('listitem')).toHaveCount(1);

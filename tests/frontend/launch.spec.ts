@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 // The mock uses the actual authored catalogue. No test fixtures ship in the UI.
 // @ts-expect-error The backend's JavaScript catalogue is separately owned.
 import { catalog } from '../../worker/catalog.js';
+import { open } from './navigate';
 
 const artifacts = fileURLToPath(new URL('./artifacts/', import.meta.url));
 const accepted = { accepted: true, id: '49cc82f0-a907-4f28-8907-6d3b0d280a95' };
@@ -67,7 +68,7 @@ test('every public page has no accessibility violations or horizontal overflow',
 });
 
 test('catalogue searches, filters and renders authored API content', async ({ page }) => {
-  await page.goto('/#/courses');
+  await open(page, '/#/courses');
   await expect(page.getByRole('heading', { name: 'Your first steps in web development' })).toBeVisible();
   await page.getByLabel('Find an introduction').fill('nothing-matches-this');
   await expect(page.getByRole('heading', { name: 'No matching introductions.' })).toBeVisible();
@@ -84,7 +85,7 @@ test('catalogue searches, filters and renders authored API content', async ({ pa
 test('failed live catalogue is explained, built-in primer stays usable, retry works', async ({ page }) => {
   let failed = true;
   await page.route('**/api/v1/catalog', route => failed ? route.abort('failed') : route.fulfill({ json: catalog }));
-  await page.goto('/#/courses');
+  await open(page, '/#/courses');
   await expect(page.getByRole('heading', { name: 'The live catalogue is unavailable.' })).toBeVisible();
   await expect(page.getByText('No catalogue data has been substituted.', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your first steps in web development' })).toHaveCount(0);
@@ -98,9 +99,9 @@ test('failed live catalogue is explained, built-in primer stays usable, retry wo
 
 test('malformed catalogue and unknown routes fail safely', async ({ page }) => {
   await page.route('**/api/v1/catalog', route => route.fulfill({ json: { courses: [{ id: 'bad' }] } }));
-  await page.goto('/#/courses');
+  await open(page, '/#/courses');
   await expect(page.getByRole('heading', { name: 'The live catalogue is unavailable.' })).toBeVisible();
-  await page.goto('/#/missing');
+  await open(page, '/#/missing');
   await expect(page.getByRole('heading', { name: 'This page is not here.' })).toBeVisible();
   await noOverflow(page);
 });
@@ -108,7 +109,7 @@ test('malformed catalogue and unknown routes fail safely', async ({ page }) => {
 test('application validation is labelled, focused, accessible and does not submit', async ({ page }) => {
   let writes = 0;
   await page.route('**/api/v1/applications', route => { writes++; return route.fulfill({ json: accepted, status: 201 }); });
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await page.getByRole('button', { name: 'Send training application' }).click();
   await expect(page.getByRole('alert')).toBeFocused();
   await expect(page.getByLabel('Full name')).toHaveAttribute('aria-invalid', 'true');
@@ -125,7 +126,7 @@ test('failure retains the draft, unchanged retry reuses its key, edits rotate th
     submissions.push({ key: route.request().headers()['idempotency-key'], body: route.request().postDataJSON() });
     return submissions.length < 3 ? route.fulfill({ status: 503, json: { error: 'Service temporarily unavailable.' } }) : route.fulfill({ status: 201, json: accepted });
   });
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await fillApplication(page);
   const send = page.getByRole('button', { name: 'Send training application' });
   await send.click();
@@ -147,7 +148,7 @@ test('failure retains the draft, unchanged retry reuses its key, edits rotate th
 
 test('server field errors and email fallback remain visible', async ({ page }) => {
   await page.route('**/api/v1/applications', route => route.fulfill({ status: 422, json: { error: 'Please check your email.', fields: { email: 'The email address is not accepted.' } } }));
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await fillApplication(page);
   await page.getByRole('button', { name: 'Send training application' }).click();
   await expect(page.locator('#email-error')).toHaveText('The email address is not accepted.');
@@ -159,7 +160,7 @@ test('server field errors and email fallback remain visible', async ({ page }) =
 test('project enquiry uses only its agreed contract fields and does not promise a booking', async ({ page }) => {
   let body: Record<string, unknown> = {};
   await page.route('**/api/v1/project-requests', route => { body = route.request().postDataJSON(); return route.fulfill({ status: 201, json: accepted }); });
-  await page.goto('/#/services');
+  await open(page, '/#/services');
   await page.getByRole('button', { name: 'Send project enquiry' }).click();
   await expect(page.getByRole('alert')).toContainText('Please check');
   await page.getByLabel('Full name').fill('Launch Test Founder');
@@ -180,7 +181,7 @@ test('project enquiry uses only its agreed contract fields and does not promise 
 });
 
 test('practice is deterministic and device-only progress persists and resets', async ({ page }) => {
-  await page.goto('/#/learn/first-web-page');
+  await open(page, '/#/learn/first-web-page');
   await expect(page.getByRole('button', { name: 'Check my answer' })).toBeDisabled();
   await page.getByRole('radio', { name: '<button>Reading list</button>' }).check();
   await page.getByRole('button', { name: 'Check my answer' }).click();
@@ -200,16 +201,16 @@ test('practice is deterministic and device-only progress persists and resets', a
 
 test('blocked local storage is explained and does not break learning', async ({ page }) => {
   await page.addInitScript(() => { Storage.prototype.getItem = () => { throw new Error('blocked'); }; Storage.prototype.setItem = () => { throw new Error('blocked'); }; });
-  await page.goto('/#/learn/first-web-page');
+  await open(page, '/#/learn/first-web-page');
   await page.getByRole('button', { name: 'Mark as read on this device' }).click();
   await expect(page.getByText('Browser storage is unavailable.', { exact: false })).toBeVisible();
 });
 
 test('draft survives policy navigation but is never stored in local storage', async ({ page }) => {
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await page.getByLabel('Full name').fill('Private Draft Name');
   await page.getByRole('link', { name: 'launch privacy notice' }).click();
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await expect(page.getByLabel('Full name')).toHaveValue('Private Draft Name');
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(storage).not.toContain('Private Draft Name');
@@ -248,7 +249,7 @@ test('turning motion off also disables route transitions', async ({ page }) => {
   await page.getByRole('button', { name: 'Motion on' }).click();
   if (await page.getByRole('button', { name: 'Close' }).isVisible()) await page.keyboard.press('Escape');
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
-  await page.locator('.bc-hero-copy a[href="#/courses"]').click();
+  await page.locator('.bc-hero-copy a[href="/courses"]').click();
   await expect(page.getByRole('heading', { name: /Start with understanding/ })).toBeVisible();
   await expect(page.locator('.route-curtain')).toHaveCount(0);
   expect(await page.locator('.route-view').evaluate(element => getComputedStyle(element).transform)).toBe('none');
@@ -300,9 +301,9 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
   await page.goto('/');
   const paths = page.getByRole('navigation', { name: 'Where to start' });
   await expect(paths.getByRole('link')).toHaveCount(3);
-  await expect(paths.getByRole('link', { name: /Your first web page/ })).toHaveAttribute('href', '#/learn/first-web-page');
-  await expect(paths.getByRole('link', { name: /The practice lab/ })).toHaveAttribute('href', '#/practice');
-  await expect(paths.getByRole('link', { name: /Training and expert help/ })).toHaveAttribute('href', '#/training');
+  await expect(paths.getByRole('link', { name: /Your first web page/ })).toHaveAttribute('href', '/learn/first-web-page');
+  await expect(paths.getByRole('link', { name: /The practice lab/ })).toHaveAttribute('href', '/practice');
+  await expect(paths.getByRole('link', { name: /Training and expert help/ })).toHaveAttribute('href', '/training');
   await expect(page.getByText('Need a break?')).toBeVisible();
   await page.getByRole('button', { name: 'leaderboard', exact: true }).click();
   const panel = page.getByRole('dialog', { name: 'Debug Defender leaderboard' });
@@ -353,4 +354,21 @@ test('Debug Defender leaderboard: idle challenge, panel, and score submission af
   expect((await new AxeBuilder({ page }).include('.share-panel').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
   await page.keyboard.press('Escape');
   await expect(share).toHaveCount(0);
+});
+
+test('pages have real addresses: links navigate in place, back works, and old #/ links still land correctly', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation', { name: 'Where to start' }).getByRole('link', { name: /The practice lab/ }).click();
+  await expect(page).toHaveURL(/\/practice$/);
+  await expect(page.getByRole('heading', { name: 'Make it. Understand it.' })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Big ideas.');
+  await open(page, '/#/learn/first-web-page');
+  await expect(page).toHaveURL(/\/learn\/first-web-page$/);
+  await expect(page.getByRole('heading', { name: 'Your first web page', level: 1 })).toBeVisible();
+  await page.goto('/practice/reading-list');
+  await expect(page.getByRole('heading', { name: 'Build a reading list', level: 1 })).toBeVisible();
+  await page.goto('/?challenge=x#/courses');
+  await expect(page).toHaveURL(/\/courses\?challenge=x$/);
 });

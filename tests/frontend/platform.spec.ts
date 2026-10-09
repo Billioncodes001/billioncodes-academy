@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { open } from './navigate';
 
 const config = { enabled:true, accountsReady:true, firebase:{apiKey:'test-public-configuration',projectId:'local-test',authDomain:'local-test.firebaseapp.com',appId:'test'},checkoutEnabled:false,pdfStorageReady:false,videoReady:false };
 test.beforeEach(async ({page}) => {
@@ -15,14 +16,14 @@ test('account, resources and training routes are accessible, responsive and gate
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   }
-  await page.goto('/#/training-dashboard');
+  await open(page, '/#/training-dashboard');
   await expect(page.getByRole('link',{name:'Create an account or sign in'})).toBeVisible();
   await expect(page.getByRole('textbox',{name:'Full name'})).toHaveCount(0);
-  await page.goto('/#/training');
+  await open(page, '/#/training');
   await expect(page.getByText('No intake dates or fees have been announced yet.',{exact:false})).toBeVisible();
 });
 test('external learning has creator credit, explicit source links and no purchase controls',async ({page}) => {
-  await page.goto('/#/resources');
+  await open(page, '/#/resources');
   await page.getByLabel('Find a resource').fill('CS50');
   await expect(page.getByRole('heading',{name:'CS50x',exact:true})).toBeVisible();
   await expect(page.getByText('David J. Malan and the CS50 team',{exact:false})).toBeVisible();
@@ -37,7 +38,7 @@ test('account creation and separate dashboards work; Google SDK is mocked only i
   await page.route('**/api/auth/register',route => { expect(route.request().postDataJSON()).toEqual({name:'Ada Learner',consent:true}); registered = true; return route.fulfill({json:{user:member}}); });
   await page.route('**/api/v2/library',route => route.fulfill({json:{courses:[]}}));
   await page.route('**/api/v2/training/applications',route => route.fulfill({json:{applications:[]}}));
-  await page.goto('/#/account');
+  await open(page, '/#/account');
   await page.getByRole('button',{name:'Continue with Google'}).click();
   await expect(page.getByRole('heading',{name:'Make it yours.'})).toBeVisible();
   await page.getByRole('checkbox').check();
@@ -62,7 +63,7 @@ test('email signup validates confirmation and waits for verified email before cr
   await page.route('**/api/v2/account',route => route.fulfill({json:{user:registered ? member : null}}));
   await page.route('**/api/auth/register',route => {expect(route.request().postDataJSON()).toEqual({name:'Email Learner',consent:true});registered=true;return route.fulfill({json:{user:member}});});
   await page.route('**/api/v2/library',route => route.fulfill({json:{courses:[]}}));
-  await page.goto('/#/account');
+  await open(page, '/#/account');
   await page.getByRole('button',{name:'Create account',exact:true}).click();
   await page.getByLabel('Full name',{exact:true}).fill('Email Learner');
   await page.getByLabel('Email address',{exact:true}).fill('email@example.com');
@@ -91,7 +92,7 @@ test('email sign-in provides generic errors and the reset flow returns a privacy
     export async function emailSignIn(){throw {code:"auth/invalid-credential"}}
     export async function resetPassword(config,email){if(email!=="learner@example.com")throw Error("Incorrect reset email")}
   `}));
-  await page.goto('/#/account');
+  await open(page, '/#/account');
   await page.getByLabel('Email address',{exact:true}).fill('learner@example.com');
   await page.getByLabel('Password',{exact:true}).fill('incorrect-test-password');
   await page.getByRole('button',{name:'Sign in with email',exact:true}).click();
@@ -107,7 +108,7 @@ test('verified email sign-in opens the existing account without registering it a
   await page.route('**/src/firebaseClient.ts*',route => route.fulfill({contentType:'text/javascript',body:'export async function emailSignIn(){return {name:"Email Learner",email:"email@example.com",verified:true}}'}));
   await page.route('**/api/v2/account',route => route.fulfill({json:{user:{id:'email',name:'Email Learner',email:'email@example.com'}}}));
   await page.route('**/api/v2/library',route => route.fulfill({json:{courses:[]}}));
-  await page.goto('/#/account');
+  await open(page, '/#/account');
   await page.getByLabel('Email address',{exact:true}).fill('email@example.com');
   await page.getByLabel('Password',{exact:true}).fill('local-test-passphrase');
   await page.getByRole('button',{name:'Sign in with email',exact:true}).click();

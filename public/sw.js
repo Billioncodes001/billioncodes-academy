@@ -18,7 +18,8 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin || privatePath(url.pathname)) return;
-  const shell = request.mode === 'navigate' && ['/', '/index.html'].includes(url.pathname);
+  // Every app page is a real address now, so any page navigation can fall back to the cached shell.
+  const shell = request.mode === 'navigate' && !/^\/c\//.test(url.pathname) && !/\.[a-z0-9]{2,5}$/i.test(url.pathname);
   if (!shell && (url.search || !allowed.has(url.pathname))) return;
   event.respondWith((async () => {
     if (shell) {

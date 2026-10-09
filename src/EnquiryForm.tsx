@@ -123,7 +123,7 @@ export function EnquiryForm({ kind }: { kind: Kind }) {
     <p>Your {training ? 'training application' : 'project enquiry'} has been recorded for review. This is not {training ? 'a confirmed place or booking' : 'an accepted project or quote'}.</p>
     <p className="reference">Reference <strong>{success}</strong></p>
     <p>No payment has been taken. Please keep this reference if you contact us.</p>
-    <a className="button button-dark" href="#/courses">Explore the free introductions <Arrow /></a>
+    <a className="button button-dark" href="/courses">Explore the free introductions <Arrow /></a>
   </div>;
 
   const field = (name: string, label: string, options: Partial<React.ComponentProps<typeof Field>> = {}) => <Field key={name} name={name} label={label} value={String(values[name] ?? '')} error={errors[name]} onChange={update} {...options} />;
@@ -147,7 +147,7 @@ export function EnquiryForm({ kind }: { kind: Kind }) {
       </>}
       <div className="honeypot" aria-hidden="true"><label htmlFor="website">Leave this field empty</label><input id="website" name="website" type="text" value={String(values.website)} onChange={event => update('website', event.target.value)} tabIndex={-1} autoComplete="off" /></div>
       <div className="privacy-callout"><strong>Keep it non-confidential.</strong> Do not include passwords, payment details, private customer data or proprietary code. Attachments are not accepted at launch.</div>
-      <div className="consent-field"><label className="checkbox-label" htmlFor="consent"><input type="checkbox" id="consent" checked={values.consent === true} onChange={event => update('consent', event.target.checked)} aria-invalid={!!errors.consent} aria-describedby={errors.consent ? 'consent-error' : 'consent-note'} required /><span>I agree that Billion Codes may store these details to review and respond to this enquiry.</span></label><p id="consent-note">Not marketing consent. Read the <a href="#/policies">launch privacy notice</a>.</p>{errors.consent && <p className="field-error" id="consent-error">{errors.consent}</p>}</div>
+      <div className="consent-field"><label className="checkbox-label" htmlFor="consent"><input type="checkbox" id="consent" checked={values.consent === true} onChange={event => update('consent', event.target.checked)} aria-invalid={!!errors.consent} aria-describedby={errors.consent ? 'consent-error' : 'consent-note'} required /><span>I agree that Billion Codes may store these details to review and respond to this enquiry.</span></label><p id="consent-note">Not marketing consent. Read the <a href="/policies">launch privacy notice</a>.</p>{errors.consent && <p className="field-error" id="consent-error">{errors.consent}</p>}</div>
       <button className="button button-dark submit-button" type="submit" disabled={busy}>{busy ? 'Sending enquiry...' : training ? 'Send training application' : 'Send project enquiry'}<Arrow /></button>
     </fieldset>
     <p className="form-footnote" role="status">{busy ? 'Please wait for confirmation. Do not close this page.' : 'No payment. No automatic enrolment. Your draft stays in this tab until it is sent or the page is reloaded.'}</p>

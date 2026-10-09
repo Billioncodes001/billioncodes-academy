@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { navigate, useRoute } from './router';
 import { request } from './api';
 import type { FirebaseConfig } from './firebaseClient';
 import './platform.css';
@@ -18,31 +19,26 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, []);
   async function refresh() { const value = await request<{ user: Member | null }>('/api/v2/account'); setUser(value.user); }
-  async function logout() { await (await import('./firebaseClient')).googleSignOut(); setUser(null); window.location.hash = '/account'; }
+  async function logout() { await (await import('./firebaseClient')).googleSignOut(); setUser(null); navigate('/account'); }
   return <AccountContext.Provider value={{ config, user, error, loading, refresh, logout }}>{children}</AccountContext.Provider>;
 }
 export function useAccount() { const value = useContext(AccountContext); if (!value) throw new Error('Missing account provider'); return value; }
 export function AccountNav() {
   const { config, user } = useAccount();
-  return config?.enabled ? <a href={user ? '#/library' : '#/account'}>{user ? 'My account' : 'Sign in'}</a> : null;
+  return config?.enabled ? <a href={user ? '/library' : '/account'}>{user ? 'My account' : 'Sign in'}</a> : null;
 }
 export function AccountGate({ children }: { children: ReactNode }) {
   const { user, config, loading, error } = useAccount();
   if (loading) return <p role="status">Checking account availability...</p>;
   if (user) return <>{children}</>;
-  return <section className="platform-panel"><p className="eyebrow">YOUR OWN SPACE TO GROW</p><h1>One account.<br />Two ways to learn.</h1><p>Sign in to save your course progress or manage a training application. Your practice-lab drafts stay on this device and are not uploaded.</p>{error && <p role="alert">{error}</p>}{config?.accountsReady ? <a className="button button-dark" href="#/account">Create an account or sign in</a> : <p role="status">Account setup is being completed. Free introductions are still available.</p>}</section>;
+  return <section className="platform-panel"><p className="eyebrow">YOUR OWN SPACE TO GROW</p><h1>One account.<br />Two ways to learn.</h1><p>Sign in to save your course progress or manage a training application. Your practice-lab drafts stay on this device and are not uploaded.</p>{error && <p role="alert">{error}</p>}{config?.accountsReady ? <a className="button button-dark" href="/account">Create an account or sign in</a> : <p role="status">Account setup is being completed. Free introductions are still available.</p>}</section>;
 }
 export function PortalNav() {
   const { user, logout } = useAccount();
   const [error, setError] = useState('');
-  const [route, setRoute] = useState(() => window.location.hash.slice(1));
-  useEffect(() => {
-    const changed = () => setRoute(window.location.hash.slice(1));
-    window.addEventListener('hashchange', changed);
-    return () => window.removeEventListener('hashchange', changed);
-  }, []);
+  const route = useRoute();
   const items = [['/library', 'My learning'], ['/training-dashboard', 'Training dashboard'], ['/course-library', 'Explore courses'], ['/resources', 'Open resources']];
-  return <><nav className="portal-nav" aria-label="Account navigation">{items.map(([path, label]) => <a key={path} href={'#' + path} aria-current={route === path || (path === '/course-library' && (route === '/courses' || route.startsWith('/course/'))) || (path === '/training-dashboard' && route.startsWith('/apply/')) ? 'page' : undefined}>{label}</a>)}{user && <button onClick={() => { logout().catch(error => setError(message(error))); }}>Sign out</button>}</nav>{error && <p role="alert">{error}</p>}</>;
+  return <><nav className="portal-nav" aria-label="Account navigation">{items.map(([path, label]) => <a key={path} href={path} aria-current={route === path || (path === '/course-library' && (route === '/courses' || route.startsWith('/course/'))) || (path === '/training-dashboard' && route.startsWith('/apply/')) ? 'page' : undefined}>{label}</a>)}{user && <button onClick={() => { logout().catch(error => setError(message(error))); }}>Sign out</button>}</nav>{error && <p role="alert">{error}</p>}</>;
 }
 type AccountMode = 'signin' | 'signup' | 'reset';
 type Profile = { name: string; email: string; verified: boolean };
@@ -80,7 +76,7 @@ export function AccountPage() {
     setPassword(''); setConfirmation('');
     if (!value.verified) { setProfile(value); return; }
     const current = await request<{ user: Member | null }>('/api/v2/account');
-    if (current.user) { await account.refresh(); window.location.hash = '/library'; }
+    if (current.user) { await account.refresh(); navigate('/library'); }
     else setProfile(value);
   }
   async function googleLogin() {
@@ -126,7 +122,7 @@ export function AccountPage() {
   }
   async function complete(event: React.FormEvent) {
     event.preventDefault(); setPending(true); setError('');
-    try { await request('/api/auth/register', jsonBody({ name: profile!.name, consent })); await account.refresh(); window.location.hash = '/library'; }
+    try { await request('/api/auth/register', jsonBody({ name: profile!.name, consent })); await account.refresh(); navigate('/library'); }
     catch (error) { setError(authError(error)); }
     finally { setPending(false); }
   }
@@ -136,7 +132,7 @@ export function AccountPage() {
     catch (error) { setError(authError(error)); }
     finally { setPending(false); }
   }
-  const privacy = <label className="platform-check"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} required /><span>I agree to the <a href="#/policies">account privacy notice</a> and storage of my profile, course progress and training applications. This is not marketing consent.</span></label>;
+  const privacy = <label className="platform-check"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} required /><span>I agree to the <a href="/policies">account privacy notice</a> and storage of my profile, course progress and training applications. This is not marketing consent.</span></label>;
   const title = account.user ? 'Welcome back.' : profile ? (profile.verified ? 'Make it yours.' : 'Check your inbox.') : mode === 'signup' ? 'Create your account.' : mode === 'reset' ? 'Forgot your password?' : 'Welcome back.';
   return <div className="wrap page-section account-page">
     <aside className="account-intro">
@@ -148,7 +144,7 @@ export function AccountPage() {
         <div><span>01 / SELF-PACED</span><h2>Your course library</h2><p>Keep your courses and reading progress in one place.</p></div>
         <div><span>02 / GUIDED TRAINING</span><h2>Your training journey</h2><p>Apply for an announced intake and follow your application.</p></div>
       </div>
-      <a href="#/learn/web-foundations-intro">Explore the free introduction without an account</a>
+      <a href="/learn/web-foundations-intro">Explore the free introduction without an account</a>
     </aside>
     <section className="platform-panel signin-panel" aria-labelledby="account-form-title">
       {!profile && !account.user && <div className="account-tabs" role="group" aria-label="Account options">
@@ -156,7 +152,7 @@ export function AccountPage() {
         <button type="button" aria-pressed={mode === 'signup'} disabled={pending} onClick={() => changeMode('signup')}>Create account</button>
       </div>}
       <h2 id="account-form-title">{title}</h2>
-      {account.user ? <><p>You are signed in as <strong>{account.user.email}</strong>.</p><a href="#/library" className="button button-dark">Open my dashboard</a><PortalNav /></> : profile ? profile.verified ? (
+      {account.user ? <><p>You are signed in as <strong>{account.user.email}</strong>.</p><a href="/library" className="button button-dark">Open my dashboard</a><PortalNav /></> : profile ? profile.verified ? (
         <form className="platform-form" onSubmit={complete}>
           <p>Verified email: <strong>{profile.email}</strong>. Confirm your details to finish your Academy profile.</p>
           <label>Full name<input value={profile.name} required minLength={2} maxLength={100} onChange={event => setProfile({ ...profile, name: event.target.value })} autoComplete="name" /></label>

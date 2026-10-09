@@ -79,7 +79,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
     setPlayer({ resource: resourceId, url: value.url, kind });
   }
 
-  if (!lesson) return <section className="platform-panel"><h2>No lessons published yet.</h2><p>This course is in your library. Check back when its lessons are available.</p><a className="text-link" href="#/library">Back to my library</a></section>;
+  if (!lesson) return <section className="platform-panel"><h2>No lessons published yet.</h2><p>This course is in your library. Check back when its lessons are available.</p><a className="text-link" href="/library">Back to my library</a></section>;
 
   return <div className="portal-reader">
     <aside className="reader-sidebar">
@@ -101,7 +101,7 @@ export function CourseReader({ courseId, lessons, initialCompleted }: { courseId
           </li>)}</ol>
         </div>)}</nav>
       </details>
-      <a className="text-link reader-library-link" href="#/library">Back to my library</a>
+      <a className="text-link reader-library-link" href="/library">Back to my library</a>
     </aside>
     <article aria-labelledby="lesson-title">
       <div className="reader-lesson-meta"><p className="eyebrow">{lesson.section ? `${lesson.section.toUpperCase()} / ` : ''}LESSON {selected + 1} / {lessons.length}</p><span className="portal-tag">{completed.has(lesson.id) ? 'Marked complete' : 'In your own time'}</span></div>

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 // @ts-expect-error Published Worker catalogue has a JS definition.
 import { catalog } from '../../worker/catalog.js';
+import { open } from './navigate';
 
 const solution = '<main><h1>A community reading club</h1><p>One chapter and one conversation each week.</p></main>';
 test.beforeEach(async ({ page }) => { await page.route('**/api/v2/platform', route => route.fulfill({ json: { enabled:false, accountsReady:false } })); await page.route('**/api/v1/catalog', route => route.fulfill({ json: catalog })); });
@@ -18,20 +19,20 @@ test('new learning pages are accessible and fit the viewport', async ({ page }) 
   }
 });
 test('practice path reflects actual completions and resumes an unfinished draft', async ({ page }) => {
-  await page.goto('/#/practice');
+  await open(page, '/#/practice');
   await expect(page.getByLabel('0 of 4 builds completed')).toHaveAttribute('value', '0');
   await page.getByRole('link', { name: 'Start your next build' }).click();
   await expect(page).toHaveURL(/practice\/profile-card/);
-  await expect(page.locator('#main-nav a[href="#/practice"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#main-nav a[href="/practice"]')).toHaveAttribute('aria-current', 'page');
   await page.getByLabel('Your HTML').fill(solution);
   await page.getByRole('button', { name: 'Check my build' }).click();
   await page.getByRole('link', { name: 'All exercises' }).click();
   await expect(page.getByLabel('1 of 4 builds completed')).toHaveAttribute('value', '1');
-  await expect(page.getByRole('link', { name: 'Start your next build' })).toHaveAttribute('href', '#/practice/reading-list');
+  await expect(page.getByRole('link', { name: 'Start your next build' })).toHaveAttribute('href', '/practice/reading-list');
   await page.getByRole('link', { name: 'Start your next build' }).click();
   await page.getByLabel('Your HTML').fill('<h1>My draft reading list</h1>');
   await page.getByRole('link', { name: 'All exercises' }).click();
-  await expect(page.getByRole('link', { name: 'Continue your build', exact: false })).toHaveAttribute('href', '#/practice/reading-list');
+  await expect(page.getByRole('link', { name: 'Continue your build', exact: false })).toHaveAttribute('href', '/practice/reading-list');
   await expect(page.getByLabel('1 of 4 builds completed')).toHaveAttribute('value', '1');
 });
 test('studio layouts retain readable controls with narrow screens, larger text and reduced motion', async ({ page }) => {
@@ -48,7 +49,7 @@ test('studio layouts retain readable controls with narrow screens, larger text a
   }
 });
 test('real practice grades, previews, persists and safely resets a draft', async ({ page }) => {
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await page.getByRole('button', { name: 'Check my build' }).click();
   await expect(page.getByRole('heading', { name: 'A few things to work on.' })).toBeVisible();
   await page.getByLabel('Your HTML').fill(solution);
@@ -64,13 +65,13 @@ test('real practice grades, previews, persists and safely resets a draft', async
   await page.getByRole('button', { name: 'Reset code', exact: true }).click();
   await page.getByRole('button', { name: 'Replace draft' }).click();
   await expect(page.getByLabel('Your HTML')).not.toHaveValue(solution);
-  await page.goto('/#/workspace');
+  await open(page, '/#/workspace');
   await expect(page.getByText('Completed once', { exact: false }).last()).toBeVisible();
 });
 test('hostile practice is inert and never makes a network request', async ({ page }) => {
   let probes = 0;
   await page.route('https://example.com/**', route => { probes++; return route.abort(); });
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await page.getByLabel('Your HTML').fill(solution + '<script>parent.location="https://example.com/probe"</script><img src="https://example.com/pixel" onerror="alert(1)"><a href="https://example.com/track">Tracking link</a>');
   await page.getByRole('button', { name: 'Check my build' }).click();
   await expect(page.getByText('Try again: Keep this HTML exercise', { exact: false })).toBeVisible();
@@ -79,28 +80,28 @@ test('hostile practice is inert and never makes a network request', async ({ pag
   await expect(page).toHaveURL(/practice\/profile-card/);
 });
 test('explicit catalogue save survives network failure, and reset needs confirmation', async ({ page }) => {
-  await page.goto('/#/workspace');
+  await open(page, '/#/workspace');
   await page.getByRole('button', { name: 'Save current catalogue' }).click();
   await expect(page.getByText(/^Saved on /)).toBeVisible();
   await page.route('**/api/v1/catalog', route => route.abort());
-  await page.goto('/#/courses');
+  await open(page, '/#/courses');
   await page.reload();
   await expect(page.getByText('Reading your saved catalogue', { exact: false })).toBeVisible();
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await page.getByLabel('Your HTML').fill(solution);
-  await page.goto('/#/workspace');
+  await open(page, '/#/workspace');
   await page.getByRole('button', { name: 'Reset all learning progress' }).click();
   await page.getByRole('button', { name: 'Keep my progress' }).click();
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await expect(page.getByLabel('Your HTML')).toHaveValue(solution);
-  await page.goto('/#/workspace');
+  await open(page, '/#/workspace');
   await page.getByRole('button', { name: 'Reset all learning progress' }).click();
   await page.getByRole('button', { name: 'Clear local progress' }).click();
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await expect(page.getByLabel('Your HTML')).not.toHaveValue(solution);
 });
 test('learning backups restore only after confirmation and validate completions', async ({ page }) => {
-  await page.goto('/#/workspace');
+  await open(page, '/#/workspace');
   const backup = { version: 1, read: {}, drafts: { 'profile-card': solution, 'reading-list': '\u0000'.repeat(12000), 'contact-form': '\u0000'.repeat(12000), 'semantic-repair': '\u0000'.repeat(12000) }, solved: { 'profile-card': true }, lastLesson: null };
   expect(Buffer.byteLength(JSON.stringify(backup))).toBeGreaterThan(200000);
   await page.getByLabel('Import a learning backup').setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
@@ -115,7 +116,7 @@ test('learning backups restore only after confirmation and validate completions'
   const exported = JSON.parse(Buffer.concat(chunks).toString());
   expect(exported.drafts).toEqual(backup.drafts);
   expect(exported.solved).toEqual({});
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await expect(page.getByLabel('Your HTML')).toHaveValue(solution);
 });
 test('homepage text preview treats markup as text', async ({ page }) => {
@@ -140,7 +141,7 @@ test('generated imagery is disclosed without attributing fictional scenes to sto
     await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
   await expect(page.locator('a[href*="unsplash.com"]')).toHaveCount(0);
-  await page.goto('/#/courses');
+  await open(page, '/#/courses');
   await expect(page.locator('.course-cover img').first()).toBeVisible();
   for (const image of await page.locator('.course-cover img').all()) {
     await image.scrollIntoViewIfNeeded();
@@ -163,7 +164,7 @@ test('small phones and intermediate tablet widths preserve layout and loaded ima
   }
 });
 test('large escaped drafts survive reload and independent tabs do not overwrite one another', async ({ page, context }) => {
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await page.evaluate(async () => {
     // @ts-expect-error This runtime import intentionally uses Vite's source module in the local test server.
     const store = await import('/src/learningStore.ts');
@@ -173,7 +174,7 @@ test('large escaped drafts survive reload and independent tabs do not overwrite 
   await page.reload();
   await expect(page.getByLabel('Your HTML')).toHaveValue('\u0000'.repeat(12000));
   const second = await context.newPage();
-  await second.goto('/#/practice/reading-list');
+  await open(second, '/#/practice/reading-list');
   // Simultaneous keyboard input shares browser focus; call the actual store instead to isolate persistence concurrency.
   await Promise.all([page, second].map((tab, index) => tab.evaluate(async ({ index, solution }) => {
     // @ts-expect-error Runtime source import under Vite.
@@ -188,7 +189,7 @@ test('large escaped drafts survive reload and independent tabs do not overwrite 
 });
 
 test('the practice brief ticks goals live as the learner types, and a passing build offers the next one', async ({ page }) => {
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   const count = page.locator('.lab-live-count');
   // The starter already has its main landmark.
   await expect(count).toHaveText('1 of 3 goals met as you type');
@@ -201,18 +202,18 @@ test('the practice brief ticks goals live as the learner types, and a passing bu
   await expect(count).toHaveText('3 of 3 goals met as you type');
   await expect(page.getByText('All goals met. Choose “Check my build” to save your result.')).toBeVisible();
   // Live ticks never record a completion on their own.
-  await page.goto('/#/practice');
+  await open(page, '/#/practice');
   await expect(page.getByText('0 of 4 builds completed')).toBeVisible();
-  await page.goto('/#/practice/profile-card');
+  await open(page, '/#/practice/profile-card');
   await page.getByRole('button', { name: 'Check my build' }).click();
   await expect(page.getByRole('heading', { name: 'You made it work.' })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Next build: Build a reading list/ })).toHaveAttribute('href', '#/practice/reading-list');
+  await expect(page.getByRole('link', { name: /Next build: Build a reading list/ })).toHaveAttribute('href', '/practice/reading-list');
   await page.getByLabel('Your HTML').fill('<main><h1>x</h1><script>alert(1)</script></main>');
   await expect(page.getByText('Scripts, embeds and non-HTTPS links are not allowed in these exercises.')).toBeVisible();
 });
 
 test('the first lesson walks through its example line by line and shows tags as code', async ({ page }) => {
-  await page.goto('/#/learn/first-web-page');
+  await open(page, '/#/learn/first-web-page');
   const walkthrough = page.locator('.walkthrough');
   await expect(walkthrough.getByRole('heading', { name: 'main holds the page' })).toBeVisible();
   await expect(walkthrough.locator('.wt-line.is-on')).toHaveCount(5);

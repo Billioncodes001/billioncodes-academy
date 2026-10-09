@@ -6,6 +6,7 @@ import { extname, resolve, sep } from 'node:path';
 // The backend owns this real Miniflare/workerd/D1 harness.
 // @ts-expect-error JavaScript test harness has no declaration file.
 import { createHarness } from '../../worker/tests/harness.mjs';
+import { open } from './navigate';
 
 let server: Server;
 let app: Awaited<ReturnType<typeof createHarness>>;
@@ -33,7 +34,9 @@ test.beforeAll(async () => {
         response.end(Buffer.from(await result.arrayBuffer()));
         return;
       }
-      const target = resolve(dist, url.pathname === '/' ? 'index.html' : `.${decodeURIComponent(url.pathname)}`);
+      // Mirrors Cloudflare's single-page-application fallback: page addresses without a file serve the app.
+      const page = url.pathname === '/' || !extname(url.pathname);
+      const target = resolve(dist, page ? 'index.html' : `.${decodeURIComponent(url.pathname)}`);
       if (!target.startsWith(resolve(dist) + sep)) { response.writeHead(403); response.end(); return; }
       const data = await readFile(target);
       response.writeHead(200, { ...securityHeaders, 'Content-Type': types[extname(target)] || 'application/octet-stream' });
@@ -55,15 +58,15 @@ test.afterAll(async () => {
 test('production frontend submits both forms to real Worker/D1 and isolates their state', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
-  await page.goto(`${origin}/#/courses`);
+  await open(page, `${origin}/#/courses`);
   await expect(page.getByRole('heading', { name: 'Your first steps in web development' })).toBeVisible();
   expect((await page.request.get(`${origin}/api/health`)).status()).toBe(200);
-  await page.goto(`${origin}/#/training`);
+  await open(page, `${origin}/#/training`);
   await page.getByLabel('Full name').fill('Integration Learner');
-  await page.goto(`${origin}/#/services`);
+  await open(page, `${origin}/#/services`);
   await expect(page.getByLabel('Full name')).toHaveValue('');
   await page.getByLabel('Full name').fill('Integration Founder');
-  await page.goto(`${origin}/#/training`);
+  await open(page, `${origin}/#/training`);
   await expect(page.getByLabel('Full name')).toHaveValue('Integration Learner');
   await page.getByLabel('Email address').fill('learner@example.com');
   await page.getByLabel('What would you like to learn?').fill('Web development');
@@ -81,7 +84,7 @@ test('production frontend submits both forms to real Worker/D1 and isolates thei
   expect(applicationRow.kind).toBe('applications');
   expect(JSON.parse(applicationRow.data_json)).toMatchObject({ name: 'Integration Learner', email: 'learner@example.com', format: 'online', consent: true });
 
-  await page.goto(`${origin}/#/services`);
+  await open(page, `${origin}/#/services`);
   await expect(page.getByLabel('Full name')).toHaveValue('Integration Founder');
   await page.getByLabel('Email address').fill('founder@example.com');
   await page.getByLabel('Type of support').selectOption('business-software');
@@ -104,19 +107,19 @@ test('production frontend submits both forms to real Worker/D1 and isolates thei
 });
 
 test('production offline app works without caching APIs, admin or form drafts', async ({ page, context }) => {
-  await page.goto(`${origin}/#/workspace`);
+  await open(page, `${origin}/#/workspace`);
   await page.getByRole('button', { name: 'Save current catalogue' }).click();
   await page.getByRole('button', { name: 'Enable offline reading' }).click();
   await expect(page.getByText('The app shell and built-in exercises are ready offline.', { exact: false })).toBeVisible({ timeout: 20000 });
-  await page.goto(`${origin}/#/training`);
+  await open(page, `${origin}/#/training`);
   await page.getByLabel('Full name').fill('Never cache this private draft');
   await context.setOffline(true);
-  await page.goto(`${origin}/#/workspace`);
+  await open(page, `${origin}/#/workspace`);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Your learning desk.', exact: true })).toBeVisible();
-  await page.goto(`${origin}/#/courses`);
+  await open(page, `${origin}/#/courses`);
   await expect(page.getByText('Reading your saved catalogue', { exact: false })).toBeVisible();
-  await page.goto(`${origin}/#/practice/profile-card`);
+  await open(page, `${origin}/#/practice/profile-card`);
   await page.getByLabel('Your HTML').fill('<main><h1>Works offline</h1><p>Meaningful HTML from anywhere.</p></main>');
   await page.getByRole('button', { name: 'Check my build' }).click();
   await expect(page.getByRole('heading', { name: 'You made it work.' })).toBeVisible();
@@ -131,7 +134,7 @@ test('production offline app works without caching APIs, admin or form drafts', 
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain('Never cache this private draft');
   expect(await page.evaluate(async () => { try { await fetch('/api/v1/admin/submissions'); return 'unexpected cache'; } catch { return 'offline'; } })).toBe('offline');
   await context.setOffline(false);
-  await page.goto(`${origin}/#/workspace`);
+  await open(page, `${origin}/#/workspace`);
   await page.getByRole('button', { name: 'Remove offline app files' }).click();
   await expect(page.getByText('Offline app files removed.', { exact: false })).toBeVisible();
   expect(await page.evaluate(() => caches.keys())).toEqual([]);

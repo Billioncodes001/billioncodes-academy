@@ -14,10 +14,10 @@ const date = (value: string | null) => value && Number.isFinite(Date.parse(value
 export function TrainingLanding() {
   const state = useRemote<{ cohorts: Cohort[] }>('/api/v2/cohorts');
   return <div className="wrap page-section studio-page training-page">
-    <div className="portal-heading"><div><p className="eyebrow">A SHARED DIRECTION</p><h1>Learn with intention.<br />Build with others.</h1><p>Two intended training windows each year. Create an account first, then prepare an application for an announced intake. Dates, format, fees and places are confirmed separately for each cohort.</p></div><a className="button button-dark" href="#/training-dashboard">Open training dashboard</a></div>
+    <div className="portal-heading"><div><p className="eyebrow">A SHARED DIRECTION</p><h1>Learn with intention.<br />Build with others.</h1><p>Two intended training windows each year. Create an account first, then prepare an application for an announced intake. Dates, format, fees and places are confirmed separately for each cohort.</p></div><a className="button button-dark" href="/training-dashboard">Open training dashboard</a></div>
     <div className="portal-grid training-windows">{[['Q1', 'Early-year intake', 'January to March'], ['Q4', 'Late-year intake', 'October to December']].map(([quarter, title, months]) => <section className="portal-card" key={quarter}><span className="portal-window">{quarter}</span><div><p className="studio-overline">PLANNED WINDOW</p><h2>{title}</h2><p>{months}. This is a planning window, not an announced start date.</p></div></section>)}</div>
     <section className="portal-section"><h2>Announced intakes</h2><RemoteNotice state={state} />{state.value && !state.value.cohorts.length && <div className="platform-notice">No intake dates or fees have been announced yet. You can create your account now; applications open only for published cohorts.</div>}<CohortCards cohorts={state.value?.cohorts || []} /></section>
-    <section className="training-guide"><div><p className="studio-overline">FROM INTEREST TO APPLICATION</p><h2>Know your next step.</h2><p>An application or offer is not a confirmed enrolment or payment.</p><a className="text-link" href="#/training-dashboard">Prepare for an intake</a></div><ol>
+    <section className="training-guide"><div><p className="studio-overline">FROM INTEREST TO APPLICATION</p><h2>Know your next step.</h2><p>An application or offer is not a confirmed enrolment or payment.</p><a className="text-link" href="/training-dashboard">Prepare for an intake</a></div><ol>
       <li><span aria-hidden="true">01</span><div><h3>Make your account</h3><p>Verify your email and keep your application in one private place.</p></div></li>
       <li><span aria-hidden="true">02</span><div><h3>Shape your application</h3><p>Choose an announced intake, save a draft and submit during its application window.</p></div></li>
       <li><span aria-hidden="true">03</span><div><h3>Follow the decision</h3><p>See the current review status. Confirm any offer's arrangements with the team.</p></div></li>
@@ -30,7 +30,7 @@ function CohortCards({ cohorts }: { cohorts: Cohort[] }) {
     <span className="portal-tag">{cohort.year} / Q{cohort.quarter} / {cohort.acceptingApplications ? 'Applications open' : cohort.status}</span>
     <h3>{cohort.title}</h3><p>{cohort.details}</p>
     <dl className="journey-facts"><div><dt>Training starts</dt><dd>{date(cohort.startsAt)}</dd></div><div><dt>Applications close</dt><dd>{date(cohort.closesAt)}</dd></div><div><dt>Format</dt><dd>{cohort.format}</dd></div></dl>
-    <p>{cohort.tuitionNote}</p><a className="text-link" href={`#/apply/${cohort.id}`}>{cohort.acceptingApplications ? 'Apply for this intake' : 'Prepare a draft'}</a>
+    <p>{cohort.tuitionNote}</p><a className="text-link" href={`/apply/${cohort.id}`}>{cohort.acceptingApplications ? 'Apply for this intake' : 'Prepare a draft'}</a>
   </article>)}</div>;
 }
 
@@ -39,7 +39,7 @@ function ApplicationState({ application, headingLevel = 3 }: { application: Appl
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   return <div className={`application-next application-next-${status.tone}`}>
     <p className="studio-overline">WHAT HAPPENS NEXT</p><Heading>{status.heading}</Heading><p>{status.next}</p>
-    {application.status === 'offered' && <a className="text-link" href="#/contact">Contact the team</a>}
+    {application.status === 'offered' && <a className="text-link" href="/contact">Contact the team</a>}
   </div>;
 }
 
@@ -55,7 +55,7 @@ function Dashboard() {
   const state = useRemote<{ applications: Application[] }>('/api/v2/training/applications');
   const intakes = useRemote<{ cohorts: Cohort[] }>('/api/v2/cohorts');
   return <>
-    <div className="portal-heading"><div><p className="eyebrow">YOUR TRAINING JOURNEY</p><h1>Your next step, in view.</h1><p>Your drafts, current application status and next action. Private to your account. An offer is not a confirmed place until arrangements are agreed with the team.</p></div><a className="text-link" href="#/library">Keep learning at your pace</a></div>
+    <div className="portal-heading"><div><p className="eyebrow">YOUR TRAINING JOURNEY</p><h1>Your next step, in view.</h1><p>Your drafts, current application status and next action. Private to your account. An offer is not a confirmed place until arrangements are agreed with the team.</p></div><a className="text-link" href="/library">Keep learning at your pace</a></div>
     <RemoteNotice state={state} />
     <div className="portal-grid application-grid">{state.value?.applications.map(application => {
       const status = applicationStatus(application.status);
@@ -63,10 +63,10 @@ function Dashboard() {
         <span className={`application-badge application-badge-${status.tone}`} id={`application-status-${application.id}`}>{status.label}</span>
         <h2>{application.cohortTitle}</h2><p>{application.data.track || 'Track not chosen yet'}</p>
         <ApplicationState application={application} /><ApplicationFacts application={application} />
-        <a className="text-link" href={`#/apply/${application.cohortId}`} aria-describedby={`application-status-${application.id}`}>{status.action}<span className="sr-only"> for {application.cohortTitle}</span> <Arrow /></a>
+        <a className="text-link" href={`/apply/${application.cohortId}`} aria-describedby={`application-status-${application.id}`}>{status.action}<span className="sr-only"> for {application.cohortTitle}</span> <Arrow /></a>
       </article>;
     })}</div>
-    {state.value?.applications.length === 0 && <section className="platform-panel application-empty"><p className="studio-overline">YOUR FIRST STEP</p><h2>A direction starts with you.</h2><p>You have not started an application yet. Choose an announced intake below when one is available.</p><a className="text-link" href="#/training">How training applications work</a></section>}
+    {state.value?.applications.length === 0 && <section className="platform-panel application-empty"><p className="studio-overline">YOUR FIRST STEP</p><h2>A direction starts with you.</h2><p>You have not started an application yet. Choose an announced intake below when one is available.</p><a className="text-link" href="/training">How training applications work</a></section>}
     <section className="portal-section"><h2>Intakes</h2><RemoteNotice state={intakes} /><CohortCards cohorts={intakes.value?.cohorts || []} />{intakes.value?.cohorts.length === 0 && <p className="platform-notice">Intakes are planned for Q1 and Q4. Exact dates and fees have not been announced.</p>}</section>
   </>;
 }
@@ -91,7 +91,7 @@ function ApplicationEditor({ cohort, saved, reload }: { cohort: Cohort; saved?: 
     catch (error) { setNotice(message(error)); } finally { setPending(false); }
   }
   return <>
-    <a className="back-link" href="#/training-dashboard">Back to training dashboard</a>
+    <a className="back-link" href="/training-dashboard">Back to training dashboard</a>
     <div className="portal-heading"><div><p className="eyebrow">{cohort.year} / Q{cohort.quarter} / TRAINING APPLICATION</p><h1>{cohort.title}</h1><p>{cohort.details}</p></div><span className={`application-badge application-badge-${saved ? applicationStatus(saved.status).tone : 'neutral'}`}>{saved ? applicationStatus(saved.status).label : 'Not started'}</span></div>
     <div className="training-layout application-layout">
       <aside className="application-context">

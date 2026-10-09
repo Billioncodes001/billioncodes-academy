@@ -5,7 +5,7 @@ import { setTokenProvider } from './api';
 export type FirebaseConfig = { apiKey: string; projectId: string; authDomain: string; appId: string };
 export type AuthIdentity = { name: string; email: string; verified: boolean };
 let auth: ReturnType<typeof initializeAuth> | undefined;
-const actions = { url: 'https://learnatbillioncodes.com/#/account', handleCodeInApp: false };
+const actions = { url: 'https://learnatbillioncodes.com/account', handleCodeInApp: false };
 const identity = (user: User): AuthIdentity => ({ name: user.displayName || '', email: user.email || '', verified: user.emailVerified });
 function client(config: FirebaseConfig) {
   if (!auth) {
