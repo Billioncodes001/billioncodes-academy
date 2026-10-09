@@ -71,7 +71,7 @@ Launch privacy text accurately discloses that a fixed automatic retention period
 - `public/sw.js`, `scripts/build-offline.mjs`: versioned public-only offline cache; API/admin/POST responses excluded.
 - `public/_headers`: production static-asset CSP restricted to self-hosted scripts, styles, fonts, images and API connections, with no inline-script/eval exception. API/admin responses retain their separate Worker policies. Self-hosted font licenses are in `public/font-licenses/`.
 
-Hash routes keep the launch compatible with static assets: `/#/courses`, `/#/learn/first-web-page`, `/#/training`, `/#/services`, `/#/about`, `/#/policies`, `/#/practice`, `/#/workspace`, `/#/credits`. Unknown paths inside the app display an explicit not-found state. Page title, focus and scroll position update after navigation.
+Pages have real addresses (`/courses`, `/learn/first-web-page`, `/practice/profile-card`, `/training` and so on), handled by `src/router.ts` with the History API. Old `/#/` links are rewritten on load and while the app is open, so bookmarks and shared links keep working. The Worker serves the app shell for every page address with that page's own search details (`worker/seo.js`); unknown addresses return 404. Pages load on demand (`React.lazy`); the homepage's motion code and the practice lab are separate chunks.
 
 ## Screenshots
 

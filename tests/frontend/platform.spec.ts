@@ -12,6 +12,8 @@ test('account, resources and training routes are accessible, responsive and gate
   for (const route of ['/account','/resources','/training','/training-dashboard','/library','/course-library']) {
     await page.goto(`/#${route}`);
     await expect(page.getByRole('main')).toBeVisible();
+    // Pages load on demand; scan once this page's code has arrived.
+    await expect(page.locator('.page-loading')).toHaveCount(0);
     await expect(page).not.toHaveTitle(/Page not found/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);

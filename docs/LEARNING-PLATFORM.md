@@ -6,9 +6,9 @@
 
 One verified Firebase identity (Google or email/password), two separate spaces:
 
-- `/#/library`: published free-course enrolments and account-backed lesson marks.
-- `/#/training-dashboard`: intake applications, draft/submitted/review/offer states.
-- `/#/resources`: externally hosted educational resources with creator and licence credits.
+- `/library`: published free-course enrolments and account-backed lesson marks.
+- `/training-dashboard`: intake applications, draft/submitted/review/offer states.
+- `/resources`: externally hosted educational resources with creator and licence credits.
 
 Q1 and Q4 are the owner's proposed two annual windows, not a claimed competitor schedule. No real cohort, fee, start date, credential or placement guarantee is seeded. A cohort must have opening/closing/start dates and a tuition note before it can accept applications. An offer never creates a course purchase or confirms a training place.
 

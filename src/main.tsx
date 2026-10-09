@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { installLinkHandler, legacyHashToPath, useRoute } from './router';
 import { track } from './metrics';
 import { createRoot } from 'react-dom/client';
@@ -8,20 +8,11 @@ import '@fontsource/dm-sans/latin-600.css';
 import '@fontsource/ibm-plex-mono/latin-400.css';
 import { type Course } from './api';
 import { useCatalog, type CatalogState } from './useCatalog';
-import { PracticeLab } from './PracticeLab';
-import { Workspace } from './Workspace';
-import { Credits } from './Credits';
 import { changeProgress, useWorkspace } from './learningStore';
 import { rememberLesson, recordRead } from '@billioncodes/learning';
 import { intro } from './intro';
-import { EnquiryForm } from './EnquiryForm';
-import { HomePage } from './HomePage';
 import { Brand } from './Brand';
 import { AccountProvider, AccountPage, AccountNav, useAccount } from './Account';
-import { CourseLibrary, CoursePage, MyLearning } from './LearningPortal';
-import { TrainingLanding, TrainingDashboard, ApplyPage } from './TrainingPortal';
-import { OpenResources } from './OpenResources';
-import { PlatformPolicies } from './PlatformPolicies';
 import '@fontsource/bricolage-grotesque/latin-500.css';
 import '@fontsource/bricolage-grotesque/latin-600.css';
 import '@fontsource/bricolage-grotesque/latin-700.css';
@@ -37,12 +28,42 @@ import './design/atlas-routes.css';
 import './motion/dark.css';
 import './motion/motion.css';
 import { LivingBackground } from './motion/LivingBackground';
-import { Cursor, MotionToggle, RouteCurtain, ScrollProgress, SmoothScroll, scrollToTop, useAutoReveal, useSpotlightTilt } from './motion/primitives';
-import { motion } from 'motion/react';
+import { Cursor, MotionToggle, RouteCurtain, ScrollProgress, SmoothScroll, scrollToTop, useAutoReveal, useSpotlightTilt } from './motion/shell';
 import { useMotionEnabled } from './motion/prefs';
 import { Arrow, Back, Icon } from './Icon';
 import { CoverArt, coverKinds } from './CoverArt';
 import { CodeWalkthrough, withCodeChips } from './CodeWalkthrough';
+// Pages load on demand, so a learner opening a lesson never downloads the homepage's
+// motion code, the practice lab or the account screens they are not using.
+const named = <T extends Record<string, unknown>>(load: () => Promise<T>, name: keyof T) => lazy(() => load().then(module => ({ default: module[name] as React.ComponentType<any> })));
+const HomePage = named(() => import('./HomePage'), 'HomePage');
+const PracticeLab = named(() => import('./PracticeLab'), 'PracticeLab');
+const Workspace = named(() => import('./Workspace'), 'Workspace');
+const Credits = named(() => import('./Credits'), 'Credits');
+const EnquiryForm = named(() => import('./EnquiryForm'), 'EnquiryForm');
+const CourseLibrary = named(() => import('./LearningPortal'), 'CourseLibrary');
+const CoursePage = named(() => import('./LearningPortal'), 'CoursePage');
+const MyLearning = named(() => import('./LearningPortal'), 'MyLearning');
+const TrainingLanding = named(() => import('./TrainingPortal'), 'TrainingLanding');
+const TrainingDashboard = named(() => import('./TrainingPortal'), 'TrainingDashboard');
+const ApplyPage = named(() => import('./TrainingPortal'), 'ApplyPage');
+const OpenResources = named(() => import('./OpenResources'), 'OpenResources');
+const PlatformPolicies = named(() => import('./PlatformPolicies'), 'PlatformPolicies');
+
+// Each page change remounts the page and gives it a short lift, using the browser's own
+// animation API (transform only, so focus and contrast are never affected).
+let firstPage = true;
+function RouteView({ motionOn, children }: { motionOn: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    // The very first page appears without a lift; later page changes get one.
+    if (firstPage) { firstPage = false; return; }
+    if (motionOn) ref.current?.animate?.([{ transform: 'translateY(28px)' }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.16, 1, .3, 1)' });
+  }, [motionOn]);
+  return <div className="route-view" ref={ref}>{children}</div>;
+}
+
+const PageLoading = () => <div className="wrap page-section page-loading" role="status"><span className="loading-line" />Loading...</div>;
 const links = [['/courses', 'Explore courses'], ['/practice', 'Practice'], ['/training', 'Training'], ['/services', 'Expert help']];
 
 
@@ -204,7 +225,7 @@ function App() {
   useAutoReveal(route);
   const motionOn = useMotionEnabled();
   return <><SmoothScroll /><LivingBackground route={route} /><Cursor /><RouteCurtain route={route} />{motionOn && <ScrollProgress />}<Header route={route} /><main id="main" tabIndex={-1} ref={mainRef}>
-    {motionOn ? <motion.div key={route} className="route-view" initial={{ y: 28 }} animate={{ y: 0, transitionEnd: { transform: 'none' } }} transition={{ duration: .6, ease: [.16, 1, .3, 1] }}>{page}</motion.div> : <div className="route-view">{page}</div>}
+    <RouteView key={route} motionOn={motionOn}><Suspense fallback={<PageLoading />}>{page}</Suspense></RouteView>
     <SaveStatus /></main><Footer /></>;
 }
 

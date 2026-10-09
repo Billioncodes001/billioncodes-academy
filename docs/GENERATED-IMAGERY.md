@@ -12,7 +12,7 @@ Created 11 September 2026 for Billion Codes using the built-in Codex image-gener
 
 Original PNGs remain in Codex's generated-images directory, with local working copies at the paths above. After copying the sources, run `node scripts/prepare-brand.mjs`. Sharp resizes to at most 1200px wide for the two people scenes and 900px for the course image, without enlargement, and exports WebP at quality 82. No generative edits or facial retouching were applied after generation. Layout crops use CSS `object-fit`.
 
-The deployed WebP assets are committed to Git. Source PNGs are not required for ordinary builds or deployments. Regenerating from the prompts is nondeterministic; retain the source PNGs to reproduce these specific exports. The generated scenes replace earlier stock images; they are not subject to those photographs' attribution. The website keeps its existing `/#/credits` address but now describes the generated imagery instead.
+The deployed WebP assets are committed to Git. Source PNGs are not required for ordinary builds or deployments. Regenerating from the prompts is nondeterministic; retain the source PNGs to reproduce these specific exports. The generated scenes replace earlier stock images; they are not subject to those photographs' attribution. The website keeps its existing `/credits` address but now describes the generated imagery instead.
 
 The `generated-v1` filenames intentionally differ from the retired stock-image URLs. An already-active offline service worker must not serve cached stock photographs under the new AI labels. Increment the filename version when replacing these scenes again, and update all references; do not overwrite a previously deployed image URL with different imagery.
 
