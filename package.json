@@ -11,7 +11,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test:frontend": "playwright test --config tests/frontend/playwright.config.ts",
-    "test:backend": "node --test --test-concurrency=1 worker/tests/backend.test.mjs worker/tests/platform.test.mjs worker/tests/studio.test.mjs worker/tests/staff.test.mjs worker/tests/arcade.test.mjs worker/tests/metrics.test.mjs",
+    "test:backend": "node --test --test-concurrency=1 worker/tests/backend.test.mjs worker/tests/platform.test.mjs worker/tests/studio.test.mjs worker/tests/staff.test.mjs worker/tests/arcade.test.mjs worker/tests/metrics.test.mjs worker/tests/seo.test.mjs",
     "test:assets:local": "node --test tests/frontend/assets.test.mjs",
     "preview:cloudflare": "wrangler dev --port 8788 --var ALLOWED_ORIGINS:http://localhost:5174,http://localhost:8788,http://127.0.0.1:5174,http://127.0.0.1:8788",
     "deploy": "npm run build && wrangler deploy",

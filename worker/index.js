@@ -6,6 +6,8 @@ import { checkOrigin, configuredSecret, secureHeaders, sha256 } from "./security
 import { requireStaff, staffSession, staffProfile, listStaff, grantStaff, updateStaffRole, revokeStaff, ensureStaffSchema } from "./staff.js";
 import { arcadeRoute, arcadeAdmin, challengePage } from "./arcade.js";
 import { recordMetric, metricsReport } from "./metrics.js";
+import { seoFor, injectSeo, sitemap, llmsTxt } from "./seo.js";
+import { courseCatalogue } from "./learning.js";
 import { database, getExisting, createSubmission, limitPublicAttempt, listSubmissions, updateStatus, readAudit } from "./storage.js";
 
 function json(data, status = 200, headers = {}) {
@@ -145,6 +147,31 @@ async function api(request, env, url) {
   throw new HttpError(404, "API endpoint not found.");
 }
 
+// Published Course Studio courses for search pages; built-in courses are listed separately.
+async function publishedCourses(env) {
+  try {
+    if (!env.DB || !platformEnabled(env)) return [];
+    const { courses } = await courseCatalogue(database(env));
+    return courses.filter(course => !course.builtin && course.status === "published");
+  } catch { return []; }
+}
+
+// Serves the app shell for a page address with that page's own search details.
+async function pageResponse(request, env, url) {
+  const path = url.pathname.replace(/\/+$/, "") || "/";
+  let published;
+  const lookup = async () => (published ||= await publishedCourses(env));
+  const seo = await seoFor(path, lookup);
+  const shell = await env.ASSETS.fetch(new Request(new URL("/index.html", url), { method: "GET", headers: request.headers }));
+  if (!shell.ok) return shell;
+  const page = seo || { title: "Page not found | Billion Codes", description: "This page is not here. Head back to the free introductions to find your next step.", url: url.origin + path, robots: "noindex", ld: [], body: "<h1>This page is not here.</h1><p><a href=\"/courses\">Explore the free introductions</a></p>" };
+  const headers = new Headers(shell.headers);
+  headers.delete("content-length"); headers.delete("etag");
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  const body = request.method === "HEAD" ? null : injectSeo(await shell.text(), page);
+  return new Response(body, { status: seo ? 200 : 404, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -155,7 +182,13 @@ export default {
       method(request, ["GET", "HEAD"]);
       const challenge = /^\/c\/([^/]*)$/.exec(url.pathname);
       if (challenge) return secureHeaders(await challengePage(request, env, challenge[1]), request, env);
+      if (url.pathname === "/sitemap.xml" || url.pathname === "/llms.txt") {
+        const list = await publishedCourses(env);
+        const xml = url.pathname === "/sitemap.xml";
+        return secureHeaders(new Response(request.method === "HEAD" ? null : (xml ? sitemap(list) : llmsTxt(list)), { headers: { "Content-Type": xml ? "application/xml; charset=utf-8" : "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" } }), request, env);
+      }
       if (!env.ASSETS) throw new HttpError(503, "Website assets are not available.");
+      if (!isAdmin && !/\.[a-z0-9]{2,5}$/i.test(url.pathname)) return secureHeaders(await pageResponse(request, env, url), request, env);
       if (isAdmin) {
         if (url.search) throw new HttpError(400, "Use the private console without URL parameters.");
         const assetURL = new URL(request.url);

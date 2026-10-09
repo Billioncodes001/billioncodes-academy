@@ -1,0 +1,8 @@
+# Search engines and AI assistants are welcome to read the public lessons and practice pages.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /c/
+
+Sitemap: https://learnatbillioncodes.com/sitemap.xml
